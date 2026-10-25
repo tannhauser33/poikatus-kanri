@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ポイ活・ポイント収益管理 (クラウド同期版)</title>
+    <!-- Tailwind CSS for modern UI -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js for graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { 
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            overflow-x: hidden;
+        }
+        * {
+            box-sizing: border-box;
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen pb-12">
+
+    <!-- Header -->
+    <header class="bg-indigo-600 text-white shadow-md">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white/10 p-2.5 rounded-xl text-xl">👟</div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight">ポイ活・ポイント収益管理</h1>
+                    <p class="text-xs text-indigo-200">クラウド同期対応：PC・スマホでリアルタイム共有</p>
+                </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <span id="sync-status" class="bg-indigo-700/80 text-indigo-200 text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> クラウド接続中
+                </span>
+                <!-- CSVエクスポート・インポートボタンを追加 -->
+                <button onclick="exportCSV()" class="bg-indigo-700/80 hover:bg-indigo-700 text-xs px-3 py-2 rounded-lg font-medium transition flex items-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-file-arrow-down"></i> CSVエクスポート
+                </button>
+                <label class="bg-indigo-700/80 hover:bg-indigo-700 text-xs px-3 py-2 rounded-lg font-medium transition flex items-center gap-1.5 shadow-sm cursor-pointer">
+                    <i class="fa-solid fa-file-arrow-up"></i> CSVインポート
+                    <input type="file" id="csvFileInput" accept=".csv" onchange="importCSV(event)" class="hidden">
+                </label>
+                <button onclick="resetCloudData()" class="bg-rose-600/80 hover:bg-rose-600 text-xs px-3 py-2 rounded-lg font-medium transition flex items-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-trash-can"></i> データ初期化
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-6xl mx-auto px-4 mt-6 space-y-6">
+
+        <!-- Navigation Tabs -->
+        <div class="grid grid-cols-2 sm:flex sm:border-b sm:border-slate-200 gap-2 sm:gap-0 bg-transparent">
+            <button onclick="switchTab('dashboard')" id="tab-dashboard" class="tab-btn px-4 py-3 font-semibold text-xs sm:text-sm border-2 sm:border-0 sm:border-b-2 border-indigo-600 text-indigo-600 bg-white sm:bg-transparent rounded-xl sm:rounded-none shadow-sm sm:shadow-none flex items-center justify-center sm:justify-start gap-2 transition">
+                <i class="fa-solid fa-chart-pie"></i> ダッシュボード
+            </button>
+            <button onclick="switchTab('entry')" id="tab-entry" class="tab-btn px-4 py-3 font-semibold text-xs sm:text-sm border-2 sm:border-0 sm:border-b-2 border-transparent text-slate-500 hover:text-slate-700 bg-white sm:bg-transparent rounded-xl sm:rounded-none shadow-sm sm:shadow-none flex items-center justify-center sm:justify-start gap-2 transition">
+                <i class="fa-solid fa-pen-to-square"></i> 数値入力・履歴
+            </button>
+            <button onclick="switchTab('redemption')" id="tab-redemption" class="tab-btn px-4 py-3 font-semibold text-xs sm:text-sm border-2 sm:border-0 sm:border-b-2 border-transparent text-slate-500 hover:text-slate-700 bg-white sm:bg-transparent rounded-xl sm:rounded-none shadow-sm sm:shadow-none flex items-center justify-center sm:justify-start gap-2 transition">
+                <i class="fa-solid fa-wallet"></i> 交換実績管理
+            </button>
+            <button onclick="switchTab('apps')" id="tab-apps" class="tab-btn px-4 py-3 font-semibold text-xs sm:text-sm border-2 sm:border-0 sm:border-b-2 border-transparent text-slate-500 hover:text-slate-700 bg-white sm:bg-transparent rounded-xl sm:rounded-none shadow-sm sm:shadow-none flex items-center justify-center sm:justify-start gap-2 transition">
+                <i class="fa-solid fa-list-check"></i> アプリ設定・並べ替え
+            </button>
+        </div>
+
+        <!-- TAB 1: DASHBOARD -->
+        <section id="view-dashboard" class="space-y-6">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+                <div class="bg-white p-2.5 sm:p-4 rounded-xl sm:rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                    <div>
+                        <p class="text-[9px] sm:text-[11px] font-medium text-slate-400 truncate">総資産価値</p>
+                        <h2 id="summary-total-assets" class="text-sm sm:text-2xl font-bold text-slate-800 mt-0.5 sm:mt-1 truncate">¥0</h2>
+                    </div>
+                    <div class="mt-2 text-[8px] sm:text-[10px] text-emerald-600 font-medium bg-emerald-50 px-1.5 py-0.5 rounded w-fit">総合</div>
+                </div>
+                <div class="bg-white p-2.5 sm:p-4 rounded-xl sm:rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                    <div>
+                        <p class="text-[9px] sm:text-[11px] font-medium text-slate-400 truncate">未交換相当</p>
+                        <h2 id="summary-unredeemed" class="text-sm sm:text-2xl font-bold text-indigo-600 mt-0.5 sm:mt-1 truncate">¥0</h2>
+                    </div>
+                    <div class="mt-2 text-[8px] sm:text-[10px] text-indigo-600 font-medium bg-indigo-50 px-1.5 py-0.5 rounded w-fit">残高</div>
+                </div>
+                <div onclick="openExchangeSummaryModal()" class="bg-white p-2.5 sm:p-4 rounded-xl sm:rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between cursor-pointer hover:border-indigo-400 transition">
+                    <div>
+                        <p class="text-[9px] sm:text-[11px] font-medium text-slate-400 truncate">交換ポイント <i class="fa-solid fa-circle-info text-[10px]"></i></p>
+                        <h2 id="summary-confirmed" class="text-sm sm:text-2xl font-bold text-emerald-600 mt-0.5 sm:mt-1 truncate">0pt</h2>
+                    </div>
+                    <div class="mt-2 text-[8px] sm:text-[10px] text-slate-500 font-medium bg-slate-100 px-1.5 py-0.5 rounded w-fit">交換済(詳細)</div>
+                </div>
+                <div class="bg-white p-2.5 sm:p-4 rounded-xl sm:rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                    <div>
+                        <p class="text-[9px] sm:text-[11px] font-medium text-slate-400 truncate">今月見積</p>
+                        <h2 id="summary-monthly" class="text-sm sm:text-2xl font-bold text-amber-600 mt-0.5 sm:mt-1 truncate">¥0</h2>
+                    </div>
+                    <div class="mt-2 text-[8px] sm:text-[10px] text-amber-600 font-medium bg-amber-50 px-1.5 py-0.5 rounded w-fit">今月</div>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                    <h3 class="font-bold text-slate-700 text-sm">登録アプリの最新状況 <span class="text-xs font-normal text-slate-400">（クリックすると履歴へ絞り込み）</span></h3>
+                    
+                    <div class="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-sm text-xs font-medium">
+                        <span id="toggle-label-pt" class="text-indigo-600 font-bold">ポイント表示</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="cardModeToggle" onchange="toggleCardDisplayMode()" class="sr-only peer">
+                            <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
+                        </label>
+                        <span id="toggle-label-yen" class="text-slate-400">交換金額表示</span>
+                    </div>
+                </div>
+                <div id="dashboard-app-cards" class="grid grid-cols-2 lg:grid-cols-4 gap-3"></div>
+            </div>
+
+            <!-- グラフ1：アプリ別比較（日別・月別・年間切り替え対応） -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <h3 class="font-bold text-slate-700 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-chart-column text-indigo-600"></i> <span id="chart1-title">アプリ別 獲得比較</span>
+                    </h3>
+                    <div class="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-medium">
+                        <button onclick="changeChart1Mode('daily')" id="btn-c1-daily" class="px-2.5 py-1 rounded-lg transition bg-white shadow-sm text-indigo-600">日別</button>
+                        <button onclick="changeChart1Mode('monthly')" id="btn-c1-monthly" class="px-2.5 py-1 rounded-lg transition text-slate-600">月別</button>
+                        <button onclick="changeChart1Mode('yearly')" id="btn-c1-yearly" class="px-2.5 py-1 rounded-lg transition text-slate-600">年間</button>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 text-xs">
+                    <span id="chart1-target-label" class="text-slate-500 font-medium">対象日:</span>
+                    <input type="date" id="chart1-date-input" onchange="renderChart1()" class="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <input type="month" id="chart1-month-input" onchange="renderChart1()" class="hidden bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <select id="chart1-select-input" onchange="renderChart1()" class="hidden bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"></select>
+                </div>
+                <div class="h-64 relative w-full">
+                    <canvas id="barChartApps"></canvas>
+                </div>
+            </div>
+
+            <!-- グラフ2：特定アプリの推移グラフ -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <h3 class="font-bold text-slate-700 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-chart-column text-emerald-600"></i> <span id="chart2-title">アプリ個別推移グラフ</span>
+                    </h3>
+                    <div class="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-medium">
+                        <button onclick="changeChart2Mode('daily')" id="btn-c2-daily" class="px-2.5 py-1 rounded-lg transition bg-white shadow-sm text-indigo-600">日別</button>
+                        <button onclick="changeChart2Mode('monthly')" id="btn-c2-monthly" class="px-2.5 py-1 rounded-lg transition text-slate-600">月別</button>
+                        <button onclick="changeChart2Mode('yearly')" id="btn-c2-yearly" class="px-2.5 py-1 rounded-lg transition text-slate-600">年間</button>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 text-xs">
+                    <span class="text-slate-500 font-medium">対象アプリ:</span>
+                    <select id="chart2-app-select" onchange="renderChart2()" class="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"></select>
+                </div>
+                <div class="h-64 relative w-full">
+                    <canvas id="barChartSingleApp"></canvas>
+                </div>
+            </div>
+
+            <!-- グラフ3：カテゴリ別集計グラフ（日別・月別・年間切り替え対応） -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <h3 class="font-bold text-slate-700 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-chart-column text-amber-600"></i> <span id="chart3-title">カテゴリ別 集計グラフ</span>
+                    </h3>
+                    <div class="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-medium">
+                        <button onclick="changeChart3Mode('daily')" id="btn-c3-daily" class="px-2.5 py-1 rounded-lg transition bg-white shadow-sm text-indigo-600">日別</button>
+                        <button onclick="changeChart3Mode('monthly')" id="btn-c3-monthly" class="px-2.5 py-1 rounded-lg transition text-slate-600">月別</button>
+                        <button onclick="changeChart3Mode('yearly')" id="btn-c3-yearly" class="px-2.5 py-1 rounded-lg transition text-slate-600">年間</button>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 text-xs">
+                    <span id="chart3-target-label" class="text-slate-500 font-medium">対象日:</span>
+                    <input type="date" id="chart3-date-input" onchange="renderChart3()" class="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <input type="month" id="chart3-month-input" onchange="renderChart3()" class="hidden bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <select id="chart3-select-input" onchange="renderChart3()" class="hidden bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"></select>
+                </div>
+                <div class="h-64 relative w-full">
+                    <canvas id="barChartMarkCategory"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: ENTRY & LOGS -->
+        <section id="view-entry" class="hidden space-y-6">
+            <div id="selectedAppCardContainer" class="hidden"></div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-pen-nib text-indigo-600"></i> 本日のポイント数値を入力
+                </h3>
+                <form id="entryForm" onsubmit="handlePointEntry(event)" class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">記録日付</label>
+                            <input type="date" id="entryDate" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">対象アプリ</label>
+                            <select id="entryAppId" onchange="onEntryAppSelectChange(this.value)" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"></select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">現在の累計ポイント数 (アプリ上の数値)</label>
+                        <input type="number" id="entryValue" placeholder="例: 15400" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div class="flex justify-end">
+                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-6 py-2.5 rounded-xl text-sm transition shadow-sm flex items-center gap-2">
+                            <i class="fa-solid fa-plus"></i> 入力を保存する
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <div class="flex items-center gap-3">
+                        <h3 class="font-bold text-slate-700">入力履歴一覧</h3>
+                        <span id="log-count" class="text-xs text-slate-400 font-medium">全 0 件</span>
+                    </div>
+
+                    <div class="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-xl text-xs font-medium">
+                        <span id="log-toggle-pt" class="text-indigo-600 font-bold">数値入力のみ</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="logModeToggle" onchange="toggleLogDisplayMode()" class="sr-only peer">
+                            <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
+                        </label>
+                        <span id="log-toggle-all" class="text-slate-400">交換実績も含める</span>
+                    </div>
+                </div>
+
+                <div id="filter-banner" class="hidden bg-indigo-50 border border-indigo-100 text-indigo-700 px-4 py-2.5 rounded-xl text-xs flex justify-between items-center">
+                    <span id="filter-banner-text">絞り込み中</span>
+                    <button onclick="clearFilter()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-lg transition font-medium">すべての履歴を表示</button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="border-b border-slate-100 text-slate-400 text-xs uppercase">
+                                <th class="py-3 px-4 font-semibold">日付</th>
+                                <th class="py-3 px-4 font-semibold">アプリ</th>
+                                <th class="py-3 px-4 font-semibold">内容 / 交換先</th>
+                                <th class="py-3 px-4 font-semibold text-right">数値 / 消費</th>
+                                <th class="py-3 px-4 font-semibold text-right">差分 / 換算額</th>
+                                <th class="py-3 px-4 font-semibold text-center">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logsTableBody" class="divide-y divide-slate-50"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: REDEMPTION -->
+        <section id="view-redemption" class="hidden space-y-6">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-gift text-emerald-600"></i> ポイント交換実績の記録
+                </h3>
+                <form id="redemptionForm" onsubmit="handleRedemptionEntry(event)" class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">交換完了日</label>
+                            <input type="date" id="redDate" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">対象アプリ</label>
+                            <select id="redAppId" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"></select>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">消費したポイント数</label>
+                            <input type="number" id="redSpentPt" placeholder="例: 10000" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">獲得した金額 (円)</label>
+                            <input type="number" id="redGainedYen" placeholder="例: 100" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">交換先 (例: 楽天, Amazon等)</label>
+                            <input type="text" id="redDestination" placeholder="例: 楽天ポイント" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                    </div>
+                    <div class="flex justify-end">
+                        <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-6 py-2.5 rounded-xl text-sm transition shadow-sm flex items-center gap-2">
+                            <i class="fa-solid fa-plus"></i> 交換実績を登録する
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+                <h3 class="font-bold text-slate-700">交換履歴一覧</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="border-b border-slate-100 text-slate-400 text-xs uppercase">
+                                <th class="py-3 px-4 font-semibold">日付</th>
+                                <th class="py-3 px-4 font-semibold">アプリ</th>
+                                <th class="py-3 px-4 font-semibold">交換先</th>
+                                <th class="py-3 px-4 font-semibold text-right">消費ポイント</th>
+                                <th class="py-3 px-4 font-semibold text-right">獲得収益</th>
+                                <th class="py-3 px-4 font-semibold text-center">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="redemptionTableBody" class="divide-y divide-slate-50"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: APPS SETTINGS -->
+        <section id="view-apps" class="hidden space-y-6">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-plus text-indigo-600"></i> 新しいアプリを追加
+                </h3>
+                <form id="appAddForm" onsubmit="handleAddApp(event)" class="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">カテゴリマーク</label>
+                        <select id="appIconInput" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="🚶">🚶 歩く</option>
+                            <option value="💤">💤 放置</option>
+                            <option value="🪙">🪙 ポイントサイト</option>
+                            <option value="⭐">⭐ etc</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">アプリ名</label>
+                        <input type="text" id="appNameInput" placeholder="例: トリマ" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">還元レート (1pt当りの円)</label>
+                        <input type="number" step="0.0001" id="appRateInput" placeholder="例: 0.01" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 py-2.5 rounded-xl text-sm transition shadow-sm flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-plus"></i> 追加する
+                    </button>
+                </form>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+                <h3 class="font-bold text-slate-700">登録アプリ一覧</h3>
+                <div id="appsListContainer" class="space-y-3"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 交換先別集計モーダル -->
+    <div id="exchangeSummaryModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                    <i class="fa-solid fa-wallet text-emerald-600"></i> 交換先別の合計一覧
+                </h3>
+                <button onclick="closeExchangeSummaryModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div id="exchangeSummaryContent" class="space-y-2 max-h-80 overflow-y-auto"></div>
+            <div class="flex justify-end pt-2">
+                <button onclick="closeExchangeSummaryModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 rounded-xl text-xs font-medium transition">閉じる</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs & App Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBpLVRhOd2v9_p6zqcamNcTU8OrfjOZg2M",
+            authDomain: "point-get-count.firebaseapp.com",
+            databaseURL: "https://point-get-count-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "point-get-count",
+            storageBucket: "point-get-count.firebasestorage.app",
+            messagingSenderId: "817543460347",
+            appId: "1:817543460347:web:7934854bbee95ebf84c75e",
+            measurementId: "G-2H1NSW58MV"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const DEFAULT_APPS = [
+            { id: 'app_1', name: 'トリマ', rate: 0.01, icon: '🚶', order: 1 },
+            { id: 'app_2', name: 'Miles', rate: 0.1, icon: '🪙', order: 2 },
+            { id: 'app_3', name: 'クラシルリワード', rate: 0.01, icon: '🚶', order: 3 },
+            { id: 'app_4', name: 'Powl', rate: 0.1, icon: '🪙', order: 4 }
+        ];
+
+        let state = { apps: [], logs: [], redemptions: [] };
+        let chart1Mode = 'daily'; 
+        let chart2Mode = 'daily'; 
+        let chart3Mode = 'daily';
+        let barChartInstance = null;
+        let singleBarChartInstance = null;
+        let markChartInstance = null;
+        let selectedAppFilter = null; 
+        let dashboardCardMode = 'point'; 
+        let logDisplayMode = 'point'; 
+
+        const COLOR_PALETTE = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#3b82f6', '#14b8a6', '#f43f5e'];
+
+        async function loadDataFromCloud() {
+            try {
+                const appsSnapshot = await getDocs(collection(db, "apps"));
+                let appsList = [];
+                appsSnapshot.forEach(docSnap => {
+                    appsList.push({ id: docSnap.id, ...docSnap.data() });
+                });
+
+                if (appsList.length === 0) {
+                    for (const defApp of DEFAULT_APPS) {
+                        await setDoc(doc(db, "apps", defApp.id), defApp);
+                        appsList.push(defApp);
+                    }
+                }
+                appsList.sort((a, b) => (a.order || 0) - (b.order || 0));
+                state.apps = appsList;
+
+                const logsSnapshot = await getDocs(collection(db, "logs"));
+                let logsList = [];
+                logsSnapshot.forEach(docSnap => {
+                    const data = docSnap.data();
+                    if (data) {
+                        const val = data.rawValue !== undefined ? data.rawValue :
+                                    data.value !== undefined ? data.value :
+                                    data.point !== undefined ? data.point : 0;
+                        logsList.push({ id: docSnap.id, ...data, value: Number(val) });
+                    }
+                });
+                state.logs = logsList;
+
+                const redsSnapshot = await getDocs(collection(db, "redemptions"));
+                let redsList = [];
+                redsSnapshot.forEach(docSnap => {
+                    const data = docSnap.data();
+                    if (data) redsList.push({ id: docSnap.id, ...data });
+                });
+                state.redemptions = redsList;
+
+                renderAll();
+                document.getElementById('sync-status').innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> クラウド接続中';
+            } catch (error) {
+                console.error("Cloud load error:", error);
+                document.getElementById('sync-status').innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-400"></span> 接続エラー';
+            }
+        }
+
+        // CSVエクスポート機能（クラウド上の全データをエクスポート）
+        window.exportCSV = function() {
+            let csvContent = "\ufeff"; 
+            
+            csvContent += "[APPS]\n";
+            csvContent += "id,name,rate,icon,order\n";
+            state.apps.forEach(a => {
+                csvContent += `"${a.id}","${a.name}",${a.rate},"${a.icon || '📱'}",${a.order || 1}\n`;
+            });
+
+            csvContent += "\n[LOGS]\n";
+            csvContent += "id,date,appId,value\n";
+            state.logs.forEach(l => {
+                csvContent += `"${l.id}","${l.date}","${l.appId}",${l.value !== undefined ? l.value : l.rawValue}\n`;
+            });
+
+            csvContent += "\n[REDEMPTIONS]\n";
+            csvContent += "id,date,appId,spentPt,gainedYen,destination\n";
+            state.redemptions.forEach(r => {
+                csvContent += `"${r.id}","${r.date}","${r.appId}",${r.spentPt},${r.gainedYen},"${r.destination || ''}"\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `poikatsu_cloud_backup_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        };
+
+        // CSVインポート機能（クラウドへ一括書き込み）
+        window.importCSV = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const text = e.target.result;
+                    const lines = text.split(/\r\n|\n/);
+
+                    let currentSection = '';
+                    let newApps = [];
+                    let newLogs = [];
+                    let newReds = [];
+
+                    lines.forEach(line => {
+                        const trimmed = line.trim();
+                        if (!trimmed) return;
+
+                        if (trimmed.startsWith('[APPS]')) { currentSection = 'APPS'; return; }
+                        if (trimmed.startsWith('[LOGS]')) { currentSection = 'LOGS'; return; }
+                        if (trimmed.startsWith('[REDEMPTIONS]')) { currentSection = 'REDEMPTIONS'; return; }
+                        if (trimmed.startsWith('id,')) return; 
+
+                        const row = [];
+                        let inQuotes = false;
+                        let currentVal = '';
+                        for (let i = 0; i < trimmed.length; i++) {
+                            const char = trimmed[i];
+                            if (char === '"') {
+                                inQuotes = !inQuotes;
+                            } else if (char === ',' && !inQuotes) {
+                                row.push(currentVal.trim().replace(/^"|"$/g, ''));
+                                currentVal = '';
+                            } else {
+                                currentVal += char;
+                            }
+                        }
+                        row.push(currentVal.trim().replace(/^"|"$/g, ''));
+
+                        if (currentSection === 'APPS' && row.length >= 3) {
+                            newApps.push({
+                                id: row[0] || ('app_' + Date.now() + Math.random().toString(36).substring(2, 5)),
+                                name: row[1],
+                                rate: parseFloat(row[2]) || 0.01,
+                                icon: row[3] || '📱',
+                                order: parseInt(row[4]) || (newApps.length + 1)
+                            });
+                        } else if (currentSection === 'LOGS' && row.length >= 4) {
+                            newLogs.push({
+                                id: row[0] || ('log_' + Date.now() + Math.random().toString(36).substring(2, 5)),
+                                date: row[1],
+                                appId: row[2],
+                                rawValue: parseFloat(row[3]) || 0,
+                                createdAt: Date.now()
+                            });
+                        } else if (currentSection === 'REDEMPTIONS' && row.length >= 6) {
+                            newReds.push({
+                                id: row[0] || ('red_' + Date.now() + Math.random().toString(36).substring(2, 5)),
+                                date: row[1],
+                                appId: row[2],
+                                spentPt: parseFloat(row[3]) || 0,
+                                gainedYen: parseFloat(row[4]) || 0,
+                                destination: row[5],
+                                createdAt: Date.now()
+                            });
+                        }
+                    });
+
+                    if (newApps.length > 0 || newLogs.length > 0 || newReds.length > 0) {
+                        if (confirm(`クラウドへインポートを実行します。\n・アプリ数: ${newApps.length}件\n・数値履歴: ${newLogs.length}件\n・交換実績: ${newReds.length}件\n\n実行してクラウドデータを更新しますか？`)) {
+                            // Firestoreに一括保存
+                            for (const app of newApps) {
+                                await setDoc(doc(db, "apps", app.id), app);
+                            }
+                            for (const log of newLogs) {
+                                await setDoc(doc(db, "logs", log.id), {
+                                    date: log.date,
+                                    appId: log.appId,
+                                    rawValue: log.rawValue,
+                                    createdAt: log.createdAt
+                                });
+                            }
+                            for (const red of newReds) {
+                                await setDoc(doc(db, "redemptions", red.id), {
+                                    date: red.date,
+                                    appId: red.appId,
+                                    spentPt: red.spentPt,
+                                    gainedYen: red.gainedYen,
+                                    destination: red.destination,
+                                    createdAt: red.createdAt
+                                });
+                            }
+                            await loadDataFromCloud();
+                            alert('CSVのクラウドインポートが完了しました！');
+                        }
+                    } else {
+                        alert('有効なデータが見つかりませんでした。');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert('CSVの読み込みに失敗しました。');
+                } finally {
+                    event.target.value = ''; 
+                }
+            };
+            reader.readAsText(file, 'UTF-8');
+        };
+
+        window.switchTab = function(tabId, preserveFilter = false) {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('border-indigo-600', 'text-indigo-600', 'bg-white', 'shadow-sm');
+                btn.classList.add('border-transparent', 'text-slate-500');
+            });
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            if(activeBtn) {
+                activeBtn.classList.add('border-indigo-600', 'text-indigo-600', 'bg-white', 'shadow-sm');
+                activeBtn.classList.remove('border-transparent', 'text-slate-500');
+            }
+
+            ['dashboard', 'entry', 'redemption', 'apps'].forEach(id => {
+                const el = document.getElementById(`view-${id}`);
+                if(el) {
+                    if (id === tabId) el.classList.remove('hidden');
+                    else el.classList.add('hidden');
+                }
+            });
+
+            if(tabId === 'entry' && !preserveFilter) {
+                selectedAppFilter = null;
+                const entrySelect = document.getElementById('entryAppId');
+                if(entrySelect) entrySelect.value = ""; 
+                renderSelectedAppCard();
+                renderLogsTable();
+            }
+
+            if(tabId === 'dashboard') {
+                setTimeout(() => {
+                    renderChart1();
+                    renderChart2();
+                    renderChart3();
+                }, 100);
+            }
+        };
+
+        window.filterLogsByApp = function(appId) {
+            selectedAppFilter = appId;
+            switchTab('entry', true);
+            const entrySelect = document.getElementById('entryAppId');
+            if(entrySelect) entrySelect.value = appId;
+            renderLogsTable();
+            renderSelectedAppCard();
+        };
+
+        window.onEntryAppSelectChange = function(appId) {
+            selectedAppFilter = appId;
+            renderLogsTable();
+            renderSelectedAppCard();
+        };
+
+        window.clearFilter = function() {
+            selectedAppFilter = null;
+            const entrySelect = document.getElementById('entryAppId');
+            if(entrySelect) entrySelect.value = "";
+            renderLogsTable();
+            renderSelectedAppCard();
+        };
+
+        window.toggleCardDisplayMode = function() {
+            const checkbox = document.getElementById('cardModeToggle');
+            dashboardCardMode = checkbox.checked ? 'exchange' : 'point';
+            
+            const labelPt = document.getElementById('toggle-label-pt');
+            const labelYen = document.getElementById('toggle-label-yen');
+            if(dashboardCardMode === 'exchange') {
+                labelPt.className = "text-slate-400";
+                labelYen.className = "text-emerald-600 font-bold";
+            } else {
+                labelPt.className = "text-indigo-600 font-bold";
+                labelYen.className = "text-slate-400";
+            }
+            renderDashboardCards();
+        };
+
+        window.toggleLogDisplayMode = function() {
+            const checkbox = document.getElementById('logModeToggle');
+            logDisplayMode = checkbox.checked ? 'all' : 'point';
+
+            const labelPt = document.getElementById('log-toggle-pt');
+            const labelAll = document.getElementById('log-toggle-all');
+
+            if(logDisplayMode === 'all') {
+                labelPt.className = "text-slate-400";
+                labelAll.className = "text-emerald-600 font-bold";
+            } else {
+                labelPt.className = "text-indigo-600 font-bold";
+                labelAll.className = "text-slate-400";
+            }
+            renderLogsTable();
+        };
+
+        const todayDate = new Date();
+        const todayStr = todayDate.toISOString().split('T')[0];
+        const currentMonthStr = todayStr.substring(0, 7);
+        const currentYearStr = todayDate.getFullYear().toString();
+
+        if(document.getElementById('entryDate')) document.getElementById('entryDate').valueAsDate = new Date();
+        if(document.getElementById('redDate')) document.getElementById('redDate').valueAsDate = new Date();
+        if(document.getElementById('chart1-date-input')) document.getElementById('chart1-date-input').value = todayStr;
+        if(document.getElementById('chart1-month-input')) document.getElementById('chart1-month-input').value = currentMonthStr;
+        if(document.getElementById('chart3-date-input')) document.getElementById('chart3-date-input').value = todayStr;
+        if(document.getElementById('chart3-month-input')) document.getElementById('chart3-month-input').value = currentMonthStr;
+
+        window.handlePointEntry = async function(e) {
+            e.preventDefault();
+            const date = document.getElementById('entryDate').value;
+            const appId = document.getElementById('entryAppId').value;
+            if(!appId) { alert('対象アプリを選択してください。'); return; }
+            const rawValue = parseFloat(document.getElementById('entryValue').value);
+
+            try {
+                await addDoc(collection(db, "logs"), {
+                    date: date,
+                    appId: appId,
+                    rawValue: rawValue,
+                    createdAt: Date.now()
+                });
+                document.getElementById('entryValue').value = '';
+                await loadDataFromCloud();
+                selectedAppFilter = appId;
+                document.getElementById('entryAppId').value = appId;
+                renderSelectedAppCard();
+                alert('ポイント数値を保存しました！');
+            } catch (error) {
+                console.error("Error adding log:", error);
+                alert('保存に失敗しました。');
+            }
+        };
+
+        window.handleRedemptionEntry = async function(e) {
+            e.preventDefault();
+            const date = document.getElementById('redDate').value;
+            const appId = document.getElementById('redAppId').value;
+            if(!appId) { alert('対象アプリを選択してください。'); return; }
+            const spentPt = parseFloat(document.getElementById('redSpentPt').value);
+            const gainedYen = parseFloat(document.getElementById('redGainedYen').value);
+            const destination = document.getElementById('redDestination').value;
+
+            try {
+                await addDoc(collection(db, "redemptions"), {
+                    date: date,
+                    appId: appId,
+                    spentPt: spentPt,
+                    gainedYen: gainedYen,
+                    destination: destination,
+                    createdAt: Date.now()
+                });
+                document.getElementById('redSpentPt').value = '';
+                document.getElementById('redGainedYen').value = '';
+                document.getElementById('redDestination').value = '';
+                await loadDataFromCloud();
+                alert('交換実績を登録しました！');
+            } catch (error) {
+                console.error("Error adding redemption:", error);
+                alert('登録に失敗しました。');
+            }
+        };
+
+        window.handleAddApp = async function(e) {
+            e.preventDefault();
+            const name = document.getElementById('appNameInput').value;
+            const rate = parseFloat(document.getElementById('appRateInput').value);
+            const icon = document.getElementById('appIconInput').value;
+            const newId = 'app_' + Date.now();
+            const newOrder = state.apps.length + 1;
+
+            try {
+                await setDoc(doc(db, "apps", newId), {
+                    id: newId, name: name, rate: rate, icon: icon, order: newOrder
+                });
+                document.getElementById('appNameInput').value = '';
+                document.getElementById('appRateInput').value = '';
+                await loadDataFromCloud();
+                alert('新しいアプリを追加しました！');
+            } catch (error) {
+                console.error("Error adding app:", error);
+                alert('追加に失敗しました。');
+            }
+        };
+
+        window.updateAppProperty = async function(appId, field, value) {
+            const app = state.apps.find(a => a.id === appId);
+            if(app) {
+                app[field] = value;
+                try {
+                    await setDoc(doc(db, "apps", appId), app, { merge: true });
+                    renderDashboardCards();
+                    renderSelectedAppCard();
+                } catch (error) {
+                    console.error("Error updating app:", error);
+                }
+            }
+        };
+
+        window.deleteLog = async function(id) {
+            if(!confirm('この履歴を削除してもよろしいですか？')) return;
+            try {
+                await deleteDoc(doc(db, "logs", id));
+                await loadDataFromCloud();
+            } catch (error) {
+                console.error("Error deleting log:", error);
+            }
+        };
+
+        window.deleteRedemption = async function(id) {
+            if(!confirm('この交換履歴を削除してもよろしいですか？')) return;
+            try {
+                await deleteDoc(doc(db, "redemptions", id));
+                await loadDataFromCloud();
+            } catch (error) {
+                console.error("Error deleting redemption:", error);
+            }
+        };
+
+        window.deleteApp = async function(appId) {
+            if(!confirm('このアプリを削除してもよろしいですか？')) return;
+            try {
+                await deleteDoc(doc(db, "apps", appId));
+                await loadDataFromCloud();
+                alert('アプリを削除しました。');
+            } catch (error) {
+                console.error("Error deleting app:", error);
+            }
+        };
+
+        window.moveAppOrder = async function(appId, direction) {
+            const sortedApps = [...state.apps].sort((a, b) => (a.order || 0) - (b.order || 0));
+            const index = sortedApps.findIndex(a => a.id === appId);
+            if (index === -1) return;
+
+            const targetIndex = direction === 'up' ? index - 1 : index + 1;
+            if (targetIndex < 0 || targetIndex >= sortedApps.length) return;
+
+            const temp = sortedApps[index];
+            sortedApps[index] = sortedApps[targetIndex];
+            sortedApps[targetIndex] = temp;
+
+            try {
+                for (let i = 0; i < sortedApps.length; i++) {
+                    const app = sortedApps[i];
+                    app.order = i + 1;
+                    await setDoc(doc(db, "apps", app.id), { ...app, order: i + 1 }, { merge: true });
+                }
+                await loadDataFromCloud();
+            } catch (error) {
+                console.error("Error updating order:", error);
+            }
+        };
+
+        window.resetCloudData = async function() {
+            if(!confirm('本当にすべてのクラウドデータを初期化しますか？')) return;
+            try {
+                for (const defApp of DEFAULT_APPS) {
+                    await setDoc(doc(db, "apps", defApp.id), defApp);
+                }
+                alert('初期化処理が完了しました。');
+                await loadDataFromCloud();
+            } catch (error) {
+                console.error("Reset error:", error);
+            }
+        };
+
+        window.openExchangeSummaryModal = function() {
+            const contentEl = document.getElementById('exchangeSummaryContent');
+            let summaryMap = {};
+            let totalSpentPt = 0;
+
+            state.redemptions.forEach(r => {
+                const dest = r.destination || '未指定';
+                const pt = Number(r.spentPt || 0);
+                summaryMap[dest] = (summaryMap[dest] || 0) + pt;
+                totalSpentPt += pt;
+            });
+
+            let html = `<div class="p-3 bg-slate-50 rounded-xl mb-3 flex justify-between items-center font-bold text-sm"><span class="text-slate-600">総交換ポイント</span><span class="text-emerald-600 text-base">${totalSpentPt.toLocaleString()} pt</span></div>`;
+            
+            const keys = Object.keys(summaryMap);
+            if(keys.length === 0) {
+                html += `<p class="text-xs text-slate-400 text-center py-4">交換履歴がありません。</p>`;
+            } else {
+                html += `<div class="space-y-2">`;
+                keys.forEach(dest => {
+                    html += `
+                        <div class="flex justify-between items-center p-3 border border-slate-100 rounded-xl bg-white text-xs">
+                            <span class="font-bold text-slate-700"><i class="fa-solid fa-gift text-indigo-500 mr-1.5"></i> ${dest}</span>
+                            <span class="font-bold text-slate-800">${summaryMap[dest].toLocaleString()} pt</span>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+            }
+
+            contentEl.innerHTML = html;
+            document.getElementById('exchangeSummaryModal').classList.remove('hidden');
+            document.getElementById('exchangeSummaryModal').classList.add('flex');
+        };
+
+        window.closeExchangeSummaryModal = function() {
+            document.getElementById('exchangeSummaryModal').classList.remove('flex');
+            document.getElementById('exchangeSummaryModal').classList.add('hidden');
+        };
+
+        window.changeChart1Mode = function(mode) {
+            chart1Mode = mode;
+            setupChartModeUI('c1', mode);
+            renderChart1();
+        };
+
+        window.changeChart2Mode = function(mode) {
+            chart2Mode = mode;
+            ['daily', 'monthly', 'yearly'].forEach(m => {
+                const btn = document.getElementById(`btn-c2-${m}`);
+                if(btn) {
+                    if(m === mode) btn.className = "px-2.5 py-1 rounded-lg transition bg-white shadow-sm text-indigo-600";
+                    else btn.className = "px-2.5 py-1 rounded-lg transition text-slate-600";
+                }
+            });
+            renderChart2();
+        };
+
+        window.changeChart3Mode = function(mode) {
+            chart3Mode = mode;
+            setupChartModeUI('c3', mode);
+            renderChart3();
+        };
+
+        function setupChartModeUI(prefix, mode) {
+            ['daily', 'monthly', 'yearly'].forEach(m => {
+                const btn = document.getElementById(`btn-${prefix}-${m}`);
+                if(btn) {
+                    if(m === mode) btn.className = "px-2.5 py-1 rounded-lg transition bg-white shadow-sm text-indigo-600";
+                    else btn.className = "px-2.5 py-1 rounded-lg transition text-slate-600";
+                }
+            });
+
+            const dateInput = document.getElementById(`${prefix}-date-input`);
+            const monthInput = document.getElementById(`${prefix}-month-input`);
+            const selectInput = document.getElementById(`${prefix}-select-input`);
+            const labelEl = document.getElementById(`${prefix}-target-label`);
+
+            if(mode === 'daily') {
+                labelEl.innerText = '対象日:';
+                dateInput.classList.remove('hidden');
+                monthInput.classList.add('hidden');
+                selectInput.classList.add('hidden');
+                if(!dateInput.value) dateInput.value = todayStr;
+            } else if(mode === 'monthly') {
+                labelEl.innerText = '対象月:';
+                dateInput.classList.add('hidden');
+                monthInput.classList.remove('hidden');
+                selectInput.classList.add('hidden');
+                if(!monthInput.value) monthInput.value = currentMonthStr;
+            } else if(mode === 'yearly') {
+                labelEl.innerText = '対象年:';
+                dateInput.classList.add('hidden');
+                monthInput.classList.add('hidden');
+                selectInput.classList.remove('hidden');
+
+                const yearsSet = new Set();
+                state.logs.forEach(l => { if(l.date) yearsSet.add(l.date.substring(0, 4)); });
+                state.redemptions.forEach(r => { if(r.date) yearsSet.add(r.date.substring(0, 4)); });
+                yearsSet.add(currentYearStr);
+
+                const sortedYears = Array.from(yearsSet).sort().reverse();
+                let opts = '';
+                sortedYears.forEach(y => { opts += `<option value="${y}">${y}年</option>`; });
+                selectInput.innerHTML = opts;
+                if(!selectInput.value) selectInput.value = currentYearStr;
+            }
+        }
+
+        function renderAll() {
+            renderAppSelects();
+            renderDashboardCards();
+            renderLogsTable();
+            renderRedemptionTable();
+            renderAppsSettingsList();
+            renderChart2AppSelect();
+            renderSelectedAppCard();
+            setupChartModeUI('c1', chart1Mode);
+            setupChartModeUI('c3', chart3Mode);
+            
+            setTimeout(() => {
+                renderChart1();
+                renderChart2();
+                renderChart3();
+            }, 100);
+        }
+
+        function renderAppSelects() {
+            const entrySelect = document.getElementById('entryAppId');
+            const redSelect = document.getElementById('redAppId');
+            let optionsHtml = '<option value="" disabled selected>アプリを選択してください</option>';
+            state.apps.forEach(app => {
+                optionsHtml += `<option value="${app.id}">${app.icon || '📱'} ${app.name}</option>`;
+            });
+            if(entrySelect) {
+                const currentVal = entrySelect.value;
+                entrySelect.innerHTML = optionsHtml;
+                entrySelect.value = selectedAppFilter || currentVal || "";
+            }
+            if(redSelect) redSelect.innerHTML = optionsHtml;
+        }
+
+        function renderChart2AppSelect() {
+            const selectEl = document.getElementById('chart2-app-select');
+            if(!selectEl) return;
+            let html = '';
+            state.apps.forEach(app => {
+                html += `<option value="${app.id}">${app.icon || '📱'} ${app.name}</option>`;
+            });
+            const currentVal = selectEl.value;
+            selectEl.innerHTML = html;
+            if(currentVal) selectEl.value = currentVal;
+        }
+
+        function renderSelectedAppCard() {
+            const container = document.getElementById('selectedAppCardContainer');
+            if(!container) return;
+
+            if(!selectedAppFilter) {
+                container.classList.add('hidden');
+                container.innerHTML = '';
+                return;
+            }
+
+            const appIndex = state.apps.findIndex(a => a.id === selectedAppFilter);
+            const app = state.apps[appIndex];
+            if(!app) { container.classList.add('hidden'); container.innerHTML = ''; return; }
+
+            const cardColor = COLOR_PALETTE[appIndex % COLOR_PALETTE.length];
+            const appLogs = state.logs.filter(l => l.appId === app.id).sort((a,b) => new Date(a.date) - new Date(b.date));
+            const latestVal = appLogs.length > 0 ? Number(appLogs[appLogs.length - 1].value || 0) : 0;
+            
+            let redeemedPtTotal = 0;
+            state.redemptions.filter(r => r.appId === app.id).forEach(r => {
+                redeemedPtTotal += Number(r.spentPt || 0);
+            });
+
+            const currentBalancePt = Math.max(0, latestVal - redeemedPtTotal);
+            let diffLast = 0;
+            if(appLogs.length > 0) {
+                const lastLog = appLogs[appLogs.length - 1];
+                const currentIndex = appLogs.findIndex(l => l.id === lastLog.id);
+                diffLast = currentIndex > 0 ? Number(lastLog.value || 0) - Number(appLogs[currentIndex - 1].value || 0) : Number(lastLog.value || 0);
+            }
+
+            let appTotalRedeemYen = 0;
+            state.redemptions.filter(r => r.appId === app.id).forEach(r => {
+                appTotalRedeemYen += Number(r.gainedYen || 0);
+            });
+
+            container.innerHTML = `
+                <div class="p-4 rounded-2xl shadow-sm text-white flex flex-col justify-between" style="background-color: ${cardColor};">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">${app.icon || '📱'}</span>
+                            <h4 class="font-bold text-sm tracking-tight">${app.name}</h4>
+                        </div>
+                        <span class="text-[11px] opacity-90 bg-white/20 px-2 py-0.5 rounded-lg">レート: ${app.rate}円</span>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-white/20 text-xs">
+                        <div>
+                            <span class="opacity-75 text-[10px] block">現在のポイント</span>
+                            <span class="font-bold text-sm">${currentBalancePt.toLocaleString()} pt</span>
+                        </div>
+                        <div>
+                            <span class="opacity-75 text-[10px] block">直近の増減</span>
+                            <span class="font-bold text-sm">${diffLast >= 0 ? '+' : ''}${diffLast.toLocaleString()} pt</span>
+                        </div>
+                        <div>
+                            <span class="opacity-75 text-[10px] block">累計交換金額</span>
+                            <span class="font-bold text-sm">¥${appTotalRedeemYen.toLocaleString()}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.classList.remove('hidden');
+        }
+
+        function renderDashboardCards() {
+            const container = document.getElementById('dashboard-app-cards');
+            if(!container) return;
+            let html = '';
+            let totalUnredeemedYen = 0;
+            let totalSpentPtAll = 0;
+
+            state.redemptions.forEach(r => { totalSpentPtAll += Number(r.spentPt || 0); });
+
+            state.apps.forEach(app => {
+                const appLogs = state.logs.filter(l => l.appId === app.id).sort((a,b) => new Date(a.date) - new Date(b.date));
+                const latestVal = appLogs.length > 0 ? Number(appLogs[appLogs.length - 1].value || 0) : 0;
+                
+                let redeemedPtTotal = 0;
+                state.redemptions.filter(r => r.appId === app.id).forEach(r => {
+                    redeemedPtTotal += Number(r.spentPt || 0);
+                });
+
+                const currentBalancePt = Math.max(0, latestVal - redeemedPtTotal);
+                const currentBalanceYen = currentBalancePt * Number(app.rate || 0);
+                totalUnredeemedYen += currentBalanceYen;
+
+                let diffLast = 0;
+                if(appLogs.length > 0) {
+                    const lastLog = appLogs[appLogs.length - 1];
+                    const currentIndex = appLogs.findIndex(l => l.id === lastLog.id);
+                    diffLast = currentIndex > 0 ? Number(lastLog.value || 0) - Number(appLogs[currentIndex - 1].value || 0) : Number(lastLog.value || 0);
+                }
+
+                html += `
+                    <div onclick="filterLogsByApp('${app.id}')" class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between cursor-pointer hover:border-indigo-400 hover:shadow-md transition">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xl">${app.icon || '📱'}</span>
+                            <span class="text-[10px] text-slate-400">レート: ${app.rate}円</span>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-xs truncate">${app.name}</h4>
+                            <p class="text-sm font-bold ${diffLast >= 0 ? 'text-emerald-600' : 'text-rose-600'} mt-0.5">${diffLast >= 0 ? '+' : ''}${diffLast.toLocaleString()} <span class="text-[10px] font-normal text-slate-500">pt (直近増減)</span></p>
+                            <p class="text-[10px] text-slate-400">累計残高: ${currentBalancePt.toLocaleString()} pt</p>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+            let totalConfirmedYen = 0;
+            state.redemptions.forEach(r => totalConfirmedYen += Number(r.gainedYen || 0));
+            const totalAssetsYen = totalUnredeemedYen + totalConfirmedYen;
+
+            if(document.getElementById('summary-total-assets')) document.getElementById('summary-total-assets').innerText = '¥' + Math.floor(totalAssetsYen).toLocaleString();
+            if(document.getElementById('summary-unredeemed')) document.getElementById('summary-unredeemed').innerText = '¥' + Math.floor(totalUnredeemedYen).toLocaleString();
+            if(document.getElementById('summary-confirmed')) document.getElementById('summary-confirmed').innerText = totalSpentPtAll.toLocaleString() + 'pt';
+            if(document.getElementById('summary-monthly')) document.getElementById('summary-monthly').innerText = '¥' + Math.floor(totalUnredeemedYen * 0.3).toLocaleString();
+        }
+
+        function renderLogsTable() {
+            const tbody = document.getElementById('logsTableBody');
+            if(!tbody) return;
+
+            let filteredLogs = state.logs;
+            let filteredReds = state.redemptions;
+            const banner = document.getElementById('filter-banner');
+            const bannerText = document.getElementById('filter-banner-text');
+
+            if (selectedAppFilter) {
+                filteredLogs = state.logs.filter(l => l.appId === selectedAppFilter);
+                filteredReds = state.redemptions.filter(r => r.appId === selectedAppFilter);
+                const targetApp = state.apps.find(a => a.id === selectedAppFilter);
+                if (banner && bannerText) {
+                    banner.classList.remove('hidden');
+                    bannerText.innerText = `🔍 ${targetApp ? targetApp.name : '選択アプリ'} の履歴を表示中`;
+                }
+            } else {
+                if (banner) banner.classList.add('hidden');
+            }
+
+            let combinedItems = [];
+            filteredLogs.forEach(l => { combinedItems.push({ ...l, recordType: 'point' }); });
+            if (logDisplayMode === 'all') {
+                filteredReds.forEach(r => { combinedItems.push({ ...r, recordType: 'redemption' }); });
+            }
+
+            combinedItems.sort((a, b) => new Date(b.date) - new Date(a.date));
+            if(document.getElementById('log-count')) document.getElementById('log-count').innerText = `全 ${combinedItems.length} 件`;
+
+            let html = '';
+            combinedItems.forEach(item => {
+                const app = state.apps.find(a => a.id === item.appId) || { name: '不明', rate: 0, icon: '❓' };
+                
+                if (item.recordType === 'redemption') {
+                    html += `
+                        <tr class="hover:bg-slate-50/50 transition bg-emerald-50/30">
+                            <td class="py-3 px-4 font-medium text-slate-600 text-xs">${item.date || ''}</td>
+                            <td class="py-3 px-4 font-medium text-slate-800 flex items-center gap-1.5"><span class="text-sm">${app.icon}</span> ${app.name}</td>
+                            <td class="py-3 px-4 text-xs font-semibold text-emerald-600"><i class="fa-solid fa-gift mr-1"></i> 交換 (${item.destination || '未指定'})</td>
+                            <td class="py-3 px-4 text-right font-bold text-slate-800">${Number(item.spentPt || 0).toLocaleString()} pt</td>
+                            <td class="py-3 px-4 text-right font-bold text-emerald-600">¥${Number(item.gainedYen || 0).toLocaleString()}</td>
+                            <td class="py-3 px-4 text-center">
+                                <button onclick="deleteRedemption('${item.id}')" class="text-slate-400 hover:text-rose-600 transition p-1"><i class="fa-solid fa-trash-can"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    const appLogsAsc = state.logs.filter(l => l.appId === item.appId).sort((a,b) => new Date(a.date) - new Date(b.date));
+                    const currentIndex = appLogsAsc.findIndex(l => l.id === item.id);
+                    let diff = currentIndex > 0 ? Number(item.value || 0) - Number(appLogsAsc[currentIndex - 1].value || 0) : Number(item.value || 0);
+                    const diffYen = diff * Number(app.rate || 0);
+
+                    html += `
+                        <tr class="hover:bg-slate-50/50 transition">
+                            <td class="py-3 px-4 font-medium text-slate-600 text-xs">${item.date || ''}</td>
+                            <td class="py-3 px-4 font-medium text-slate-800 flex items-center gap-1.5"><span class="text-sm">${app.icon}</span> ${app.name}</td>
+                            <td class="py-3 px-4 text-xs text-slate-500">数値入力</td>
+                            <td class="py-3 px-4 text-right font-bold text-slate-800">${Number(item.value || 0).toLocaleString()} pt</td>
+                            <td class="py-3 px-4 text-right font-medium ${diff >= 0 ? 'text-emerald-600' : 'text-rose-600'}">${diff >= 0 ? '+' : ''}${diff.toLocaleString()} pt <span class="text-slate-400 text-xs block">¥${Math.floor(diffYen).toLocaleString()}</span></td>
+                            <td class="py-3 px-4 text-center">
+                                <button onclick="deleteLog('${item.id}')" class="text-slate-400 hover:text-rose-600 transition p-1"><i class="fa-solid fa-trash-can"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                }
+            });
+            if(combinedItems.length === 0) {
+                html = `<tr><td colspan="6" class="text-center py-6 text-xs text-slate-400">表示する履歴がありません。</td></tr>`;
+            }
+            tbody.innerHTML = html;
+        }
+
+        function renderRedemptionTable() {
+            const tbody = document.getElementById('redemptionTableBody');
+            if(!tbody) return;
+            const sortedReds = [...state.redemptions].sort((a, b) => new Date(b.date) - new Date(a.date));
+            let html = '';
+            sortedReds.forEach(r => {
+                const app = state.apps.find(a => a.id === r.appId) || { name: '不明', icon: '❓' };
+                html += `
+                    <tr class="hover:bg-slate-50/50 transition">
+                        <td class="py-3 px-4 font-medium text-slate-600 text-xs">${r.date || ''}</td>
+                        <td class="py-3 px-4 font-medium text-slate-800 flex items-center gap-1.5"><span class="text-sm">${app.icon}</span> ${app.name}</td>
+                        <td class="py-3 px-4 font-medium text-slate-700 text-xs">${r.destination || '未指定'}</td>
+                        <td class="py-3 px-4 text-right font-bold text-slate-800">${Number(r.spentPt || 0).toLocaleString()} pt</td>
+                        <td class="py-3 px-4 text-right font-bold text-emerald-600">¥${Number(r.gainedYen || 0).toLocaleString()}</td>
+                        <td class="py-3 px-4 text-center">
+                            <button onclick="deleteRedemption('${r.id}')" class="text-slate-400 hover:text-rose-600 transition p-1"><i class="fa-solid fa-trash-can"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function renderAppsSettingsList() {
+            const container = document.getElementById('appsListContainer');
+            if(!container) return;
+            let html = '';
+            const sortedApps = [...state.apps].sort((a, b) => (a.order || 0) - (b.order || 0));
+
+            sortedApps.forEach((app, idx) => {
+                const isFirst = idx === 0;
+                const isLast = idx === sortedApps.length - 1;
+
+                html += `
+                    <div class="flex items-center justify-between p-3 bg-slate-50 border border-slate-100 rounded-xl gap-2">
+                        <div class="flex items-center gap-3">
+                            <select onchange="updateAppProperty('${app.id}', 'icon', this.value)" class="bg-white border border-slate-200 rounded-lg px-2 py-1 text-sm focus:outline-none">
+                                <option value="🚶" ${app.icon === '🚶' ? 'selected' : ''}>🚶 歩く</option>
+                                <option value="💤" ${app.icon === '💤' ? 'selected' : ''}>💤 放置</option>
+                                <option value="🪙" ${app.icon === '🪙' ? 'selected' : ''}>🪙 ポイントサイト</option>
+                                <option value="⭐" ${app.icon === '⭐' ? 'selected' : ''}>⭐ etc</option>
+                            </select>
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-sm">${app.name}</h4>
+                                <p class="text-xs text-slate-400">還元レート: 1pt ＝ ${app.rate}円</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-1">
+                                <button onclick="moveAppOrder('${app.id}', 'up')" ${isFirst ? 'disabled class="text-slate-300 cursor-not-allowed p-1.5"' : 'class="text-slate-500 hover:text-indigo-600 transition p-1.5 bg-white border border-slate-200 rounded-lg shadow-sm"'}>
+                                    <i class="fa-solid fa-arrow-up text-xs"></i>
+                                </button>
+                                <button onclick="moveAppOrder('${app.id}', 'down')" ${isLast ? 'disabled class="text-slate-300 cursor-not-allowed p-1.5"' : 'class="text-slate-500 hover:text-indigo-600 transition p-1.5 bg-white border border-slate-200 rounded-lg shadow-sm"'}>
+                                    <i class="fa-solid fa-arrow-down text-xs"></i>
+                                </button>
+                            </div>
+                            <button onclick="deleteApp('${app.id}')" class="text-slate-400 hover:text-rose-600 transition p-1.5 ml-2 bg-white border border-slate-200 rounded-lg shadow-sm">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function calculateEarnedPointsForPeriod(appId, periodStr, mode) {
+            const appLogs = state.logs.filter(l => l.appId === appId).sort((a,b) => new Date(a.date) - new Date(b.date));
+            if(appLogs.length === 0) return 0;
+
+            let totalEarned = 0;
+            appLogs.forEach((log, idx) => {
+                if(!log.date) return;
+                const match = mode === 'monthly' ? log.date.substring(0, 7) === periodStr : log.date.substring(0, 4) === periodStr;
+                if(match) {
+                    const diff = idx === 0 ? Number(log.value || 0) : Number(log.value || 0) - Number(appLogs[idx - 1].value || 0);
+                    if(diff > 0) totalEarned += diff;
+                }
+            });
+            return totalEarned;
+        }
+
+        function getLast12MonthsKeys() {
+            let months = [];
+            let d = new Date();
+            for (let i = 11; i >= 0; i--) {
+                let dCopy = new Date(d.getFullYear(), d.getMonth() - i, 1);
+                let y = dCopy.getFullYear();
+                let m = String(dCopy.getMonth() + 1).padStart(2, '0');
+                months.push(`${y}-${m}`);
+            }
+            return months;
+        }
+
+        function getLast30DaysKeys() {
+            let days = [];
+            for (let i = 29; i >= 0; i--) {
+                let dCopy = new Date();
+                dCopy.setDate(todayDate.getDate() - i);
+                days.push(dCopy.toISOString().split('T')[0]);
+            }
+            return days;
+        }
+
+        // グラフ1（アプリ別 獲得比較 - 日別・月別・年間対応）
+        function renderChart1() {
+            const canvasEl = document.getElementById('barChartApps');
+            if(!canvasEl) return;
+            const ctx = canvasEl.getContext('2d');
+            if(barChartInstance) barChartInstance.destroy();
+
+            const labels = state.apps.map(a => a.name);
+            const barColors = state.apps.map((_, i) => COLOR_PALETTE[i % COLOR_PALETTE.length]);
+            let dataPoints = [];
+            let redYenPoints = [];
+
+            if (chart1Mode === 'daily') {
+                const targetDate = document.getElementById('chart1-date-input').value;
+                document.getElementById('chart1-title').innerText = `アプリ別 獲得比較 (${targetDate})`;
+
+                dataPoints = state.apps.map(app => {
+                    const appLogs = state.logs.filter(l => l.appId === app.id).sort((a,b) => new Date(a.date) - new Date(b.date));
+                    const logIndex = appLogs.findIndex(l => l.date === targetDate);
+                    if(logIndex === -1) return 0;
+                    if(logIndex === 0) return appLogs[0].value;
+                    return appLogs[logIndex].value - appLogs[logIndex - 1].value;
+                });
+
+                redYenPoints = state.apps.map(app => {
+                    let yen = 0;
+                    state.redemptions.filter(r => r.appId === app.id && r.date === targetDate).forEach(r => yen += Number(r.gainedYen || 0));
+                    return yen;
+                });
+
+            } else if (chart1Mode === 'monthly') {
+                const targetMonth = document.getElementById('chart1-month-input').value || currentMonthStr;
+                document.getElementById('chart1-title').innerText = `アプリ別 獲得比較 (${targetMonth})`;
+
+                dataPoints = state.apps.map(app => calculateEarnedPointsForPeriod(app.id, targetMonth, 'monthly'));
+
+                redYenPoints = state.apps.map(app => {
+                    let yen = 0;
+                    state.redemptions.filter(r => r.appId === app.id && r.date && r.date.substring(0, 7) === targetMonth).forEach(r => yen += Number(r.gainedYen || 0));
+                    return yen;
+                });
+
+            } else if (chart1Mode === 'yearly') {
+                const targetYear = document.getElementById('chart1-select-input').value || currentYearStr;
+                document.getElementById('chart1-title').innerText = `アプリ別 獲得比較 (${targetYear}年)`;
+
+                dataPoints = state.apps.map(app => calculateEarnedPointsForPeriod(app.id, targetYear, 'yearly'));
+
+                redYenPoints = state.apps.map(app => {
+                    let yen = 0;
+                    state.redemptions.filter(r => r.appId === app.id && r.date && r.date.substring(0, 4) === targetYear).forEach(r => yen += Number(r.gainedYen || 0));
+                    return yen;
+                });
+            }
+
+            barChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            type: 'line',
+                            label: '交換金額 (円)',
+                            data: redYenPoints,
+                            borderColor: '#ef4444',
+                            backgroundColor: '#ef4444',
+                            borderWidth: 2,
+                            tension: 0.2,
+                            yAxisID: 'y1',
+                            order: 1
+                        },
+                        {
+                            type: 'bar',
+                            label: '獲得ポイント',
+                            data: dataPoints,
+                            backgroundColor: barColors,
+                            borderRadius: 6,
+                            yAxisID: 'y',
+                            order: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true, position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+                    },
+                    scales: {
+                        y: { type: 'linear', position: 'left', beginAtZero: true, title: { display: true, text: 'ポイント' } },
+                        y1: { type: 'linear', position: 'right', beginAtZero: true, grid: { drawOnChartArea: false }, title: { display: true, text: '交換金額 (円)' } }
+                    }
+                }
+            });
+        }
+
+        // グラフ2（特定アプリの推移）
+        function renderChart2() {
+            const canvasEl = document.getElementById('barChartSingleApp');
+            if(!canvasEl) return;
+            const ctx = canvasEl.getContext('2d');
+            if(singleBarChartInstance) singleBarChartInstance.destroy();
+
+            const appId = document.getElementById('chart2-app-select').value;
+            const targetApp = state.apps.find(a => a.id === appId) || state.apps[0];
+            if(!targetApp) return;
+
+            document.getElementById('chart2-title').innerText = `${targetApp.name} の推移グラフ`;
+
+            let chartLabels = [];
+            let dataPoints = [];
+            let redYenPoints = [];
+
+            const appLogs = state.logs.filter(l => l.appId === targetApp.id).sort((a,b) => new Date(a.date) - new Date(b.date));
+            const appReds = state.redemptions.filter(r => r.appId === targetApp.id);
+            const appIndexMap = state.apps.findIndex(a => a.id === targetApp.id);
+            const appColor = COLOR_PALETTE[appIndexMap % COLOR_PALETTE.length];
+
+            if (chart2Mode === 'daily') {
+                chartLabels = getLast30DaysKeys();
+
+                dataPoints = chartLabels.map(date => {
+                    const logIndex = appLogs.findIndex(l => l.date === date);
+                    if(logIndex === -1) return 0;
+                    if(logIndex === 0) return appLogs[0].value;
+                    return appLogs[logIndex].value - appLogs[logIndex - 1].value;
+                });
+
+                redYenPoints = chartLabels.map(date => {
+                    let yen = 0;
+                    appReds.filter(r => r.date === date).forEach(r => yen += Number(r.gainedYen || 0));
+                    return yen;
+                });
+
+            } else if (chart2Mode === 'monthly') {
+                chartLabels = getLast12MonthsKeys();
+
+                dataPoints = chartLabels.map(period => calculateEarnedPointsForPeriod(targetApp.id, period, 'monthly'));
+
+                redYenPoints = chartLabels.map(period => {
+                    let yen = 0;
+                    appReds.filter(r => r.date && r.date.substring(0, 7) === period).forEach(r => yen += Number(r.gainedYen || 0));
+                    return yen;
+                });
+
+            } else if (chart2Mode === 'yearly') {
+                const yearsSet = new Set();
+                appLogs.forEach(l => { if(l.date) yearsSet.add(l.date.substring(0, 4)); });
+                appReds.forEach(r => { if(r.date) yearsSet.add(r.date.substring(0, 4)); });
+                yearsSet.add(currentYearStr);
+                chartLabels = Array.from(yearsSet).sort();
+
+                dataPoints = chartLabels.map(period => calculateEarnedPointsForPeriod(targetApp.id, period, 'yearly'));
+
+                redYenPoints = chartLabels.map(period => {
+                    let yen = 0;
+                    appReds.filter(r => r.date && r.date.substring(0, 4) === period).forEach(r => yen += Number(r.gainedYen || 0));
+                    return yen;
+                });
+            }
+
+            singleBarChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: chartLabels,
+                    datasets: [
+                        {
+                            type: 'line',
+                            label: '交換金額 (円)',
+                            data: redYenPoints,
+                            borderColor: '#ef4444',
+                            backgroundColor: '#ef4444',
+                            borderWidth: 2,
+                            tension: 0.2,
+                            yAxisID: 'y1',
+                            order: 1
+                        },
+                        {
+                            type: 'bar',
+                            label: '獲得ポイント',
+                            data: dataPoints,
+                            backgroundColor: appColor,
+                            borderRadius: 6,
+                            yAxisID: 'y',
+                            order: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true, position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+                    },
+                    scales: {
+                        y: { type: 'linear', position: 'left', beginAtZero: true, title: { display: true, text: 'ポイント' } },
+                        y1: { type: 'linear', position: 'right', beginAtZero: true, grid: { drawOnChartArea: false }, title: { display: true, text: '交換金額 (円)' } }
+                    }
+                }
+            });
+        }
+
+        // グラフ3（カテゴリ別集計グラフ - 日別・月別・年間対応）
+        function renderChart3() {
+            const canvasEl = document.getElementById('barChartMarkCategory');
+            if(!canvasEl) return;
+            const ctx = canvasEl.getContext('2d');
+            if(markChartInstance) markChartInstance.destroy();
+
+            const markLabels = ['🚶 歩く', '💤 放置', '🪙 ポイントサイト', '⭐ etc'];
+            const markKeys = ['🚶', '💤', '🪙', '⭐'];
+            const markColors = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6'];
+
+            let dataPoints = [];
+            let redYenPoints = [];
+
+            if (chart3Mode === 'daily') {
+                const targetDate = document.getElementById('chart3-date-input').value;
+                document.getElementById('chart3-title').innerText = `カテゴリ別 集計グラフ (${targetDate})`;
+
+                dataPoints = markKeys.map(icon => {
+                    const matchedApps = state.apps.filter(a => a.icon === icon);
+                    let sum = 0;
+                    matchedApps.forEach(app => {
+                        const appLogs = state.logs.filter(l => l.appId === app.id).sort((a,b) => new Date(a.date) - new Date(b.date));
+                        const logIndex = appLogs.findIndex(l => l.date === targetDate);
+                        if(logIndex !== -1) {
+                            if(logIndex === 0) sum += appLogs[0].value;
+                            else sum += (appLogs[logIndex].value - appLogs[logIndex - 1].value);
+                        }
+                    });
+                    return sum;
+                });
+
+                redYenPoints = markKeys.map(icon => {
+                    const matchedAppIds = state.apps.filter(a => a.icon === icon).map(a => a.id);
+                    let yen = 0;
+                    state.redemptions.forEach(r => {
+                        if(matchedAppIds.includes(r.appId) && r.date === targetDate) {
+                            yen += Number(r.gainedYen || 0);
+                        }
+                    });
+                    return yen;
+                });
+
+            } else if (chart3Mode === 'monthly') {
+                const targetMonth = document.getElementById('chart3-month-input').value || currentMonthStr;
+                document.getElementById('chart3-title').innerText = `カテゴリ別 集計グラフ (${targetMonth})`;
+
+                dataPoints = markKeys.map(icon => {
+                    const matchedApps = state.apps.filter(a => a.icon === icon);
+                    let sum = 0;
+                    matchedApps.forEach(app => {
+                        sum += calculateEarnedPointsForPeriod(app.id, targetMonth, 'monthly');
+                    });
+                    return sum;
+                });
+
+                redYenPoints = markKeys.map(icon => {
+                    const matchedAppIds = state.apps.filter(a => a.icon === icon).map(a => a.id);
+                    let yen = 0;
+                    state.redemptions.forEach(r => {
+                        if(matchedAppIds.includes(r.appId) && r.date && r.date.substring(0, 7) === targetMonth) {
+                            yen += Number(r.gainedYen || 0);
+                        }
+                    });
+                    return yen;
+                });
+
+            } else if (chart3Mode === 'yearly') {
+                const targetYear = document.getElementById('chart3-select-input').value || currentYearStr;
+                document.getElementById('chart3-title').innerText = `カテゴリ別 集計グラフ (${targetYear}年)`;
+
+                dataPoints = markKeys.map(icon => {
+                    const matchedApps = state.apps.filter(a => a.icon === icon);
+                    let sum = 0;
+                    matchedApps.forEach(app => {
+                        sum += calculateEarnedPointsForPeriod(app.id, targetYear, 'yearly');
+                    });
+                    return sum;
+                });
+
+                redYenPoints = markKeys.map(icon => {
+                    const matchedAppIds = state.apps.filter(a => a.icon === icon).map(a => a.id);
+                    let yen = 0;
+                    state.redemptions.forEach(r => {
+                        if(matchedAppIds.includes(r.appId) && r.date && r.date.substring(0, 4) === targetYear) {
+                            yen += Number(r.gainedYen || 0);
+                        }
+                    });
+                    return yen;
+                });
+            }
+
+            markChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: markLabels,
+                    datasets: [
+                        {
+                            type: 'line',
+                            label: '交換金額 (円)',
+                            data: redYenPoints,
+                            borderColor: '#ef4444',
+                            backgroundColor: '#ef4444',
+                            borderWidth: 2,
+                            tension: 0.2,
+                            yAxisID: 'y1',
+                            order: 1
+                        },
+                        {
+                            type: 'bar',
+                            label: '獲得ポイント',
+                            data: dataPoints,
+                            backgroundColor: markColors,
+                            borderRadius: 6,
+                            yAxisID: 'y',
+                            order: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true, position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+                    },
+                    scales: {
+                        y: { type: 'linear', position: 'left', beginAtZero: true, title: { display: true, text: 'ポイント' } },
+                        y1: { type: 'linear', position: 'right', beginAtZero: true, grid: { drawOnChartArea: false }, title: { display: true, text: '交換金額 (円)' } }
+                    }
+                }
+            });
+        }
+
+        loadDataFromCloud();
+    </script>
+</body>
+</html>
