@@ -37,7 +37,6 @@
                 <span id="sync-status" class="bg-indigo-700/80 text-indigo-200 text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5">
                     <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> クラウド接続中
                 </span>
-                <!-- CSVエクスポート・インポートボタンを追加 -->
                 <button onclick="exportCSV()" class="bg-indigo-700/80 hover:bg-indigo-700 text-xs px-3 py-2 rounded-lg font-medium transition flex items-center gap-1.5 shadow-sm">
                     <i class="fa-solid fa-file-arrow-down"></i> CSVエクスポート
                 </button>
@@ -88,10 +87,11 @@
                     </div>
                     <div class="mt-2 text-[8px] sm:text-[10px] text-indigo-600 font-medium bg-indigo-50 px-1.5 py-0.5 rounded w-fit">残高</div>
                 </div>
+                <!-- 3つ目：当月交換金額の合計 -->
                 <div onclick="openExchangeSummaryModal()" class="bg-white p-2.5 sm:p-4 rounded-xl sm:rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between cursor-pointer hover:border-indigo-400 transition">
                     <div>
-                        <p class="text-[9px] sm:text-[11px] font-medium text-slate-400 truncate">交換ポイント <i class="fa-solid fa-circle-info text-[10px]"></i></p>
-                        <h2 id="summary-confirmed" class="text-sm sm:text-2xl font-bold text-emerald-600 mt-0.5 sm:mt-1 truncate">0pt</h2>
+                        <p class="text-[9px] sm:text-[11px] font-medium text-slate-400 truncate">交換済み金額(今月) <i class="fa-solid fa-circle-info text-[10px]"></i></p>
+                        <h2 id="summary-confirmed" class="text-sm sm:text-2xl font-bold text-emerald-600 mt-0.5 sm:mt-1 truncate">¥0</h2>
                     </div>
                     <div class="mt-2 text-[8px] sm:text-[10px] text-slate-500 font-medium bg-slate-100 px-1.5 py-0.5 rounded w-fit">交換済(詳細)</div>
                 </div>
@@ -117,10 +117,11 @@
                         <span id="toggle-label-yen" class="text-slate-400">交換金額表示</span>
                     </div>
                 </div>
+                <!-- 2列（2-column）レイアウトに整理されたアプリカード群 -->
                 <div id="dashboard-app-cards" class="grid grid-cols-2 lg:grid-cols-4 gap-3"></div>
             </div>
 
-            <!-- グラフ1：アプリ別比較（日別・月別・年間切り替え対応） -->
+            <!-- グラフ1：アプリ別比較 -->
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <h3 class="font-bold text-slate-700 text-sm flex items-center gap-2">
@@ -164,7 +165,7 @@
                 </div>
             </div>
 
-            <!-- グラフ3：カテゴリ別集計グラフ（日別・月別・年間切り替え対応） -->
+            <!-- グラフ3：カテゴリ別集計グラフ -->
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <h3 class="font-bold text-slate-700 text-sm flex items-center gap-2">
@@ -457,7 +458,6 @@
             }
         }
 
-        // CSVエクスポート機能（クラウド上の全データをエクスポート）
         window.exportCSV = function() {
             let csvContent = "\ufeff"; 
             
@@ -490,7 +490,6 @@
             URL.revokeObjectURL(url);
         };
 
-        // CSVインポート機能（クラウドへ一括書き込み）
         window.importCSV = function(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -562,7 +561,6 @@
 
                     if (newApps.length > 0 || newLogs.length > 0 || newReds.length > 0) {
                         if (confirm(`クラウドへインポートを実行します。\n・アプリ数: ${newApps.length}件\n・数値履歴: ${newLogs.length}件\n・交換実績: ${newReds.length}件\n\n実行してクラウドデータを更新しますか？`)) {
-                            // Firestoreに一括保存
                             for (const app of newApps) {
                                 await setDoc(doc(db, "apps", app.id), app);
                             }
@@ -866,16 +864,16 @@
         window.openExchangeSummaryModal = function() {
             const contentEl = document.getElementById('exchangeSummaryContent');
             let summaryMap = {};
-            let totalSpentPt = 0;
+            let totalGainedYen = 0;
 
             state.redemptions.forEach(r => {
                 const dest = r.destination || '未指定';
-                const pt = Number(r.spentPt || 0);
-                summaryMap[dest] = (summaryMap[dest] || 0) + pt;
-                totalSpentPt += pt;
+                const yen = Number(r.gainedYen || 0);
+                summaryMap[dest] = (summaryMap[dest] || 0) + yen;
+                totalGainedYen += yen;
             });
 
-            let html = `<div class="p-3 bg-slate-50 rounded-xl mb-3 flex justify-between items-center font-bold text-sm"><span class="text-slate-600">総交換ポイント</span><span class="text-emerald-600 text-base">${totalSpentPt.toLocaleString()} pt</span></div>`;
+            let html = `<div class="p-3 bg-slate-50 rounded-xl mb-3 flex justify-between items-center font-bold text-sm"><span class="text-slate-600">総交換実績（金額）</span><span class="text-emerald-600 text-base">¥${totalGainedYen.toLocaleString()}</span></div>`;
             
             const keys = Object.keys(summaryMap);
             if(keys.length === 0) {
@@ -886,7 +884,7 @@
                     html += `
                         <div class="flex justify-between items-center p-3 border border-slate-100 rounded-xl bg-white text-xs">
                             <span class="font-bold text-slate-700"><i class="fa-solid fa-gift text-indigo-500 mr-1.5"></i> ${dest}</span>
-                            <span class="font-bold text-slate-800">${summaryMap[dest].toLocaleString()} pt</span>
+                            <span class="font-bold text-slate-800">¥${summaryMap[dest].toLocaleString()}</span>
                         </div>
                     `;
                 });
@@ -1086,9 +1084,13 @@
             if(!container) return;
             let html = '';
             let totalUnredeemedYen = 0;
-            let totalSpentPtAll = 0;
+            let currentMonthGainedYen = 0;
 
-            state.redemptions.forEach(r => { totalSpentPtAll += Number(r.spentPt || 0); });
+            state.redemptions.forEach(r => { 
+                if(r.date && r.date.substring(0, 7) === currentMonthStr) {
+                    currentMonthGainedYen += Number(r.gainedYen || 0); 
+                }
+            });
 
             state.apps.forEach(app => {
                 const appLogs = state.logs.filter(l => l.appId === app.id).sort((a,b) => new Date(a.date) - new Date(b.date));
@@ -1110,16 +1112,52 @@
                     diffLast = currentIndex > 0 ? Number(lastLog.value || 0) - Number(appLogs[currentIndex - 1].value || 0) : Number(lastLog.value || 0);
                 }
 
-                html += `
-                    <div onclick="filterLogsByApp('${app.id}')" class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between cursor-pointer hover:border-indigo-400 hover:shadow-md transition">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-xl">${app.icon || '📱'}</span>
-                            <span class="text-[10px] text-slate-400">レート: ${app.rate}円</span>
+                let cardContentHtml = '';
+                if(dashboardCardMode === 'point') {
+                    cardContentHtml = `
+                        <div class="flex justify-between items-baseline">
+                            <span class="text-[10px] text-slate-400">直近増減</span>
+                            <span class="text-xs font-bold ${diffLast >= 0 ? 'text-emerald-600' : 'text-rose-600'}">${diffLast >= 0 ? '+' : ''}${diffLast.toLocaleString()} pt</span>
                         </div>
-                        <div>
-                            <h4 class="font-bold text-slate-800 text-xs truncate">${app.name}</h4>
-                            <p class="text-sm font-bold ${diffLast >= 0 ? 'text-emerald-600' : 'text-rose-600'} mt-0.5">${diffLast >= 0 ? '+' : ''}${diffLast.toLocaleString()} <span class="text-[10px] font-normal text-slate-500">pt (直近増減)</span></p>
-                            <p class="text-[10px] text-slate-400">累計残高: ${currentBalancePt.toLocaleString()} pt</p>
+                        <div class="flex justify-between items-baseline">
+                            <span class="text-[10px] text-slate-400">累計残高</span>
+                            <span class="text-xs font-bold text-slate-700">${currentBalancePt.toLocaleString()} pt</span>
+                        </div>
+                    `;
+                } else {
+                    let appMonthlyYen = 0;
+                    let appTotalYen = 0;
+                    state.redemptions.filter(r => r.appId === app.id).forEach(r => {
+                        const yen = Number(r.gainedYen || 0);
+                        appTotalYen += yen;
+                        if(r.date && r.date.substring(0, 7) === currentMonthStr) {
+                            appMonthlyYen += yen;
+                        }
+                    });
+                    cardContentHtml = `
+                        <div class="flex justify-between items-baseline">
+                            <span class="text-[10px] text-slate-400">今月交換</span>
+                            <span class="text-xs font-bold text-emerald-600">¥${appMonthlyYen.toLocaleString()}</span>
+                        </div>
+                        <div class="flex justify-between items-baseline">
+                            <span class="text-[10px] text-slate-400">累計金額</span>
+                            <span class="text-xs font-bold text-slate-700">¥${appTotalYen.toLocaleString()}</span>
+                        </div>
+                    `;
+                }
+
+                // 2列でスッキリ収まるように調整した各カードのHTML
+                html += `
+                    <div class="bg-white p-2.5 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between hover:border-indigo-400 hover:shadow-md transition">
+                        <div class="flex items-center justify-between mb-1 cursor-pointer" onclick="filterLogsByApp('${app.id}')">
+                            <div class="flex items-center gap-1.5 overflow-hidden">
+                                <span class="text-sm shrink-0">${app.icon || '📱'}</span>
+                                <h4 class="font-bold text-slate-800 text-xs truncate">${app.name}</h4>
+                            </div>
+                            <span class="text-[9px] text-slate-400 shrink-0 ml-1">率:${app.rate}円</span>
+                        </div>
+                        <div class="cursor-pointer space-y-0.5 border-t border-slate-50 pt-1" onclick="filterLogsByApp('${app.id}')">
+                            ${cardContentHtml}
                         </div>
                     </div>
                 `;
@@ -1132,7 +1170,7 @@
 
             if(document.getElementById('summary-total-assets')) document.getElementById('summary-total-assets').innerText = '¥' + Math.floor(totalAssetsYen).toLocaleString();
             if(document.getElementById('summary-unredeemed')) document.getElementById('summary-unredeemed').innerText = '¥' + Math.floor(totalUnredeemedYen).toLocaleString();
-            if(document.getElementById('summary-confirmed')) document.getElementById('summary-confirmed').innerText = totalSpentPtAll.toLocaleString() + 'pt';
+            if(document.getElementById('summary-confirmed')) document.getElementById('summary-confirmed').innerText = '¥' + currentMonthGainedYen.toLocaleString(); // 当月の交換金額合計
             if(document.getElementById('summary-monthly')) document.getElementById('summary-monthly').innerText = '¥' + Math.floor(totalUnredeemedYen * 0.3).toLocaleString();
         }
 
@@ -1313,7 +1351,6 @@
             return days;
         }
 
-        // グラフ1（アプリ別 獲得比較 - 日別・月別・年間対応）
         function renderChart1() {
             const canvasEl = document.getElementById('barChartApps');
             if(!canvasEl) return;
@@ -1409,7 +1446,6 @@
             });
         }
 
-        // グラフ2（特定アプリの推移）
         function renderChart2() {
             const canvasEl = document.getElementById('barChartSingleApp');
             if(!canvasEl) return;
@@ -1515,7 +1551,6 @@
             });
         }
 
-        // グラフ3（カテゴリ別集計グラフ - 日別・月別・年間対応）
         function renderChart3() {
             const canvasEl = document.getElementById('barChartMarkCategory');
             if(!canvasEl) return;
