@@ -72,35 +72,35 @@
 
         <!-- TAB 1: DASHBOARD -->
         <section id="view-dashboard" class="space-y-6">
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
-                <div class="bg-white p-2.5 sm:p-4 rounded-xl sm:rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
+            <!-- 上部4つの指標をスマホでも横4列に並ぶように調整 -->
+            <div class="grid grid-cols-4 gap-1.5 sm:gap-3">
+                <div class="bg-white p-2 sm:p-4 rounded-xl sm:rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
                     <div>
-                        <p class="text-[9px] sm:text-[11px] font-medium text-slate-400 truncate">総資産価値</p>
-                        <h2 id="summary-total-assets" class="text-sm sm:text-2xl font-bold text-slate-800 mt-0.5 sm:mt-1 truncate">¥0</h2>
+                        <p class="text-[8px] sm:text-[11px] font-medium text-slate-400 truncate">総資産価値</p>
+                        <h2 id="summary-total-assets" class="text-xs sm:text-2xl font-bold text-slate-800 mt-0.5 sm:mt-1 truncate">¥0</h2>
                     </div>
-                    <div class="mt-2 text-[8px] sm:text-[10px] text-emerald-600 font-medium bg-emerald-50 px-1.5 py-0.5 rounded w-fit">総合</div>
+                    <div class="mt-2 text-[7px] sm:text-[10px] text-emerald-600 font-medium bg-emerald-50 px-1 py-0.5 rounded w-fit">総合</div>
                 </div>
-                <div class="bg-white p-2.5 sm:p-4 rounded-xl sm:rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                <div class="bg-white p-2 sm:p-4 rounded-xl sm:rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
                     <div>
-                        <p class="text-[9px] sm:text-[11px] font-medium text-slate-400 truncate">未交換相当</p>
-                        <h2 id="summary-unredeemed" class="text-sm sm:text-2xl font-bold text-indigo-600 mt-0.5 sm:mt-1 truncate">¥0</h2>
+                        <p class="text-[8px] sm:text-[11px] font-medium text-slate-400 truncate">未交換相当</p>
+                        <h2 id="summary-unredeemed" class="text-xs sm:text-2xl font-bold text-indigo-600 mt-0.5 sm:mt-1 truncate">¥0</h2>
                     </div>
-                    <div class="mt-2 text-[8px] sm:text-[10px] text-indigo-600 font-medium bg-indigo-50 px-1.5 py-0.5 rounded w-fit">残高</div>
+                    <div class="mt-2 text-[7px] sm:text-[10px] text-indigo-600 font-medium bg-indigo-50 px-1 py-0.5 rounded w-fit">残高</div>
                 </div>
-                <!-- 3つ目：当月交換金額の合計 -->
-                <div onclick="openExchangeSummaryModal()" class="bg-white p-2.5 sm:p-4 rounded-xl sm:rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between cursor-pointer hover:border-indigo-400 transition">
+                <div onclick="openExchangeSummaryModal()" class="bg-white p-2 sm:p-4 rounded-xl sm:rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between cursor-pointer hover:border-indigo-400 transition">
                     <div>
-                        <p class="text-[9px] sm:text-[11px] font-medium text-slate-400 truncate">交換済み金額(今月) <i class="fa-solid fa-circle-info text-[10px]"></i></p>
-                        <h2 id="summary-confirmed" class="text-sm sm:text-2xl font-bold text-emerald-600 mt-0.5 sm:mt-1 truncate">¥0</h2>
+                        <p class="text-[8px] sm:text-[11px] font-medium text-slate-400 truncate">交換済み(今月) <i class="fa-solid fa-circle-info text-[9px]"></i></p>
+                        <h2 id="summary-confirmed" class="text-xs sm:text-2xl font-bold text-emerald-600 mt-0.5 sm:mt-1 truncate">¥0</h2>
                     </div>
-                    <div class="mt-2 text-[8px] sm:text-[10px] text-slate-500 font-medium bg-slate-100 px-1.5 py-0.5 rounded w-fit">交換済(詳細)</div>
+                    <div class="mt-2 text-[7px] sm:text-[10px] text-slate-500 font-medium bg-slate-100 px-1 py-0.5 rounded w-fit">交換済</div>
                 </div>
-                <div class="bg-white p-2.5 sm:p-4 rounded-xl sm:rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                <div class="bg-white p-2 sm:p-4 rounded-xl sm:rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
                     <div>
-                        <p class="text-[9px] sm:text-[11px] font-medium text-slate-400 truncate">今月見積</p>
-                        <h2 id="summary-monthly" class="text-sm sm:text-2xl font-bold text-amber-600 mt-0.5 sm:mt-1 truncate">¥0</h2>
+                        <p class="text-[8px] sm:text-[11px] font-medium text-slate-400 truncate">今月見積</p>
+                        <h2 id="summary-monthly" class="text-xs sm:text-2xl font-bold text-amber-600 mt-0.5 sm:mt-1 truncate">¥0</h2>
                     </div>
-                    <div class="mt-2 text-[8px] sm:text-[10px] text-amber-600 font-medium bg-amber-50 px-1.5 py-0.5 rounded w-fit">今月</div>
+                    <div class="mt-2 text-[7px] sm:text-[10px] text-amber-600 font-medium bg-amber-50 px-1 py-0.5 rounded w-fit">今月</div>
                 </div>
             </div>
 
@@ -117,7 +117,7 @@
                         <span id="toggle-label-yen" class="text-slate-400">交換金額表示</span>
                     </div>
                 </div>
-                <!-- 2列（2-column）レイアウトに整理されたアプリカード群 -->
+                <!-- アプリのカードサイズ・配置設定を元通り（2列〜4列レスポンシブ）に戻しました[cite: 1] -->
                 <div id="dashboard-app-cards" class="grid grid-cols-2 lg:grid-cols-4 gap-3"></div>
             </div>
 
@@ -133,11 +133,18 @@
                         <button onclick="changeChart1Mode('yearly')" id="btn-c1-yearly" class="px-2.5 py-1 rounded-lg transition text-slate-600">年間</button>
                     </div>
                 </div>
-                <div class="flex flex-wrap items-center gap-2 text-xs">
-                    <span id="chart1-target-label" class="text-slate-500 font-medium">対象日:</span>
-                    <input type="date" id="chart1-date-input" onchange="renderChart1()" class="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <input type="month" id="chart1-month-input" onchange="renderChart1()" class="hidden bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <select id="chart1-select-input" onchange="renderChart1()" class="hidden bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"></select>
+                <div class="flex flex-wrap items-center gap-2 bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs">
+                    <div class="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200">
+                        <button onclick="changeChart1PeriodTab('day')" id="c1-ptab-day" class="px-2.5 py-1 rounded-md transition bg-indigo-600 text-white font-medium">日選択</button>
+                        <button onclick="changeChart1PeriodTab('month')" id="c1-ptab-month" class="px-2.5 py-1 rounded-md transition text-slate-600">月選択</button>
+                        <button onclick="changeChart1PeriodTab('year')" id="c1-ptab-year" class="px-2.5 py-1 rounded-md transition text-slate-600">年選択</button>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span id="chart1-target-label" class="text-slate-500 font-medium">対象日:</span>
+                        <input type="date" id="chart1-date-input" onchange="renderChart1()" class="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <input type="month" id="chart1-month-input" onchange="renderChart1()" class="hidden bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <select id="chart1-select-input" onchange="renderChart1()" class="hidden bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"></select>
+                    </div>
                 </div>
                 <div class="h-64 relative w-full">
                     <canvas id="barChartApps"></canvas>
@@ -907,6 +914,23 @@
             renderChart1();
         };
 
+        window.changeChart1PeriodTab = function(periodType) {
+            ['day', 'month', 'year'].forEach(p => {
+                const btn = document.getElementById(`c1-ptab-${p}`);
+                if(btn) {
+                    if(p === periodType) {
+                        btn.className = "px-2.5 py-1 rounded-md transition bg-indigo-600 text-white font-medium";
+                    } else {
+                        btn.className = "px-2.5 py-1 rounded-md transition text-slate-600";
+                    }
+                }
+            });
+
+            if(periodType === 'day') changeChart1Mode('daily');
+            else if(periodType === 'month') changeChart1Mode('monthly');
+            else if(periodType === 'year') changeChart1Mode('yearly');
+        };
+
         window.changeChart2Mode = function(mode) {
             chart2Mode = mode;
             ['daily', 'monthly', 'yearly'].forEach(m => {
@@ -940,22 +964,24 @@
             const labelEl = document.getElementById(`${prefix}-target-label`);
 
             if(mode === 'daily') {
-                labelEl.innerText = '対象日:';
-                dateInput.classList.remove('hidden');
-                monthInput.classList.add('hidden');
-                selectInput.classList.add('hidden');
-                if(!dateInput.value) dateInput.value = todayStr;
+                if(labelEl) labelEl.innerText = '対象日:';
+                if(dateInput) dateInput.classList.remove('hidden');
+                if(monthInput) monthInput.classList.add('hidden');
+                if(selectInput) selectInput.classList.add('hidden');
+                if(dateInput && !dateInput.value) dateInput.value = todayStr;
+                if(prefix === 'c1') syncChart1PeriodTabUI('day');
             } else if(mode === 'monthly') {
-                labelEl.innerText = '対象月:';
-                dateInput.classList.add('hidden');
-                monthInput.classList.remove('hidden');
-                selectInput.classList.add('hidden');
-                if(!monthInput.value) monthInput.value = currentMonthStr;
+                if(labelEl) labelEl.innerText = '対象月:';
+                if(dateInput) dateInput.classList.add('hidden');
+                if(monthInput) monthInput.classList.remove('hidden');
+                if(selectInput) selectInput.classList.add('hidden');
+                if(monthInput && !monthInput.value) monthInput.value = currentMonthStr;
+                if(prefix === 'c1') syncChart1PeriodTabUI('month');
             } else if(mode === 'yearly') {
-                labelEl.innerText = '対象年:';
-                dateInput.classList.add('hidden');
-                monthInput.classList.add('hidden');
-                selectInput.classList.remove('hidden');
+                if(labelEl) labelEl.innerText = '対象年:';
+                if(dateInput) dateInput.classList.add('hidden');
+                if(monthInput) monthInput.classList.add('hidden');
+                if(selectInput) selectInput.classList.remove('hidden');
 
                 const yearsSet = new Set();
                 state.logs.forEach(l => { if(l.date) yearsSet.add(l.date.substring(0, 4)); });
@@ -965,9 +991,25 @@
                 const sortedYears = Array.from(yearsSet).sort().reverse();
                 let opts = '';
                 sortedYears.forEach(y => { opts += `<option value="${y}">${y}年</option>`; });
-                selectInput.innerHTML = opts;
-                if(!selectInput.value) selectInput.value = currentYearStr;
+                if(selectInput) {
+                    selectInput.innerHTML = opts;
+                    if(!selectInput.value) selectInput.value = currentYearStr;
+                }
+                if(prefix === 'c1') syncChart1PeriodTabUI('year');
             }
+        }
+
+        function syncChart1PeriodTabUI(ptype) {
+            ['day', 'month', 'year'].forEach(p => {
+                const btn = document.getElementById(`c1-ptab-${p}`);
+                if(btn) {
+                    if(p === ptype) {
+                        btn.className = "px-2.5 py-1 rounded-md transition bg-indigo-600 text-white font-medium";
+                    } else {
+                        btn.className = "px-2.5 py-1 rounded-md transition text-slate-600";
+                    }
+                }
+            });
         }
 
         function renderAll() {
@@ -1146,7 +1188,6 @@
                     `;
                 }
 
-                // 2列でスッキリ収まるように調整した各カードのHTML
                 html += `
                     <div class="bg-white p-2.5 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between hover:border-indigo-400 hover:shadow-md transition">
                         <div class="flex items-center justify-between mb-1 cursor-pointer" onclick="filterLogsByApp('${app.id}')">
@@ -1170,7 +1211,7 @@
 
             if(document.getElementById('summary-total-assets')) document.getElementById('summary-total-assets').innerText = '¥' + Math.floor(totalAssetsYen).toLocaleString();
             if(document.getElementById('summary-unredeemed')) document.getElementById('summary-unredeemed').innerText = '¥' + Math.floor(totalUnredeemedYen).toLocaleString();
-            if(document.getElementById('summary-confirmed')) document.getElementById('summary-confirmed').innerText = '¥' + currentMonthGainedYen.toLocaleString(); // 当月の交換金額合計
+            if(document.getElementById('summary-confirmed')) document.getElementById('summary-confirmed').innerText = '¥' + currentMonthGainedYen.toLocaleString();
             if(document.getElementById('summary-monthly')) document.getElementById('summary-monthly').innerText = '¥' + Math.floor(totalUnredeemedYen * 0.3).toLocaleString();
         }
 
