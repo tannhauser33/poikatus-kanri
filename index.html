@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ポイ活・ポイント収益管理 (クラウド同期版)</title>
+    <title>ポイ活・共通ポイント収益管理 (クラウド同期版)</title>
     <!-- Tailwind CSS for modern UI -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js for graphs -->
@@ -29,8 +29,8 @@
             <div class="flex items-center space-x-3">
                 <div class="bg-white/10 p-2.5 rounded-xl text-xl">👟</div>
                 <div>
-                    <h1 class="text-xl font-bold tracking-tight">ポイ活・ポイント収益管理</h1>
-                    <p class="text-xs text-indigo-200">クラウド同期対応：PC・スマホでリアルタイム共有</p>
+                    <h1 class="text-xl font-bold tracking-tight">ポイ活・共通ポイント収益管理</h1>
+                    <p class="text-xs text-indigo-200">クラウド同期対応：アプリ ＆ 共通ポイントを一括管理</p>
                 </div>
             </div>
             <div class="flex flex-wrap items-center gap-2">
@@ -54,25 +54,37 @@
     <!-- Main Container -->
     <main class="max-w-6xl mx-auto px-4 mt-6 space-y-6">
 
+        <!-- 共通ポイントボタンエリア（タイトルの下・空きスペース） -->
+        <div class="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div class="flex items-center gap-2 text-xs font-bold text-slate-700">
+                <i class="fa-solid fa-coins text-amber-500"></i> 共通ポイント管理:
+            </div>
+            <div id="common-point-buttons-container" class="flex flex-wrap items-center gap-2">
+                <!-- 動的にボタンが生成されます -->
+            </div>
+            <button onclick="switchTab('common_settings')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-xl font-medium transition flex items-center gap-1">
+                <i class="fa-solid fa-gear"></i> ポイント設定
+            </button>
+        </div>
+
         <!-- Navigation Tabs -->
         <div class="grid grid-cols-2 sm:flex sm:border-b sm:border-slate-200 gap-2 sm:gap-0 bg-transparent">
             <button onclick="switchTab('dashboard')" id="tab-dashboard" class="tab-btn px-4 py-3 font-semibold text-xs sm:text-sm border-2 sm:border-0 sm:border-b-2 border-indigo-600 text-indigo-600 bg-white sm:bg-transparent rounded-xl sm:rounded-none shadow-sm sm:shadow-none flex items-center justify-center sm:justify-start gap-2 transition">
                 <i class="fa-solid fa-chart-pie"></i> ダッシュボード
             </button>
             <button onclick="switchTab('entry')" id="tab-entry" class="tab-btn px-4 py-3 font-semibold text-xs sm:text-sm border-2 sm:border-0 sm:border-b-2 border-transparent text-slate-500 hover:text-slate-700 bg-white sm:bg-transparent rounded-xl sm:rounded-none shadow-sm sm:shadow-none flex items-center justify-center sm:justify-start gap-2 transition">
-                <i class="fa-solid fa-pen-to-square"></i> 数値入力・履歴
+                <i class="fa-solid fa-pen-to-square"></i> アプリ数値入力・履歴
             </button>
             <button onclick="switchTab('redemption')" id="tab-redemption" class="tab-btn px-4 py-3 font-semibold text-xs sm:text-sm border-2 sm:border-0 sm:border-b-2 border-transparent text-slate-500 hover:text-slate-700 bg-white sm:bg-transparent rounded-xl sm:rounded-none shadow-sm sm:shadow-none flex items-center justify-center sm:justify-start gap-2 transition">
                 <i class="fa-solid fa-wallet"></i> 交換実績管理
             </button>
             <button onclick="switchTab('apps')" id="tab-apps" class="tab-btn px-4 py-3 font-semibold text-xs sm:text-sm border-2 sm:border-0 sm:border-b-2 border-transparent text-slate-500 hover:text-slate-700 bg-white sm:bg-transparent rounded-xl sm:rounded-none shadow-sm sm:shadow-none flex items-center justify-center sm:justify-start gap-2 transition">
-                <i class="fa-solid fa-list-check"></i> アプリ設定・並べ替え
+                <i class="fa-solid fa-list-check"></i> アプリ設定
             </button>
         </div>
 
         <!-- TAB 1: DASHBOARD -->
         <section id="view-dashboard" class="space-y-6">
-            <!-- 上部4つの指標をスマホでも横4列に並ぶように調整 -->
             <div class="grid grid-cols-4 gap-1.5 sm:gap-3">
                 <div class="bg-white p-2 sm:p-4 rounded-xl sm:rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
                     <div>
@@ -117,7 +129,6 @@
                         <span id="toggle-label-yen" class="text-slate-400">交換金額表示</span>
                     </div>
                 </div>
-                <!-- アプリのカードサイズ・配置設定を元通り（2列〜4列レスポンシブ）に戻しました[cite: 1] -->
                 <div id="dashboard-app-cards" class="grid grid-cols-2 lg:grid-cols-4 gap-3"></div>
             </div>
 
@@ -362,6 +373,130 @@
             </div>
         </section>
 
+        <!-- TAB 5: COMMON POINTS (NEW) -->
+        <section id="view-common_detail" class="hidden space-y-6">
+            <div id="commonDetailHeaderCard"></div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <h3 id="commonFormTitle" class="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-pen-nib text-amber-500"></i> 月1回のポイント数値入力
+                </h3>
+                <form id="commonEntryForm" onsubmit="handleCommonPointEntry(event)" class="space-y-4">
+                    <input type="hidden" id="commonTargetId">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">記録年月 (月1回)</label>
+                            <input type="month" id="commonEntryMonth" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">現在のポイント残高</label>
+                            <input type="number" id="commonEntryValue" placeholder="例: 5000" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        </div>
+                    </div>
+                    <div class="flex justify-end">
+                        <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white font-medium px-6 py-2.5 rounded-xl text-sm transition shadow-sm flex items-center gap-2">
+                            <i class="fa-solid fa-plus"></i> 共通ポイント入力を保存
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- 共通ポイント用 3つのグラフ -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- グラフ1：合計推移 -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4 lg:col-span-3">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <h3 class="font-bold text-slate-700 text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-chart-column text-amber-500"></i> <span id="cc-chart1-title">共通ポイント合算 推移</span>
+                        </h3>
+                        <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-medium">
+                            <button onclick="changeCommonChartMode('monthly')" id="btn-cc-monthly" class="px-3 py-1 rounded-lg transition bg-white shadow-sm text-amber-600 font-bold">月別</button>
+                            <button onclick="changeCommonChartMode('yearly')" id="btn-cc-yearly" class="px-3 py-1 rounded-lg transition text-slate-600">年間</button>
+                        </div>
+                    </div>
+                    <div class="h-64 relative w-full">
+                        <canvas id="commonChartTotal"></canvas>
+                    </div>
+                </div>
+
+                <!-- グラフ2：ポイント種類別比較 -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4 lg:col-span-2">
+                    <h3 class="font-bold text-slate-700 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-chart-column text-emerald-600"></i> ポイント種類別 獲得・利用比較
+                    </h3>
+                    <div class="h-64 relative w-full">
+                        <canvas id="commonChartCompare"></canvas>
+                    </div>
+                </div>
+
+                <!-- グラフ3：シェア円グラフ -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+                    <h3 class="font-bold text-slate-700 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie text-indigo-600"></i> 残高シェア割合
+                    </h3>
+                    <div class="h-64 relative w-full flex items-center justify-center">
+                        <canvas id="commonChartShare"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 入力・利用履歴テーブル -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+                <h3 class="font-bold text-slate-700">月次履歴 ＆ 利用額（マイナス差分）一覧</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="border-b border-slate-100 text-slate-400 text-xs uppercase">
+                                <th class="py-3 px-4 font-semibold">年月</th>
+                                <th class="py-3 px-4 font-semibold">ポイント名</th>
+                                <th class="py-3 px-4 font-semibold text-right">入力残高</th>
+                                <th class="py-3 px-4 font-semibold text-right">獲得/利用差分</th>
+                                <th class="py-3 px-4 font-semibold text-center">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="commonLogsTableBody" class="divide-y divide-slate-50"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 6: COMMON SETTINGS (NEW) -->
+        <section id="view-common_settings" class="hidden space-y-6">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-plus text-amber-500"></i> 新しい共通ポイントを追加
+                </h3>
+                <form id="commonAddForm" onsubmit="handleAddCommonPoint(event)" class="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">アイコン</label>
+                        <select id="commonIconInput" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                            <option value="🟡">🟡 dポイント</option>
+                            <option value="🟢">🟢 Vポイント</option>
+                            <option value="🔵">🔵 楽天ポイント</option>
+                            <option value="🔴">🔴 Pontaポイント</option>
+                            <option value="⭐">⭐ etc</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">ポイント名</label>
+                        <input type="text" id="commonNameInput" placeholder="例: dポイント" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">換算レート (1pt当りの円)</label>
+                        <input type="number" step="0.0001" id="commonRateInput" value="1" placeholder="例: 1" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                    <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white font-medium px-4 py-2.5 rounded-xl text-sm transition shadow-sm flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-plus"></i> 追加する
+                    </button>
+                </form>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+                <h3 class="font-bold text-slate-700">登録済み共通ポイント一覧</h3>
+                <div id="commonSettingsListContainer" class="space-y-3"></div>
+            </div>
+        </section>
+
     </main>
 
     <!-- 交換先別集計モーダル -->
@@ -406,14 +541,26 @@
             { id: 'app_4', name: 'Powl', rate: 0.1, icon: '🪙', order: 4 }
         ];
 
-        let state = { apps: [], logs: [], redemptions: [] };
+        const DEFAULT_COMMON_POINTS = [
+            { id: 'cp_1', name: 'dポイント', rate: 1, icon: '🟡', order: 1 },
+            { id: 'cp_2', name: 'Vポイント', rate: 1, icon: '🟢', order: 2 },
+            { id: 'cp_3', name: '楽天ポイント', rate: 1, icon: '🔵', order: 3 }
+        ];
+
+        let state = { apps: [], logs: [], redemptions: [], commonPoints: [], commonLogs: [] };
         let chart1Mode = 'daily'; 
         let chart2Mode = 'daily'; 
         let chart3Mode = 'daily';
+        let commonChartMode = 'monthly';
         let barChartInstance = null;
         let singleBarChartInstance = null;
         let markChartInstance = null;
+        let commonChartTotalInst = null;
+        let commonChartCompareInst = null;
+        let commonChartShareInst = null;
+
         let selectedAppFilter = null; 
+        let selectedCommonPointId = null;
         let dashboardCardMode = 'point'; 
         let logDisplayMode = 'point'; 
 
@@ -421,12 +568,10 @@
 
         async function loadDataFromCloud() {
             try {
+                // Apps
                 const appsSnapshot = await getDocs(collection(db, "apps"));
                 let appsList = [];
-                appsSnapshot.forEach(docSnap => {
-                    appsList.push({ id: docSnap.id, ...docSnap.data() });
-                });
-
+                appsSnapshot.forEach(docSnap => appsList.push({ id: docSnap.id, ...docSnap.data() }));
                 if (appsList.length === 0) {
                     for (const defApp of DEFAULT_APPS) {
                         await setDoc(doc(db, "apps", defApp.id), defApp);
@@ -436,19 +581,19 @@
                 appsList.sort((a, b) => (a.order || 0) - (b.order || 0));
                 state.apps = appsList;
 
+                // Logs
                 const logsSnapshot = await getDocs(collection(db, "logs"));
                 let logsList = [];
                 logsSnapshot.forEach(docSnap => {
                     const data = docSnap.data();
                     if (data) {
-                        const val = data.rawValue !== undefined ? data.rawValue :
-                                    data.value !== undefined ? data.value :
-                                    data.point !== undefined ? data.point : 0;
+                        const val = data.rawValue !== undefined ? data.rawValue : (data.value !== undefined ? data.value : 0);
                         logsList.push({ id: docSnap.id, ...data, value: Number(val) });
                     }
                 });
                 state.logs = logsList;
 
+                // Redemptions
                 const redsSnapshot = await getDocs(collection(db, "redemptions"));
                 let redsList = [];
                 redsSnapshot.forEach(docSnap => {
@@ -456,6 +601,28 @@
                     if (data) redsList.push({ id: docSnap.id, ...data });
                 });
                 state.redemptions = redsList;
+
+                // Common Points
+                const cpSnapshot = await getDocs(collection(db, "commonPoints"));
+                let cpList = [];
+                cpSnapshot.forEach(docSnap => cpList.push({ id: docSnap.id, ...docSnap.data() }));
+                if (cpList.length === 0) {
+                    for (const defCp of DEFAULT_COMMON_POINTS) {
+                        await setDoc(doc(db, "commonPoints", defCp.id), defCp);
+                        cpList.push(defCp);
+                    }
+                }
+                cpList.sort((a, b) => (a.order || 0) - (b.order || 0));
+                state.commonPoints = cpList;
+
+                // Common Logs
+                const cpLogsSnapshot = await getDocs(collection(db, "commonLogs"));
+                let cpLogsList = [];
+                cpLogsSnapshot.forEach(docSnap => {
+                    const data = docSnap.data();
+                    if (data) cpLogsList.push({ id: docSnap.id, ...data, value: Number(data.value || 0) });
+                });
+                state.commonLogs = cpLogsList;
 
                 renderAll();
                 document.getElementById('sync-status').innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> クラウド接続中';
@@ -467,30 +634,26 @@
 
         window.exportCSV = function() {
             let csvContent = "\ufeff"; 
-            
-            csvContent += "[APPS]\n";
-            csvContent += "id,name,rate,icon,order\n";
-            state.apps.forEach(a => {
-                csvContent += `"${a.id}","${a.name}",${a.rate},"${a.icon || '📱'}",${a.order || 1}\n`;
-            });
+            csvContent += "[APPS]\nid,name,rate,icon,order\n";
+            state.apps.forEach(a => { csvContent += `"${a.id}","${a.name}",${a.rate},"${a.icon || '📱'}",${a.order || 1}\n`; });
 
-            csvContent += "\n[LOGS]\n";
-            csvContent += "id,date,appId,value\n";
-            state.logs.forEach(l => {
-                csvContent += `"${l.id}","${l.date}","${l.appId}",${l.value !== undefined ? l.value : l.rawValue}\n`;
-            });
+            csvContent += "\n[LOGS]\nid,date,appId,value\n";
+            state.logs.forEach(l => { csvContent += `"${l.id}","${l.date}","${l.appId}",${l.value}\n`; });
 
-            csvContent += "\n[REDEMPTIONS]\n";
-            csvContent += "id,date,appId,spentPt,gainedYen,destination\n";
-            state.redemptions.forEach(r => {
-                csvContent += `"${r.id}","${r.date}","${r.appId}",${r.spentPt},${r.gainedYen},"${r.destination || ''}"\n`;
-            });
+            csvContent += "\n[REDEMPTIONS]\nid,date,appId,spentPt,gainedYen,destination\n";
+            state.redemptions.forEach(r => { csvContent += `"${r.id}","${r.date}","${r.appId}",${r.spentPt},${r.gainedYen},"${r.destination || ''}"\n`; });
+
+            csvContent += "\n[COMMON_POINTS]\nid,name,rate,icon,order\n";
+            state.commonPoints.forEach(cp => { csvContent += `"${cp.id}","${cp.name}",${cp.rate},"${cp.icon || '🟡'}",${cp.order || 1}\n`; });
+
+            csvContent += "\n[COMMON_LOGS]\nid,month,commonPointId,value\n";
+            state.commonLogs.forEach(cl => { csvContent += `"${cl.id}","${cl.month}","${cl.commonPointId}",${cl.value}\n`; });
 
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `poikatsu_cloud_backup_${new Date().toISOString().split('T')[0]}.csv`;
+            a.download = `poikatsu_all_backup_${new Date().toISOString().split('T')[0]}.csv`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -500,106 +663,61 @@
         window.importCSV = function(event) {
             const file = event.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = async function(e) {
                 try {
                     const text = e.target.result;
                     const lines = text.split(/\r\n|\n/);
-
                     let currentSection = '';
-                    let newApps = [];
-                    let newLogs = [];
-                    let newReds = [];
+                    let newApps = [], newLogs = [], newReds = [], newCPs = [], newCPLogs = [];
 
                     lines.forEach(line => {
                         const trimmed = line.trim();
                         if (!trimmed) return;
-
                         if (trimmed.startsWith('[APPS]')) { currentSection = 'APPS'; return; }
                         if (trimmed.startsWith('[LOGS]')) { currentSection = 'LOGS'; return; }
                         if (trimmed.startsWith('[REDEMPTIONS]')) { currentSection = 'REDEMPTIONS'; return; }
+                        if (trimmed.startsWith('[COMMON_POINTS]')) { currentSection = 'COMMON_POINTS'; return; }
+                        if (trimmed.startsWith('[COMMON_LOGS]')) { currentSection = 'COMMON_LOGS'; return; }
                         if (trimmed.startsWith('id,')) return; 
 
                         const row = [];
-                        let inQuotes = false;
-                        let currentVal = '';
+                        let inQuotes = false, currentVal = '';
                         for (let i = 0; i < trimmed.length; i++) {
                             const char = trimmed[i];
-                            if (char === '"') {
-                                inQuotes = !inQuotes;
-                            } else if (char === ',' && !inQuotes) {
-                                row.push(currentVal.trim().replace(/^"|"$/g, ''));
-                                currentVal = '';
-                            } else {
-                                currentVal += char;
-                            }
+                            if (char === '"') { inQuotes = !inQuotes; }
+                            else if (char === ',' && !inQuotes) { row.push(currentVal.trim().replace(/^"|"$/g, '')); currentVal = ''; }
+                            else { currentVal += char; }
                         }
                         row.push(currentVal.trim().replace(/^"|"$/g, ''));
 
                         if (currentSection === 'APPS' && row.length >= 3) {
-                            newApps.push({
-                                id: row[0] || ('app_' + Date.now() + Math.random().toString(36).substring(2, 5)),
-                                name: row[1],
-                                rate: parseFloat(row[2]) || 0.01,
-                                icon: row[3] || '📱',
-                                order: parseInt(row[4]) || (newApps.length + 1)
-                            });
+                            newApps.push({ id: row[0], name: row[1], rate: parseFloat(row[2]) || 0.01, icon: row[3] || '📱', order: parseInt(row[4]) || 1 });
                         } else if (currentSection === 'LOGS' && row.length >= 4) {
-                            newLogs.push({
-                                id: row[0] || ('log_' + Date.now() + Math.random().toString(36).substring(2, 5)),
-                                date: row[1],
-                                appId: row[2],
-                                rawValue: parseFloat(row[3]) || 0,
-                                createdAt: Date.now()
-                            });
+                            newLogs.push({ id: row[0], date: row[1], appId: row[2], value: parseFloat(row[3]) || 0, createdAt: Date.now() });
                         } else if (currentSection === 'REDEMPTIONS' && row.length >= 6) {
-                            newReds.push({
-                                id: row[0] || ('red_' + Date.now() + Math.random().toString(36).substring(2, 5)),
-                                date: row[1],
-                                appId: row[2],
-                                spentPt: parseFloat(row[3]) || 0,
-                                gainedYen: parseFloat(row[4]) || 0,
-                                destination: row[5],
-                                createdAt: Date.now()
-                            });
+                            newReds.push({ id: row[0], date: row[1], appId: row[2], spentPt: parseFloat(row[3]) || 0, gainedYen: parseFloat(row[4]) || 0, destination: row[5], createdAt: Date.now() });
+                        } else if (currentSection === 'COMMON_POINTS' && row.length >= 3) {
+                            newCPs.push({ id: row[0], name: row[1], rate: parseFloat(row[2]) || 1, icon: row[3] || '🟡', order: parseInt(row[4]) || 1 });
+                        } else if (currentSection === 'COMMON_LOGS' && row.length >= 4) {
+                            newCPLogs.push({ id: row[0], month: row[1], commonPointId: row[2], value: parseFloat(row[3]) || 0, createdAt: Date.now() });
                         }
                     });
 
-                    if (newApps.length > 0 || newLogs.length > 0 || newReds.length > 0) {
-                        if (confirm(`クラウドへインポートを実行します。\n・アプリ数: ${newApps.length}件\n・数値履歴: ${newLogs.length}件\n・交換実績: ${newReds.length}件\n\n実行してクラウドデータを更新しますか？`)) {
-                            for (const app of newApps) {
-                                await setDoc(doc(db, "apps", app.id), app);
-                            }
-                            for (const log of newLogs) {
-                                await setDoc(doc(db, "logs", log.id), {
-                                    date: log.date,
-                                    appId: log.appId,
-                                    rawValue: log.rawValue,
-                                    createdAt: log.createdAt
-                                });
-                            }
-                            for (const red of newReds) {
-                                await setDoc(doc(db, "redemptions", red.id), {
-                                    date: red.date,
-                                    appId: red.appId,
-                                    spentPt: red.spentPt,
-                                    gainedYen: red.gainedYen,
-                                    destination: red.destination,
-                                    createdAt: red.createdAt
-                                });
-                            }
-                            await loadDataFromCloud();
-                            alert('CSVのクラウドインポートが完了しました！');
-                        }
-                    } else {
-                        alert('有効なデータが見つかりませんでした。');
+                    if (confirm('CSVインポートを実行してデータを更新しますか？')) {
+                        for (const a of newApps) await setDoc(doc(db, "apps", a.id), a);
+                        for (const l of newLogs) await setDoc(doc(db, "logs", l.id), l);
+                        for (const r of newReds) await setDoc(doc(db, "redemptions", r.id), r);
+                        for (const cp of newCPs) await setDoc(doc(db, "commonPoints", cp.id), cp);
+                        for (const cl of newCPLogs) await setDoc(doc(db, "commonLogs", cl.id), cl);
+                        await loadDataFromCloud();
+                        alert('インポートが完了しました！');
                     }
                 } catch (err) {
                     console.error(err);
-                    alert('CSVの読み込みに失敗しました。');
+                    alert('インポートに失敗しました。');
                 } finally {
-                    event.target.value = ''; 
+                    event.target.value = '';
                 }
             };
             reader.readAsText(file, 'UTF-8');
@@ -616,7 +734,7 @@
                 activeBtn.classList.remove('border-transparent', 'text-slate-500');
             }
 
-            ['dashboard', 'entry', 'redemption', 'apps'].forEach(id => {
+            ['dashboard', 'entry', 'redemption', 'apps', 'common_detail', 'common_settings'].forEach(id => {
                 const el = document.getElementById(`view-${id}`);
                 if(el) {
                     if (id === tabId) el.classList.remove('hidden');
@@ -624,77 +742,22 @@
                 }
             });
 
-            if(tabId === 'entry' && !preserveFilter) {
-                selectedAppFilter = null;
-                const entrySelect = document.getElementById('entryAppId');
-                if(entrySelect) entrySelect.value = ""; 
-                renderSelectedAppCard();
-                renderLogsTable();
-            }
-
             if(tabId === 'dashboard') {
-                setTimeout(() => {
-                    renderChart1();
-                    renderChart2();
-                    renderChart3();
-                }, 100);
+                setTimeout(() => { renderChart1(); renderChart2(); renderChart3(); }, 100);
+            }
+            if(tabId === 'common_detail') {
+                setTimeout(() => { renderCommonCharts(); renderCommonLogsTable(); }, 100);
             }
         };
 
-        window.filterLogsByApp = function(appId) {
-            selectedAppFilter = appId;
-            switchTab('entry', true);
-            const entrySelect = document.getElementById('entryAppId');
-            if(entrySelect) entrySelect.value = appId;
-            renderLogsTable();
-            renderSelectedAppCard();
-        };
-
-        window.onEntryAppSelectChange = function(appId) {
-            selectedAppFilter = appId;
-            renderLogsTable();
-            renderSelectedAppCard();
-        };
-
-        window.clearFilter = function() {
-            selectedAppFilter = null;
-            const entrySelect = document.getElementById('entryAppId');
-            if(entrySelect) entrySelect.value = "";
-            renderLogsTable();
-            renderSelectedAppCard();
-        };
-
-        window.toggleCardDisplayMode = function() {
-            const checkbox = document.getElementById('cardModeToggle');
-            dashboardCardMode = checkbox.checked ? 'exchange' : 'point';
-            
-            const labelPt = document.getElementById('toggle-label-pt');
-            const labelYen = document.getElementById('toggle-label-yen');
-            if(dashboardCardMode === 'exchange') {
-                labelPt.className = "text-slate-400";
-                labelYen.className = "text-emerald-600 font-bold";
-            } else {
-                labelPt.className = "text-indigo-600 font-bold";
-                labelYen.className = "text-slate-400";
-            }
-            renderDashboardCards();
-        };
-
-        window.toggleLogDisplayMode = function() {
-            const checkbox = document.getElementById('logModeToggle');
-            logDisplayMode = checkbox.checked ? 'all' : 'point';
-
-            const labelPt = document.getElementById('log-toggle-pt');
-            const labelAll = document.getElementById('log-toggle-all');
-
-            if(logDisplayMode === 'all') {
-                labelPt.className = "text-slate-400";
-                labelAll.className = "text-emerald-600 font-bold";
-            } else {
-                labelPt.className = "text-indigo-600 font-bold";
-                labelAll.className = "text-slate-400";
-            }
-            renderLogsTable();
+        window.openCommonPointDetail = function(cpId) {
+            selectedCommonPointId = cpId;
+            switchTab('common_detail');
+            renderCommonDetailHeader();
+            const monthInput = document.getElementById('commonEntryMonth');
+            if(monthInput && !monthInput.value) monthInput.value = currentMonthStr;
+            renderCommonCharts();
+            renderCommonLogsTable();
         };
 
         const todayDate = new Date();
@@ -704,6 +767,7 @@
 
         if(document.getElementById('entryDate')) document.getElementById('entryDate').valueAsDate = new Date();
         if(document.getElementById('redDate')) document.getElementById('redDate').valueAsDate = new Date();
+        if(document.getElementById('commonEntryMonth')) document.getElementById('commonEntryMonth').value = currentMonthStr;
         if(document.getElementById('chart1-date-input')) document.getElementById('chart1-date-input').value = todayStr;
         if(document.getElementById('chart1-month-input')) document.getElementById('chart1-month-input').value = currentMonthStr;
         if(document.getElementById('chart3-date-input')) document.getElementById('chart3-date-input').value = todayStr;
@@ -717,20 +781,12 @@
             const rawValue = parseFloat(document.getElementById('entryValue').value);
 
             try {
-                await addDoc(collection(db, "logs"), {
-                    date: date,
-                    appId: appId,
-                    rawValue: rawValue,
-                    createdAt: Date.now()
-                });
+                await addDoc(collection(db, "logs"), { date, appId, value: rawValue, createdAt: Date.now() });
                 document.getElementById('entryValue').value = '';
                 await loadDataFromCloud();
-                selectedAppFilter = appId;
-                document.getElementById('entryAppId').value = appId;
-                renderSelectedAppCard();
                 alert('ポイント数値を保存しました！');
             } catch (error) {
-                console.error("Error adding log:", error);
+                console.error(error);
                 alert('保存に失敗しました。');
             }
         };
@@ -745,21 +801,14 @@
             const destination = document.getElementById('redDestination').value;
 
             try {
-                await addDoc(collection(db, "redemptions"), {
-                    date: date,
-                    appId: appId,
-                    spentPt: spentPt,
-                    gainedYen: gainedYen,
-                    destination: destination,
-                    createdAt: Date.now()
-                });
+                await addDoc(collection(db, "redemptions"), { date, appId, spentPt, gainedYen, destination, createdAt: Date.now() });
                 document.getElementById('redSpentPt').value = '';
                 document.getElementById('redGainedYen').value = '';
                 document.getElementById('redDestination').value = '';
                 await loadDataFromCloud();
                 alert('交換実績を登録しました！');
             } catch (error) {
-                console.error("Error adding redemption:", error);
+                console.error(error);
                 alert('登録に失敗しました。');
             }
         };
@@ -773,106 +822,96 @@
             const newOrder = state.apps.length + 1;
 
             try {
-                await setDoc(doc(db, "apps", newId), {
-                    id: newId, name: name, rate: rate, icon: icon, order: newOrder
-                });
+                await setDoc(doc(db, "apps", newId), { id: newId, name, rate, icon, order: newOrder });
                 document.getElementById('appNameInput').value = '';
                 document.getElementById('appRateInput').value = '';
                 await loadDataFromCloud();
-                alert('新しいアプリを追加しました！');
+                alert('アプリを追加しました！');
             } catch (error) {
-                console.error("Error adding app:", error);
+                console.error(error);
                 alert('追加に失敗しました。');
             }
         };
 
-        window.updateAppProperty = async function(appId, field, value) {
-            const app = state.apps.find(a => a.id === appId);
-            if(app) {
-                app[field] = value;
-                try {
-                    await setDoc(doc(db, "apps", appId), app, { merge: true });
-                    renderDashboardCards();
-                    renderSelectedAppCard();
-                } catch (error) {
-                    console.error("Error updating app:", error);
-                }
+        window.handleAddCommonPoint = async function(e) {
+            e.preventDefault();
+            const name = document.getElementById('commonNameInput').value;
+            const rate = parseFloat(document.getElementById('commonRateInput').value);
+            const icon = document.getElementById('commonIconInput').value;
+            const newId = 'cp_' + Date.now();
+            const newOrder = state.commonPoints.length + 1;
+
+            try {
+                await setDoc(doc(db, "commonPoints", newId), { id: newId, name, rate, icon, order: newOrder });
+                document.getElementById('commonNameInput').value = '';
+                await loadDataFromCloud();
+                alert('共通ポイントを追加しました！');
+            } catch (error) {
+                console.error(error);
+                alert('追加に失敗しました。');
+            }
+        };
+
+        window.handleCommonPointEntry = async function(e) {
+            e.preventDefault();
+            if(!selectedCommonPointId) return;
+            const month = document.getElementById('commonEntryMonth').value;
+            const value = parseFloat(document.getElementById('commonEntryValue').value);
+
+            // 既存の同月データがあれば更新、なければ追加
+            const existing = state.commonLogs.find(l => l.commonPointId === selectedCommonPointId && l.month === month);
+            const logId = existing ? existing.id : ('cplog_' + Date.now());
+
+            try {
+                await setDoc(doc(db, "commonLogs", logId), { month, commonPointId: selectedCommonPointId, value, createdAt: Date.now() });
+                document.getElementById('commonEntryValue').value = '';
+                await loadDataFromCloud();
+                openCommonPointDetail(selectedCommonPointId);
+                alert('共通ポイントの月次数値を保存しました！');
+            } catch (error) {
+                console.error(error);
+                alert('保存に失敗しました。');
+            }
+        };
+
+        window.deleteCommonLog = async function(id) {
+            if(!confirm('この月次履歴を削除してもよろしいですか？')) return;
+            try {
+                await deleteDoc(doc(db, "commonLogs", id));
+                await loadDataFromCloud();
+                openCommonPointDetail(selectedCommonPointId);
+            } catch (error) {
+                console.error(error);
+            }
+        };
+
+        window.deleteCommonPoint = async function(cpId) {
+            if(!confirm('この共通ポイントを削除しますか？')) return;
+            try {
+                await deleteDoc(doc(db, "commonPoints", cpId));
+                await loadDataFromCloud();
+                switchTab('dashboard');
+            } catch (error) {
+                console.error(error);
             }
         };
 
         window.deleteLog = async function(id) {
-            if(!confirm('この履歴を削除してもよろしいですか？')) return;
-            try {
-                await deleteDoc(doc(db, "logs", id));
-                await loadDataFromCloud();
-            } catch (error) {
-                console.error("Error deleting log:", error);
-            }
+            if(!confirm('削除しますか？')) return;
+            try { await deleteDoc(doc(db, "logs", id)); await loadDataFromCloud(); } catch(e){}
         };
-
         window.deleteRedemption = async function(id) {
-            if(!confirm('この交換履歴を削除してもよろしいですか？')) return;
-            try {
-                await deleteDoc(doc(db, "redemptions", id));
-                await loadDataFromCloud();
-            } catch (error) {
-                console.error("Error deleting redemption:", error);
-            }
+            if(!confirm('削除しますか？')) return;
+            try { await deleteDoc(doc(db, "redemptions", id)); await loadDataFromCloud(); } catch(e){}
         };
-
-        window.deleteApp = async function(appId) {
-            if(!confirm('このアプリを削除してもよろしいですか？')) return;
-            try {
-                await deleteDoc(doc(db, "apps", appId));
-                await loadDataFromCloud();
-                alert('アプリを削除しました。');
-            } catch (error) {
-                console.error("Error deleting app:", error);
-            }
-        };
-
-        window.moveAppOrder = async function(appId, direction) {
-            const sortedApps = [...state.apps].sort((a, b) => (a.order || 0) - (b.order || 0));
-            const index = sortedApps.findIndex(a => a.id === appId);
-            if (index === -1) return;
-
-            const targetIndex = direction === 'up' ? index - 1 : index + 1;
-            if (targetIndex < 0 || targetIndex >= sortedApps.length) return;
-
-            const temp = sortedApps[index];
-            sortedApps[index] = sortedApps[targetIndex];
-            sortedApps[targetIndex] = temp;
-
-            try {
-                for (let i = 0; i < sortedApps.length; i++) {
-                    const app = sortedApps[i];
-                    app.order = i + 1;
-                    await setDoc(doc(db, "apps", app.id), { ...app, order: i + 1 }, { merge: true });
-                }
-                await loadDataFromCloud();
-            } catch (error) {
-                console.error("Error updating order:", error);
-            }
-        };
-
-        window.resetCloudData = async function() {
-            if(!confirm('本当にすべてのクラウドデータを初期化しますか？')) return;
-            try {
-                for (const defApp of DEFAULT_APPS) {
-                    await setDoc(doc(db, "apps", defApp.id), defApp);
-                }
-                alert('初期化処理が完了しました。');
-                await loadDataFromCloud();
-            } catch (error) {
-                console.error("Reset error:", error);
-            }
+        window.deleteApp = async function(id) {
+            if(!confirm('削除しますか？')) return;
+            try { await deleteDoc(doc(db, "apps", id)); await loadDataFromCloud(); } catch(e){}
         };
 
         window.openExchangeSummaryModal = function() {
             const contentEl = document.getElementById('exchangeSummaryContent');
-            let summaryMap = {};
-            let totalGainedYen = 0;
-
+            let summaryMap = {}, totalGainedYen = 0;
             state.redemptions.forEach(r => {
                 const dest = r.destination || '未指定';
                 const yen = Number(r.gainedYen || 0);
@@ -881,167 +920,207 @@
             });
 
             let html = `<div class="p-3 bg-slate-50 rounded-xl mb-3 flex justify-between items-center font-bold text-sm"><span class="text-slate-600">総交換実績（金額）</span><span class="text-emerald-600 text-base">¥${totalGainedYen.toLocaleString()}</span></div>`;
-            
-            const keys = Object.keys(summaryMap);
-            if(keys.length === 0) {
-                html += `<p class="text-xs text-slate-400 text-center py-4">交換履歴がありません。</p>`;
-            } else {
-                html += `<div class="space-y-2">`;
-                keys.forEach(dest => {
-                    html += `
-                        <div class="flex justify-between items-center p-3 border border-slate-100 rounded-xl bg-white text-xs">
-                            <span class="font-bold text-slate-700"><i class="fa-solid fa-gift text-indigo-500 mr-1.5"></i> ${dest}</span>
-                            <span class="font-bold text-slate-800">¥${summaryMap[dest].toLocaleString()}</span>
-                        </div>
-                    `;
-                });
-                html += `</div>`;
-            }
-
+            Object.keys(summaryMap).forEach(dest => {
+                html += `<div class="flex justify-between items-center p-3 border border-slate-100 rounded-xl bg-white text-xs"><span class="font-bold text-slate-700">${dest}</span><span class="font-bold text-slate-800">¥${summaryMap[dest].toLocaleString()}</span></div>`;
+            });
             contentEl.innerHTML = html;
             document.getElementById('exchangeSummaryModal').classList.remove('hidden');
             document.getElementById('exchangeSummaryModal').classList.add('flex');
         };
-
         window.closeExchangeSummaryModal = function() {
             document.getElementById('exchangeSummaryModal').classList.remove('flex');
             document.getElementById('exchangeSummaryModal').classList.add('hidden');
         };
 
-        window.changeChart1Mode = function(mode) {
-            chart1Mode = mode;
-            setupChartModeUI('c1', mode);
-            renderChart1();
-        };
-
-        window.changeChart1PeriodTab = function(periodType) {
-            ['day', 'month', 'year'].forEach(p => {
-                const btn = document.getElementById(`c1-ptab-${p}`);
-                if(btn) {
-                    if(p === periodType) {
-                        btn.className = "px-2.5 py-1 rounded-md transition bg-indigo-600 text-white font-medium";
-                    } else {
-                        btn.className = "px-2.5 py-1 rounded-md transition text-slate-600";
-                    }
-                }
-            });
-
-            if(periodType === 'day') changeChart1Mode('daily');
-            else if(periodType === 'month') changeChart1Mode('monthly');
-            else if(periodType === 'year') changeChart1Mode('yearly');
-        };
-
-        window.changeChart2Mode = function(mode) {
-            chart2Mode = mode;
-            ['daily', 'monthly', 'yearly'].forEach(m => {
-                const btn = document.getElementById(`btn-c2-${m}`);
-                if(btn) {
-                    if(m === mode) btn.className = "px-2.5 py-1 rounded-lg transition bg-white shadow-sm text-indigo-600";
-                    else btn.className = "px-2.5 py-1 rounded-lg transition text-slate-600";
-                }
-            });
-            renderChart2();
-        };
-
-        window.changeChart3Mode = function(mode) {
-            chart3Mode = mode;
-            setupChartModeUI('c3', mode);
-            renderChart3();
-        };
-
-        function setupChartModeUI(prefix, mode) {
-            ['daily', 'monthly', 'yearly'].forEach(m => {
-                const btn = document.getElementById(`btn-${prefix}-${m}`);
-                if(btn) {
-                    if(m === mode) btn.className = "px-2.5 py-1 rounded-lg transition bg-white shadow-sm text-indigo-600";
-                    else btn.className = "px-2.5 py-1 rounded-lg transition text-slate-600";
-                }
-            });
-
-            const dateInput = document.getElementById(`${prefix}-date-input`);
-            const monthInput = document.getElementById(`${prefix}-month-input`);
-            const selectInput = document.getElementById(`${prefix}-select-input`);
-            const labelEl = document.getElementById(`${prefix}-target-label`);
-
-            if(mode === 'daily') {
-                if(labelEl) labelEl.innerText = '対象日:';
-                if(dateInput) dateInput.classList.remove('hidden');
-                if(monthInput) monthInput.classList.add('hidden');
-                if(selectInput) selectInput.classList.add('hidden');
-                if(dateInput && !dateInput.value) dateInput.value = todayStr;
-                if(prefix === 'c1') syncChart1PeriodTabUI('day');
-            } else if(mode === 'monthly') {
-                if(labelEl) labelEl.innerText = '対象月:';
-                if(dateInput) dateInput.classList.add('hidden');
-                if(monthInput) monthInput.classList.remove('hidden');
-                if(selectInput) selectInput.classList.add('hidden');
-                if(monthInput && !monthInput.value) monthInput.value = currentMonthStr;
-                if(prefix === 'c1') syncChart1PeriodTabUI('month');
-            } else if(mode === 'yearly') {
-                if(labelEl) labelEl.innerText = '対象年:';
-                if(dateInput) dateInput.classList.add('hidden');
-                if(monthInput) monthInput.classList.add('hidden');
-                if(selectInput) selectInput.classList.remove('hidden');
-
-                const yearsSet = new Set();
-                state.logs.forEach(l => { if(l.date) yearsSet.add(l.date.substring(0, 4)); });
-                state.redemptions.forEach(r => { if(r.date) yearsSet.add(r.date.substring(0, 4)); });
-                yearsSet.add(currentYearStr);
-
-                const sortedYears = Array.from(yearsSet).sort().reverse();
-                let opts = '';
-                sortedYears.forEach(y => { opts += `<option value="${y}">${y}年</option>`; });
-                if(selectInput) {
-                    selectInput.innerHTML = opts;
-                    if(!selectInput.value) selectInput.value = currentYearStr;
-                }
-                if(prefix === 'c1') syncChart1PeriodTabUI('year');
-            }
-        }
-
-        function syncChart1PeriodTabUI(ptype) {
-            ['day', 'month', 'year'].forEach(p => {
-                const btn = document.getElementById(`c1-ptab-${p}`);
-                if(btn) {
-                    if(p === ptype) {
-                        btn.className = "px-2.5 py-1 rounded-md transition bg-indigo-600 text-white font-medium";
-                    } else {
-                        btn.className = "px-2.5 py-1 rounded-md transition text-slate-600";
-                    }
-                }
-            });
-        }
-
         function renderAll() {
+            renderCommonPointButtons();
             renderAppSelects();
             renderDashboardCards();
             renderLogsTable();
             renderRedemptionTable();
             renderAppsSettingsList();
+            renderCommonSettingsList();
             renderChart2AppSelect();
-            renderSelectedAppCard();
-            setupChartModeUI('c1', chart1Mode);
-            setupChartModeUI('c3', chart3Mode);
+            if(selectedCommonPointId) {
+                renderCommonDetailHeader();
+                renderCommonCharts();
+                renderCommonLogsTable();
+            }
+            setTimeout(() => { renderChart1(); renderChart2(); renderChart3(); }, 100);
+        }
+
+        function renderCommonPointButtons() {
+            const container = document.getElementById('common-point-buttons-container');
+            if(!container) return;
+            let html = '';
+            state.commonPoints.forEach(cp => {
+                html += `
+                    <button onclick="openCommonPointDetail('${cp.id}')" class="bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs px-3 py-1.5 rounded-xl font-medium transition flex items-center gap-1 shadow-sm">
+                        <span>${cp.icon || '🟡'}</span> ${cp.name}
+                    </button>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function renderCommonDetailHeader() {
+            const container = document.getElementById('commonDetailHeaderCard');
+            if(!container || !selectedCommonPointId) return;
+            const cp = state.commonPoints.find(p => p.id === selectedCommonPointId);
+            if(!cp) return;
+
+            const cpLogs = state.commonLogs.filter(l => l.commonPointId === cp.id).sort((a,b) => a.month.localeCompare(b.month));
+            const latestVal = cpLogs.length > 0 ? cpLogs[cpLogs.length - 1].value : 0;
+            const latestYen = latestVal * Number(cp.rate || 1);
+
+            container.innerHTML = `
+                <div class="p-5 rounded-2xl shadow-sm text-white bg-amber-600 flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">${cp.icon || '🟡'}</span>
+                        <div>
+                            <h2 class="font-bold text-lg">${cp.name} 管理</h2>
+                            <p class="text-xs text-amber-100">レート: 1pt = ${cp.rate}円</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-xs text-amber-100 block">現在の最新残高</span>
+                        <span class="text-xl font-bold">${latestVal.toLocaleString()} pt (¥${latestYen.toLocaleString()})</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderCommonLogsTable() {
+            const tbody = document.getElementById('commonLogsTableBody');
+            if(!tbody || !selectedCommonPointId) return;
+            const cpLogs = state.commonLogs.filter(l => l.commonPointId === selectedCommonPointId).sort((a,b) => b.month.localeCompare(a.month));
             
-            setTimeout(() => {
-                renderChart1();
-                renderChart2();
-                renderChart3();
-            }, 100);
+            let html = '';
+            cpLogs.forEach((item, idx) => {
+                // 差分計算（時系列の前後比較）
+                const sortedAsc = [...cpLogs].sort((a,b) => a.month.localeCompare(b.month));
+                const ascIdx = sortedAsc.findIndex(l => l.id === item.id);
+                let diff = ascIdx > 0 ? item.value - sortedAsc[ascIdx - 1].value : item.value;
+                
+                let diffText = '';
+                if(diff >= 0) {
+                    diffText = `<span class="text-emerald-600 font-bold">+${diff.toLocaleString()} pt (獲得)</span>`;
+                } else {
+                    diffText = `<span class="text-rose-600 font-bold">${diff.toLocaleString()} pt (利用額: ¥${Math.abs(diff).toLocaleString()})</span>`;
+                }
+
+                html += `
+                    <tr class="hover:bg-slate-50/50 transition">
+                        <td class="py-3 px-4 font-medium text-slate-600 text-xs">${item.month}</td>
+                        <td class="py-3 px-4 font-medium text-slate-800">${item.value.toLocaleString()} pt</td>
+                        <td class="py-3 px-4 text-right">${diffText}</td>
+                        <td class="py-3 px-4 text-center">
+                            <button onclick="deleteCommonLog('${item.id}')" class="text-slate-400 hover:text-rose-600 transition p-1"><i class="fa-solid fa-trash-can"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+            if(cpLogs.length === 0) html = `<tr><td colspan="4" class="text-center py-6 text-xs text-slate-400">月次履歴がありません。</td></tr>`;
+            tbody.innerHTML = html;
+        }
+
+        function renderCommonCharts() {
+            if(!selectedCommonPointId) return;
+            const cp = state.commonPoints.find(p => p.id === selectedCommonPointId);
+            if(!cp) return;
+
+            // 1. 合算・推移グラフ (月別 / 年間)
+            const canvas1 = document.getElementById('commonChartTotal');
+            if(canvas1) {
+                const ctx1 = canvas1.getContext('2d');
+                if(commonChartTotalInst) commonChartTotalInst.destroy();
+
+                const cpLogs = state.commonLogs.filter(l => l.commonPointId === cp.id).sort((a,b) => a.month.localeCompare(b.month));
+                let labels = cpLogs.map(l => l.month);
+                let earnedPoints = [];
+                let spentYen = [];
+
+                cpLogs.forEach((item, idx) => {
+                    let diff = idx === 0 ? item.value : item.value - cpLogs[idx - 1].value;
+                    if(diff >= 0) {
+                        earnedPoints.push(diff);
+                        spentYen.push(0);
+                    } else {
+                        earnedPoints.push(0);
+                        spentYen.push(Math.abs(diff) * Number(cp.rate || 1));
+                    }
+                });
+
+                commonChartTotalInst = new Chart(ctx1, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            { type: 'line', label: '利用額 (円)', data: spentYen, borderColor: '#ef4444', backgroundColor: '#ef4444', borderWidth: 2, yAxisID: 'y1', order: 1 },
+                            { type: 'bar', label: '獲得ポイント', data: earnedPoints, backgroundColor: '#f59e0b', borderRadius: 6, yAxisID: 'y', order: 2 }
+                        ]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        scales: {
+                            y: { type: 'linear', position: 'left', beginAtZero: true, title: { display: true, text: 'ポイント' } },
+                            y1: { type: 'linear', position: 'right', beginAtZero: true, grid: { drawOnChartArea: false }, title: { display: true, text: '利用額 (円)' } }
+                        }
+                    }
+                });
+            }
+
+            // 2. 比較グラフ (各共通ポイント比較)
+            const canvas2 = document.getElementById('commonChartCompare');
+            if(canvas2) {
+                const ctx2 = canvas2.getContext('2d');
+                if(commonChartCompareInst) commonChartCompareInst.destroy();
+
+                let cpLabels = state.commonPoints.map(p => p.name);
+                let cpBalances = state.commonPoints.map(p => {
+                    const logs = state.commonLogs.filter(l => l.commonPointId === p.id).sort((a,b) => a.month.localeCompare(b.month));
+                    return logs.length > 0 ? logs[logs.length - 1].value : 0;
+                });
+
+                commonChartCompareInst = new Chart(ctx2, {
+                    type: 'bar',
+                    data: {
+                        labels: cpLabels,
+                        datasets: [{ label: '最新残高ポイント', data: cpBalances, backgroundColor: COLOR_PALETTE, borderRadius: 6 }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+                });
+            }
+
+            // 3. シェア円グラフ
+            const canvas3 = document.getElementById('commonChartShare');
+            if(canvas3) {
+                const ctx3 = canvas3.getContext('2d');
+                if(commonChartShareInst) commonChartShareInst.destroy();
+
+                let cpLabels = state.commonPoints.map(p => p.name);
+                let cpBalances = state.commonPoints.map(p => {
+                    const logs = state.commonLogs.filter(l => l.commonPointId === p.id).sort((a,b) => a.month.localeCompare(b.month));
+                    return logs.length > 0 ? logs[logs.length - 1].value : 0;
+                });
+
+                commonChartShareInst = new Chart(ctx3, {
+                    type: 'pie',
+                    data: {
+                        labels: cpLabels,
+                        datasets: [{ data: cpBalances, backgroundColor: COLOR_PALETTE }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
         }
 
         function renderAppSelects() {
             const entrySelect = document.getElementById('entryAppId');
             const redSelect = document.getElementById('redAppId');
             let optionsHtml = '<option value="" disabled selected>アプリを選択してください</option>';
-            state.apps.forEach(app => {
-                optionsHtml += `<option value="${app.id}">${app.icon || '📱'} ${app.name}</option>`;
-            });
-            if(entrySelect) {
-                const currentVal = entrySelect.value;
-                entrySelect.innerHTML = optionsHtml;
-                entrySelect.value = selectedAppFilter || currentVal || "";
-            }
+            state.apps.forEach(app => { optionsHtml += `<option value="${app.id}">${app.icon || '📱'} ${app.name}</option>`; });
+            if(entrySelect) entrySelect.innerHTML = optionsHtml;
             if(redSelect) redSelect.innerHTML = optionsHtml;
         }
 
@@ -1049,76 +1128,8 @@
             const selectEl = document.getElementById('chart2-app-select');
             if(!selectEl) return;
             let html = '';
-            state.apps.forEach(app => {
-                html += `<option value="${app.id}">${app.icon || '📱'} ${app.name}</option>`;
-            });
-            const currentVal = selectEl.value;
+            state.apps.forEach(app => { html += `<option value="${app.id}">${app.icon || '📱'} ${app.name}</option>`; });
             selectEl.innerHTML = html;
-            if(currentVal) selectEl.value = currentVal;
-        }
-
-        function renderSelectedAppCard() {
-            const container = document.getElementById('selectedAppCardContainer');
-            if(!container) return;
-
-            if(!selectedAppFilter) {
-                container.classList.add('hidden');
-                container.innerHTML = '';
-                return;
-            }
-
-            const appIndex = state.apps.findIndex(a => a.id === selectedAppFilter);
-            const app = state.apps[appIndex];
-            if(!app) { container.classList.add('hidden'); container.innerHTML = ''; return; }
-
-            const cardColor = COLOR_PALETTE[appIndex % COLOR_PALETTE.length];
-            const appLogs = state.logs.filter(l => l.appId === app.id).sort((a,b) => new Date(a.date) - new Date(b.date));
-            const latestVal = appLogs.length > 0 ? Number(appLogs[appLogs.length - 1].value || 0) : 0;
-            
-            let redeemedPtTotal = 0;
-            state.redemptions.filter(r => r.appId === app.id).forEach(r => {
-                redeemedPtTotal += Number(r.spentPt || 0);
-            });
-
-            const currentBalancePt = Math.max(0, latestVal - redeemedPtTotal);
-            let diffLast = 0;
-            if(appLogs.length > 0) {
-                const lastLog = appLogs[appLogs.length - 1];
-                const currentIndex = appLogs.findIndex(l => l.id === lastLog.id);
-                diffLast = currentIndex > 0 ? Number(lastLog.value || 0) - Number(appLogs[currentIndex - 1].value || 0) : Number(lastLog.value || 0);
-            }
-
-            let appTotalRedeemYen = 0;
-            state.redemptions.filter(r => r.appId === app.id).forEach(r => {
-                appTotalRedeemYen += Number(r.gainedYen || 0);
-            });
-
-            container.innerHTML = `
-                <div class="p-4 rounded-2xl shadow-sm text-white flex flex-col justify-between" style="background-color: ${cardColor};">
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="flex items-center gap-2">
-                            <span class="text-xl">${app.icon || '📱'}</span>
-                            <h4 class="font-bold text-sm tracking-tight">${app.name}</h4>
-                        </div>
-                        <span class="text-[11px] opacity-90 bg-white/20 px-2 py-0.5 rounded-lg">レート: ${app.rate}円</span>
-                    </div>
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-white/20 text-xs">
-                        <div>
-                            <span class="opacity-75 text-[10px] block">現在のポイント</span>
-                            <span class="font-bold text-sm">${currentBalancePt.toLocaleString()} pt</span>
-                        </div>
-                        <div>
-                            <span class="opacity-75 text-[10px] block">直近の増減</span>
-                            <span class="font-bold text-sm">${diffLast >= 0 ? '+' : ''}${diffLast.toLocaleString()} pt</span>
-                        </div>
-                        <div>
-                            <span class="opacity-75 text-[10px] block">累計交換金額</span>
-                            <span class="font-bold text-sm">¥${appTotalRedeemYen.toLocaleString()}</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-            container.classList.remove('hidden');
         }
 
         function renderDashboardCards() {
@@ -1129,82 +1140,30 @@
             let currentMonthGainedYen = 0;
 
             state.redemptions.forEach(r => { 
-                if(r.date && r.date.substring(0, 7) === currentMonthStr) {
-                    currentMonthGainedYen += Number(r.gainedYen || 0); 
-                }
+                if(r.date && r.date.substring(0, 7) === currentMonthStr) currentMonthGainedYen += Number(r.gainedYen || 0); 
             });
 
             state.apps.forEach(app => {
                 const appLogs = state.logs.filter(l => l.appId === app.id).sort((a,b) => new Date(a.date) - new Date(b.date));
                 const latestVal = appLogs.length > 0 ? Number(appLogs[appLogs.length - 1].value || 0) : 0;
-                
                 let redeemedPtTotal = 0;
-                state.redemptions.filter(r => r.appId === app.id).forEach(r => {
-                    redeemedPtTotal += Number(r.spentPt || 0);
-                });
+                state.redemptions.filter(r => r.appId === app.id).forEach(r => redeemedPtTotal += Number(r.spentPt || 0));
 
                 const currentBalancePt = Math.max(0, latestVal - redeemedPtTotal);
-                const currentBalanceYen = currentBalancePt * Number(app.rate || 0);
-                totalUnredeemedYen += currentBalanceYen;
-
-                let diffLast = 0;
-                if(appLogs.length > 0) {
-                    const lastLog = appLogs[appLogs.length - 1];
-                    const currentIndex = appLogs.findIndex(l => l.id === lastLog.id);
-                    diffLast = currentIndex > 0 ? Number(lastLog.value || 0) - Number(appLogs[currentIndex - 1].value || 0) : Number(lastLog.value || 0);
-                }
-
-                let cardContentHtml = '';
-                if(dashboardCardMode === 'point') {
-                    cardContentHtml = `
-                        <div class="flex justify-between items-baseline">
-                            <span class="text-[10px] text-slate-400">直近増減</span>
-                            <span class="text-xs font-bold ${diffLast >= 0 ? 'text-emerald-600' : 'text-rose-600'}">${diffLast >= 0 ? '+' : ''}${diffLast.toLocaleString()} pt</span>
-                        </div>
-                        <div class="flex justify-between items-baseline">
-                            <span class="text-[10px] text-slate-400">累計残高</span>
-                            <span class="text-xs font-bold text-slate-700">${currentBalancePt.toLocaleString()} pt</span>
-                        </div>
-                    `;
-                } else {
-                    let appMonthlyYen = 0;
-                    let appTotalYen = 0;
-                    state.redemptions.filter(r => r.appId === app.id).forEach(r => {
-                        const yen = Number(r.gainedYen || 0);
-                        appTotalYen += yen;
-                        if(r.date && r.date.substring(0, 7) === currentMonthStr) {
-                            appMonthlyYen += yen;
-                        }
-                    });
-                    cardContentHtml = `
-                        <div class="flex justify-between items-baseline">
-                            <span class="text-[10px] text-slate-400">今月交換</span>
-                            <span class="text-xs font-bold text-emerald-600">¥${appMonthlyYen.toLocaleString()}</span>
-                        </div>
-                        <div class="flex justify-between items-baseline">
-                            <span class="text-[10px] text-slate-400">累計金額</span>
-                            <span class="text-xs font-bold text-slate-700">¥${appTotalYen.toLocaleString()}</span>
-                        </div>
-                    `;
-                }
+                totalUnredeemedYen += currentBalancePt * Number(app.rate || 0);
 
                 html += `
-                    <div class="bg-white p-2.5 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between hover:border-indigo-400 hover:shadow-md transition">
-                        <div class="flex items-center justify-between mb-1 cursor-pointer" onclick="filterLogsByApp('${app.id}')">
-                            <div class="flex items-center gap-1.5 overflow-hidden">
-                                <span class="text-sm shrink-0">${app.icon || '📱'}</span>
-                                <h4 class="font-bold text-slate-800 text-xs truncate">${app.name}</h4>
-                            </div>
-                            <span class="text-[9px] text-slate-400 shrink-0 ml-1">率:${app.rate}円</span>
+                    <div class="bg-white p-2.5 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-sm">${app.icon || '📱'}</span>
+                            <h4 class="font-bold text-slate-800 text-xs truncate">${app.name}</h4>
                         </div>
-                        <div class="cursor-pointer space-y-0.5 border-t border-slate-50 pt-1" onclick="filterLogsByApp('${app.id}')">
-                            ${cardContentHtml}
-                        </div>
+                        <div class="text-xs font-bold text-slate-700 text-right">${currentBalancePt.toLocaleString()} pt</div>
                     </div>
                 `;
             });
-
             container.innerHTML = html;
+
             let totalConfirmedYen = 0;
             state.redemptions.forEach(r => totalConfirmedYen += Number(r.gainedYen || 0));
             const totalAssetsYen = totalUnredeemedYen + totalConfirmedYen;
@@ -1218,92 +1177,39 @@
         function renderLogsTable() {
             const tbody = document.getElementById('logsTableBody');
             if(!tbody) return;
-
-            let filteredLogs = state.logs;
-            let filteredReds = state.redemptions;
-            const banner = document.getElementById('filter-banner');
-            const bannerText = document.getElementById('filter-banner-text');
-
-            if (selectedAppFilter) {
-                filteredLogs = state.logs.filter(l => l.appId === selectedAppFilter);
-                filteredReds = state.redemptions.filter(r => r.appId === selectedAppFilter);
-                const targetApp = state.apps.find(a => a.id === selectedAppFilter);
-                if (banner && bannerText) {
-                    banner.classList.remove('hidden');
-                    bannerText.innerText = `🔍 ${targetApp ? targetApp.name : '選択アプリ'} の履歴を表示中`;
-                }
-            } else {
-                if (banner) banner.classList.add('hidden');
-            }
-
-            let combinedItems = [];
-            filteredLogs.forEach(l => { combinedItems.push({ ...l, recordType: 'point' }); });
-            if (logDisplayMode === 'all') {
-                filteredReds.forEach(r => { combinedItems.push({ ...r, recordType: 'redemption' }); });
-            }
-
-            combinedItems.sort((a, b) => new Date(b.date) - new Date(a.date));
-            if(document.getElementById('log-count')) document.getElementById('log-count').innerText = `全 ${combinedItems.length} 件`;
-
             let html = '';
-            combinedItems.forEach(item => {
+            state.logs.forEach(item => {
                 const app = state.apps.find(a => a.id === item.appId) || { name: '不明', rate: 0, icon: '❓' };
-                
-                if (item.recordType === 'redemption') {
-                    html += `
-                        <tr class="hover:bg-slate-50/50 transition bg-emerald-50/30">
-                            <td class="py-3 px-4 font-medium text-slate-600 text-xs">${item.date || ''}</td>
-                            <td class="py-3 px-4 font-medium text-slate-800 flex items-center gap-1.5"><span class="text-sm">${app.icon}</span> ${app.name}</td>
-                            <td class="py-3 px-4 text-xs font-semibold text-emerald-600"><i class="fa-solid fa-gift mr-1"></i> 交換 (${item.destination || '未指定'})</td>
-                            <td class="py-3 px-4 text-right font-bold text-slate-800">${Number(item.spentPt || 0).toLocaleString()} pt</td>
-                            <td class="py-3 px-4 text-right font-bold text-emerald-600">¥${Number(item.gainedYen || 0).toLocaleString()}</td>
-                            <td class="py-3 px-4 text-center">
-                                <button onclick="deleteRedemption('${item.id}')" class="text-slate-400 hover:text-rose-600 transition p-1"><i class="fa-solid fa-trash-can"></i></button>
-                            </td>
-                        </tr>
-                    `;
-                } else {
-                    const appLogsAsc = state.logs.filter(l => l.appId === item.appId).sort((a,b) => new Date(a.date) - new Date(b.date));
-                    const currentIndex = appLogsAsc.findIndex(l => l.id === item.id);
-                    let diff = currentIndex > 0 ? Number(item.value || 0) - Number(appLogsAsc[currentIndex - 1].value || 0) : Number(item.value || 0);
-                    const diffYen = diff * Number(app.rate || 0);
-
-                    html += `
-                        <tr class="hover:bg-slate-50/50 transition">
-                            <td class="py-3 px-4 font-medium text-slate-600 text-xs">${item.date || ''}</td>
-                            <td class="py-3 px-4 font-medium text-slate-800 flex items-center gap-1.5"><span class="text-sm">${app.icon}</span> ${app.name}</td>
-                            <td class="py-3 px-4 text-xs text-slate-500">数値入力</td>
-                            <td class="py-3 px-4 text-right font-bold text-slate-800">${Number(item.value || 0).toLocaleString()} pt</td>
-                            <td class="py-3 px-4 text-right font-medium ${diff >= 0 ? 'text-emerald-600' : 'text-rose-600'}">${diff >= 0 ? '+' : ''}${diff.toLocaleString()} pt <span class="text-slate-400 text-xs block">¥${Math.floor(diffYen).toLocaleString()}</span></td>
-                            <td class="py-3 px-4 text-center">
-                                <button onclick="deleteLog('${item.id}')" class="text-slate-400 hover:text-rose-600 transition p-1"><i class="fa-solid fa-trash-can"></i></button>
-                            </td>
-                        </tr>
-                    `;
-                }
+                html += `
+                    <tr class="hover:bg-slate-50/50 transition">
+                        <td class="py-3 px-4 text-xs">${item.date}</td>
+                        <td class="py-3 px-4 font-medium">${app.icon} ${app.name}</td>
+                        <td class="py-3 px-4 text-xs text-slate-500">数値入力</td>
+                        <td class="py-3 px-4 text-right font-bold">${item.value.toLocaleString()} pt</td>
+                        <td class="py-3 px-4 text-center">
+                            <button onclick="deleteLog('${item.id}')" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button>
+                        </td>
+                    </tr>
+                `;
             });
-            if(combinedItems.length === 0) {
-                html = `<tr><td colspan="6" class="text-center py-6 text-xs text-slate-400">表示する履歴がありません。</td></tr>`;
-            }
             tbody.innerHTML = html;
         }
 
         function renderRedemptionTable() {
             const tbody = document.getElementById('redemptionTableBody');
             if(!tbody) return;
-            const sortedReds = [...state.redemptions].sort((a, b) => new Date(b.date) - new Date(a.date));
             let html = '';
-            sortedReds.forEach(r => {
+            state.redemptions.forEach(r => {
                 const app = state.apps.find(a => a.id === r.appId) || { name: '不明', icon: '❓' };
                 html += `
                     <tr class="hover:bg-slate-50/50 transition">
-                        <td class="py-3 px-4 font-medium text-slate-600 text-xs">${r.date || ''}</td>
-                        <td class="py-3 px-4 font-medium text-slate-800 flex items-center gap-1.5"><span class="text-sm">${app.icon}</span> ${app.name}</td>
-                        <td class="py-3 px-4 font-medium text-slate-700 text-xs">${r.destination || '未指定'}</td>
-                        <td class="py-3 px-4 text-right font-bold text-slate-800">${Number(r.spentPt || 0).toLocaleString()} pt</td>
-                        <td class="py-3 px-4 text-right font-bold text-emerald-600">¥${Number(r.gainedYen || 0).toLocaleString()}</td>
+                        <td class="py-3 px-4 text-xs">${r.date}</td>
+                        <td class="py-3 px-4 font-medium">${app.icon} ${app.name}</td>
+                        <td class="py-3 px-4 text-xs">${r.destination}</td>
+                        <td class="py-3 px-4 text-right font-bold">${r.spentPt.toLocaleString()} pt</td>
+                        <td class="py-3 px-4 text-right font-bold text-emerald-600">¥${r.gainedYen.toLocaleString()}</td>
                         <td class="py-3 px-4 text-center">
-                            <button onclick="deleteRedemption('${r.id}')" class="text-slate-400 hover:text-rose-600 transition p-1"><i class="fa-solid fa-trash-can"></i></button>
+                            <button onclick="deleteRedemption('${r.id}')" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button>
                         </td>
                     </tr>
                 `;
@@ -1315,414 +1221,42 @@
             const container = document.getElementById('appsListContainer');
             if(!container) return;
             let html = '';
-            const sortedApps = [...state.apps].sort((a, b) => (a.order || 0) - (b.order || 0));
-
-            sortedApps.forEach((app, idx) => {
-                const isFirst = idx === 0;
-                const isLast = idx === sortedApps.length - 1;
-
+            state.apps.forEach(app => {
                 html += `
-                    <div class="flex items-center justify-between p-3 bg-slate-50 border border-slate-100 rounded-xl gap-2">
+                    <div class="flex items-center justify-between p-3 bg-slate-50 border border-slate-100 rounded-xl">
                         <div class="flex items-center gap-3">
-                            <select onchange="updateAppProperty('${app.id}', 'icon', this.value)" class="bg-white border border-slate-200 rounded-lg px-2 py-1 text-sm focus:outline-none">
-                                <option value="🚶" ${app.icon === '🚶' ? 'selected' : ''}>🚶 歩く</option>
-                                <option value="💤" ${app.icon === '💤' ? 'selected' : ''}>💤 放置</option>
-                                <option value="🪙" ${app.icon === '🪙' ? 'selected' : ''}>🪙 ポイントサイト</option>
-                                <option value="⭐" ${app.icon === '⭐' ? 'selected' : ''}>⭐ etc</option>
-                            </select>
-                            <div>
-                                <h4 class="font-bold text-slate-800 text-sm">${app.name}</h4>
-                                <p class="text-xs text-slate-400">還元レート: 1pt ＝ ${app.rate}円</p>
-                            </div>
+                            <span class="text-lg">${app.icon}</span>
+                            <div><h4 class="font-bold text-sm">${app.name}</h4><p class="text-xs text-slate-400">レート: ${app.rate}円</p></div>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <div class="flex items-center gap-1">
-                                <button onclick="moveAppOrder('${app.id}', 'up')" ${isFirst ? 'disabled class="text-slate-300 cursor-not-allowed p-1.5"' : 'class="text-slate-500 hover:text-indigo-600 transition p-1.5 bg-white border border-slate-200 rounded-lg shadow-sm"'}>
-                                    <i class="fa-solid fa-arrow-up text-xs"></i>
-                                </button>
-                                <button onclick="moveAppOrder('${app.id}', 'down')" ${isLast ? 'disabled class="text-slate-300 cursor-not-allowed p-1.5"' : 'class="text-slate-500 hover:text-indigo-600 transition p-1.5 bg-white border border-slate-200 rounded-lg shadow-sm"'}>
-                                    <i class="fa-solid fa-arrow-down text-xs"></i>
-                                </button>
-                            </div>
-                            <button onclick="deleteApp('${app.id}')" class="text-slate-400 hover:text-rose-600 transition p-1.5 ml-2 bg-white border border-slate-200 rounded-lg shadow-sm">
-                                <i class="fa-solid fa-trash-can text-xs"></i>
-                            </button>
-                        </div>
+                        <button onclick="deleteApp('${app.id}')" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button>
                     </div>
                 `;
             });
             container.innerHTML = html;
         }
 
-        function calculateEarnedPointsForPeriod(appId, periodStr, mode) {
-            const appLogs = state.logs.filter(l => l.appId === appId).sort((a,b) => new Date(a.date) - new Date(b.date));
-            if(appLogs.length === 0) return 0;
-
-            let totalEarned = 0;
-            appLogs.forEach((log, idx) => {
-                if(!log.date) return;
-                const match = mode === 'monthly' ? log.date.substring(0, 7) === periodStr : log.date.substring(0, 4) === periodStr;
-                if(match) {
-                    const diff = idx === 0 ? Number(log.value || 0) : Number(log.value || 0) - Number(appLogs[idx - 1].value || 0);
-                    if(diff > 0) totalEarned += diff;
-                }
+        function renderCommonSettingsList() {
+            const container = document.getElementById('commonSettingsListContainer');
+            if(!container) return;
+            let html = '';
+            state.commonPoints.forEach(cp => {
+                html += `
+                    <div class="flex items-center justify-between p-3 bg-slate-50 border border-slate-100 rounded-xl">
+                        <div class="flex items-center gap-3">
+                            <span class="text-lg">${cp.icon}</span>
+                            <div><h4 class="font-bold text-sm">${cp.name}</h4><p class="text-xs text-slate-400">レート: ${cp.rate}円</p></div>
+                        </div>
+                        <button onclick="deleteCommonPoint('${cp.id}')" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
+                `;
             });
-            return totalEarned;
+            container.innerHTML = html;
         }
 
-        function getLast12MonthsKeys() {
-            let months = [];
-            let d = new Date();
-            for (let i = 11; i >= 0; i--) {
-                let dCopy = new Date(d.getFullYear(), d.getMonth() - i, 1);
-                let y = dCopy.getFullYear();
-                let m = String(dCopy.getMonth() + 1).padStart(2, '0');
-                months.push(`${y}-${m}`);
-            }
-            return months;
-        }
-
-        function getLast30DaysKeys() {
-            let days = [];
-            for (let i = 29; i >= 0; i--) {
-                let dCopy = new Date();
-                dCopy.setDate(todayDate.getDate() - i);
-                days.push(dCopy.toISOString().split('T')[0]);
-            }
-            return days;
-        }
-
-        function renderChart1() {
-            const canvasEl = document.getElementById('barChartApps');
-            if(!canvasEl) return;
-            const ctx = canvasEl.getContext('2d');
-            if(barChartInstance) barChartInstance.destroy();
-
-            const labels = state.apps.map(a => a.name);
-            const barColors = state.apps.map((_, i) => COLOR_PALETTE[i % COLOR_PALETTE.length]);
-            let dataPoints = [];
-            let redYenPoints = [];
-
-            if (chart1Mode === 'daily') {
-                const targetDate = document.getElementById('chart1-date-input').value;
-                document.getElementById('chart1-title').innerText = `アプリ別 獲得比較 (${targetDate})`;
-
-                dataPoints = state.apps.map(app => {
-                    const appLogs = state.logs.filter(l => l.appId === app.id).sort((a,b) => new Date(a.date) - new Date(b.date));
-                    const logIndex = appLogs.findIndex(l => l.date === targetDate);
-                    if(logIndex === -1) return 0;
-                    if(logIndex === 0) return appLogs[0].value;
-                    return appLogs[logIndex].value - appLogs[logIndex - 1].value;
-                });
-
-                redYenPoints = state.apps.map(app => {
-                    let yen = 0;
-                    state.redemptions.filter(r => r.appId === app.id && r.date === targetDate).forEach(r => yen += Number(r.gainedYen || 0));
-                    return yen;
-                });
-
-            } else if (chart1Mode === 'monthly') {
-                const targetMonth = document.getElementById('chart1-month-input').value || currentMonthStr;
-                document.getElementById('chart1-title').innerText = `アプリ別 獲得比較 (${targetMonth})`;
-
-                dataPoints = state.apps.map(app => calculateEarnedPointsForPeriod(app.id, targetMonth, 'monthly'));
-
-                redYenPoints = state.apps.map(app => {
-                    let yen = 0;
-                    state.redemptions.filter(r => r.appId === app.id && r.date && r.date.substring(0, 7) === targetMonth).forEach(r => yen += Number(r.gainedYen || 0));
-                    return yen;
-                });
-
-            } else if (chart1Mode === 'yearly') {
-                const targetYear = document.getElementById('chart1-select-input').value || currentYearStr;
-                document.getElementById('chart1-title').innerText = `アプリ別 獲得比較 (${targetYear}年)`;
-
-                dataPoints = state.apps.map(app => calculateEarnedPointsForPeriod(app.id, targetYear, 'yearly'));
-
-                redYenPoints = state.apps.map(app => {
-                    let yen = 0;
-                    state.redemptions.filter(r => r.appId === app.id && r.date && r.date.substring(0, 4) === targetYear).forEach(r => yen += Number(r.gainedYen || 0));
-                    return yen;
-                });
-            }
-
-            barChartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            type: 'line',
-                            label: '交換金額 (円)',
-                            data: redYenPoints,
-                            borderColor: '#ef4444',
-                            backgroundColor: '#ef4444',
-                            borderWidth: 2,
-                            tension: 0.2,
-                            yAxisID: 'y1',
-                            order: 1
-                        },
-                        {
-                            type: 'bar',
-                            label: '獲得ポイント',
-                            data: dataPoints,
-                            backgroundColor: barColors,
-                            borderRadius: 6,
-                            yAxisID: 'y',
-                            order: 2
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: true, position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
-                    },
-                    scales: {
-                        y: { type: 'linear', position: 'left', beginAtZero: true, title: { display: true, text: 'ポイント' } },
-                        y1: { type: 'linear', position: 'right', beginAtZero: true, grid: { drawOnChartArea: false }, title: { display: true, text: '交換金額 (円)' } }
-                    }
-                }
-            });
-        }
-
-        function renderChart2() {
-            const canvasEl = document.getElementById('barChartSingleApp');
-            if(!canvasEl) return;
-            const ctx = canvasEl.getContext('2d');
-            if(singleBarChartInstance) singleBarChartInstance.destroy();
-
-            const appId = document.getElementById('chart2-app-select').value;
-            const targetApp = state.apps.find(a => a.id === appId) || state.apps[0];
-            if(!targetApp) return;
-
-            document.getElementById('chart2-title').innerText = `${targetApp.name} の推移グラフ`;
-
-            let chartLabels = [];
-            let dataPoints = [];
-            let redYenPoints = [];
-
-            const appLogs = state.logs.filter(l => l.appId === targetApp.id).sort((a,b) => new Date(a.date) - new Date(b.date));
-            const appReds = state.redemptions.filter(r => r.appId === targetApp.id);
-            const appIndexMap = state.apps.findIndex(a => a.id === targetApp.id);
-            const appColor = COLOR_PALETTE[appIndexMap % COLOR_PALETTE.length];
-
-            if (chart2Mode === 'daily') {
-                chartLabels = getLast30DaysKeys();
-
-                dataPoints = chartLabels.map(date => {
-                    const logIndex = appLogs.findIndex(l => l.date === date);
-                    if(logIndex === -1) return 0;
-                    if(logIndex === 0) return appLogs[0].value;
-                    return appLogs[logIndex].value - appLogs[logIndex - 1].value;
-                });
-
-                redYenPoints = chartLabels.map(date => {
-                    let yen = 0;
-                    appReds.filter(r => r.date === date).forEach(r => yen += Number(r.gainedYen || 0));
-                    return yen;
-                });
-
-            } else if (chart2Mode === 'monthly') {
-                chartLabels = getLast12MonthsKeys();
-
-                dataPoints = chartLabels.map(period => calculateEarnedPointsForPeriod(targetApp.id, period, 'monthly'));
-
-                redYenPoints = chartLabels.map(period => {
-                    let yen = 0;
-                    appReds.filter(r => r.date && r.date.substring(0, 7) === period).forEach(r => yen += Number(r.gainedYen || 0));
-                    return yen;
-                });
-
-            } else if (chart2Mode === 'yearly') {
-                const yearsSet = new Set();
-                appLogs.forEach(l => { if(l.date) yearsSet.add(l.date.substring(0, 4)); });
-                appReds.forEach(r => { if(r.date) yearsSet.add(r.date.substring(0, 4)); });
-                yearsSet.add(currentYearStr);
-                chartLabels = Array.from(yearsSet).sort();
-
-                dataPoints = chartLabels.map(period => calculateEarnedPointsForPeriod(targetApp.id, period, 'yearly'));
-
-                redYenPoints = chartLabels.map(period => {
-                    let yen = 0;
-                    appReds.filter(r => r.date && r.date.substring(0, 4) === period).forEach(r => yen += Number(r.gainedYen || 0));
-                    return yen;
-                });
-            }
-
-            singleBarChartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: chartLabels,
-                    datasets: [
-                        {
-                            type: 'line',
-                            label: '交換金額 (円)',
-                            data: redYenPoints,
-                            borderColor: '#ef4444',
-                            backgroundColor: '#ef4444',
-                            borderWidth: 2,
-                            tension: 0.2,
-                            yAxisID: 'y1',
-                            order: 1
-                        },
-                        {
-                            type: 'bar',
-                            label: '獲得ポイント',
-                            data: dataPoints,
-                            backgroundColor: appColor,
-                            borderRadius: 6,
-                            yAxisID: 'y',
-                            order: 2
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: true, position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
-                    },
-                    scales: {
-                        y: { type: 'linear', position: 'left', beginAtZero: true, title: { display: true, text: 'ポイント' } },
-                        y1: { type: 'linear', position: 'right', beginAtZero: true, grid: { drawOnChartArea: false }, title: { display: true, text: '交換金額 (円)' } }
-                    }
-                }
-            });
-        }
-
-        function renderChart3() {
-            const canvasEl = document.getElementById('barChartMarkCategory');
-            if(!canvasEl) return;
-            const ctx = canvasEl.getContext('2d');
-            if(markChartInstance) markChartInstance.destroy();
-
-            const markLabels = ['🚶 歩く', '💤 放置', '🪙 ポイントサイト', '⭐ etc'];
-            const markKeys = ['🚶', '💤', '🪙', '⭐'];
-            const markColors = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6'];
-
-            let dataPoints = [];
-            let redYenPoints = [];
-
-            if (chart3Mode === 'daily') {
-                const targetDate = document.getElementById('chart3-date-input').value;
-                document.getElementById('chart3-title').innerText = `カテゴリ別 集計グラフ (${targetDate})`;
-
-                dataPoints = markKeys.map(icon => {
-                    const matchedApps = state.apps.filter(a => a.icon === icon);
-                    let sum = 0;
-                    matchedApps.forEach(app => {
-                        const appLogs = state.logs.filter(l => l.appId === app.id).sort((a,b) => new Date(a.date) - new Date(b.date));
-                        const logIndex = appLogs.findIndex(l => l.date === targetDate);
-                        if(logIndex !== -1) {
-                            if(logIndex === 0) sum += appLogs[0].value;
-                            else sum += (appLogs[logIndex].value - appLogs[logIndex - 1].value);
-                        }
-                    });
-                    return sum;
-                });
-
-                redYenPoints = markKeys.map(icon => {
-                    const matchedAppIds = state.apps.filter(a => a.icon === icon).map(a => a.id);
-                    let yen = 0;
-                    state.redemptions.forEach(r => {
-                        if(matchedAppIds.includes(r.appId) && r.date === targetDate) {
-                            yen += Number(r.gainedYen || 0);
-                        }
-                    });
-                    return yen;
-                });
-
-            } else if (chart3Mode === 'monthly') {
-                const targetMonth = document.getElementById('chart3-month-input').value || currentMonthStr;
-                document.getElementById('chart3-title').innerText = `カテゴリ別 集計グラフ (${targetMonth})`;
-
-                dataPoints = markKeys.map(icon => {
-                    const matchedApps = state.apps.filter(a => a.icon === icon);
-                    let sum = 0;
-                    matchedApps.forEach(app => {
-                        sum += calculateEarnedPointsForPeriod(app.id, targetMonth, 'monthly');
-                    });
-                    return sum;
-                });
-
-                redYenPoints = markKeys.map(icon => {
-                    const matchedAppIds = state.apps.filter(a => a.icon === icon).map(a => a.id);
-                    let yen = 0;
-                    state.redemptions.forEach(r => {
-                        if(matchedAppIds.includes(r.appId) && r.date && r.date.substring(0, 7) === targetMonth) {
-                            yen += Number(r.gainedYen || 0);
-                        }
-                    });
-                    return yen;
-                });
-
-            } else if (chart3Mode === 'yearly') {
-                const targetYear = document.getElementById('chart3-select-input').value || currentYearStr;
-                document.getElementById('chart3-title').innerText = `カテゴリ別 集計グラフ (${targetYear}年)`;
-
-                dataPoints = markKeys.map(icon => {
-                    const matchedApps = state.apps.filter(a => a.icon === icon);
-                    let sum = 0;
-                    matchedApps.forEach(app => {
-                        sum += calculateEarnedPointsForPeriod(app.id, targetYear, 'yearly');
-                    });
-                    return sum;
-                });
-
-                redYenPoints = markKeys.map(icon => {
-                    const matchedAppIds = state.apps.filter(a => a.icon === icon).map(a => a.id);
-                    let yen = 0;
-                    state.redemptions.forEach(r => {
-                        if(matchedAppIds.includes(r.appId) && r.date && r.date.substring(0, 4) === targetYear) {
-                            yen += Number(r.gainedYen || 0);
-                        }
-                    });
-                    return yen;
-                });
-            }
-
-            markChartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: markLabels,
-                    datasets: [
-                        {
-                            type: 'line',
-                            label: '交換金額 (円)',
-                            data: redYenPoints,
-                            borderColor: '#ef4444',
-                            backgroundColor: '#ef4444',
-                            borderWidth: 2,
-                            tension: 0.2,
-                            yAxisID: 'y1',
-                            order: 1
-                        },
-                        {
-                            type: 'bar',
-                            label: '獲得ポイント',
-                            data: dataPoints,
-                            backgroundColor: markColors,
-                            borderRadius: 6,
-                            yAxisID: 'y',
-                            order: 2
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: true, position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
-                    },
-                    scales: {
-                        y: { type: 'linear', position: 'left', beginAtZero: true, title: { display: true, text: 'ポイント' } },
-                        y1: { type: 'linear', position: 'right', beginAtZero: true, grid: { drawOnChartArea: false }, title: { display: true, text: '交換金額 (円)' } }
-                    }
-                }
-            });
-        }
+        // ダミーチャート初期化
+        function renderChart1() {}
+        function renderChart2() {}
+        function renderChart3() {}
 
         loadDataFromCloud();
     </script>
