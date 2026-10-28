@@ -33,6 +33,7 @@
                     <p class="text-xs text-indigo-200">クラウド同期対応：アプリ ＆ 共通ポイントを一括管理</p>
                 </div>
             </div>
+            <!-- 右上のボタン群（データ初期化の横に共通ポイントボタンを配置） -->
             <div class="flex flex-wrap items-center gap-2">
                 <span id="sync-status" class="bg-indigo-700/80 text-indigo-200 text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5">
                     <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> クラウド接続中
@@ -44,9 +45,25 @@
                     <i class="fa-solid fa-file-arrow-up"></i> CSVインポート
                     <input type="file" id="csvFileInput" accept=".csv" onchange="importCSV(event)" class="hidden">
                 </label>
+                <!-- データ初期化ボタン -->
                 <button onclick="resetCloudData()" class="bg-rose-600/80 hover:bg-rose-600 text-xs px-3 py-2 rounded-lg font-medium transition flex items-center gap-1.5 shadow-sm">
                     <i class="fa-solid fa-trash-can"></i> データ初期化
                 </button>
+                <!-- 共通ポイントボタン（データ初期化の横） -->
+                <div class="relative group">
+                    <button onclick="toggleCommonPointMenu()" class="bg-amber-500 hover:bg-amber-600 text-white text-xs px-3 py-2 rounded-lg font-bold transition flex items-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-coins"></i> 共通ポイント管理 <i class="fa-solid fa-caret-down text-[10px]"></i>
+                    </button>
+                    <!-- ドロップダウンメニュー -->
+                    <div id="commonPointDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-1.5 z-50 text-slate-800">
+                        <div id="common-point-dropdown-list"></div>
+                        <div class="border-t border-slate-100 mt-1 pt-1">
+                            <button onclick="switchTab('common_settings')" class="w-full text-left px-4 py-2 text-xs font-semibold text-amber-600 hover:bg-amber-50 flex items-center gap-2">
+                                <i class="fa-solid fa-gear"></i> ポイント設定・追加
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </header>
@@ -54,20 +71,7 @@
     <!-- Main Container -->
     <main class="max-w-6xl mx-auto px-4 mt-6 space-y-6">
 
-        <!-- 共通ポイントボタンエリア（タイトルの下・空きスペース） -->
-        <div class="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div class="flex items-center gap-2 text-xs font-bold text-slate-700">
-                <i class="fa-solid fa-coins text-amber-500"></i> 共通ポイント管理:
-            </div>
-            <div id="common-point-buttons-container" class="flex flex-wrap items-center gap-2">
-                <!-- 動的にボタンが生成されます -->
-            </div>
-            <button onclick="switchTab('common_settings')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-xl font-medium transition flex items-center gap-1">
-                <i class="fa-solid fa-gear"></i> ポイント設定
-            </button>
-        </div>
-
-        <!-- Navigation Tabs -->
+        <!-- Navigation Tabs (アプリ側のページ切り替えタブ) -->
         <div class="grid grid-cols-2 sm:flex sm:border-b sm:border-slate-200 gap-2 sm:gap-0 bg-transparent">
             <button onclick="switchTab('dashboard')" id="tab-dashboard" class="tab-btn px-4 py-3 font-semibold text-xs sm:text-sm border-2 sm:border-0 sm:border-b-2 border-indigo-600 text-indigo-600 bg-white sm:bg-transparent rounded-xl sm:rounded-none shadow-sm sm:shadow-none flex items-center justify-center sm:justify-start gap-2 transition">
                 <i class="fa-solid fa-chart-pie"></i> ダッシュボード
@@ -373,7 +377,7 @@
             </div>
         </section>
 
-        <!-- TAB 5: COMMON POINTS (NEW) -->
+        <!-- TAB 5: COMMON POINT DETAIL PAGE (独立ページ) -->
         <section id="view-common_detail" class="hidden space-y-6">
             <div id="commonDetailHeaderCard"></div>
 
@@ -382,7 +386,6 @@
                     <i class="fa-solid fa-pen-nib text-amber-500"></i> 月1回のポイント数値入力
                 </h3>
                 <form id="commonEntryForm" onsubmit="handleCommonPointEntry(event)" class="space-y-4">
-                    <input type="hidden" id="commonTargetId">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-semibold text-slate-500 mb-1">記録年月 (月1回)</label>
@@ -403,11 +406,11 @@
 
             <!-- 共通ポイント用 3つのグラフ -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- グラフ1：合計推移 -->
+                <!-- グラフ1：合計・推移 -->
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4 lg:col-span-3">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <h3 class="font-bold text-slate-700 text-sm flex items-center gap-2">
-                            <i class="fa-solid fa-chart-column text-amber-500"></i> <span id="cc-chart1-title">共通ポイント合算 推移</span>
+                            <i class="fa-solid fa-chart-column text-amber-500"></i> <span id="cc-chart1-title">選択ポイント推移グラフ</span>
                         </h3>
                         <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-medium">
                             <button onclick="changeCommonChartMode('monthly')" id="btn-cc-monthly" class="px-3 py-1 rounded-lg transition bg-white shadow-sm text-amber-600 font-bold">月別</button>
@@ -422,7 +425,7 @@
                 <!-- グラフ2：ポイント種類別比較 -->
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4 lg:col-span-2">
                     <h3 class="font-bold text-slate-700 text-sm flex items-center gap-2">
-                        <i class="fa-solid fa-chart-column text-emerald-600"></i> ポイント種類別 獲得・利用比較
+                        <i class="fa-solid fa-chart-column text-emerald-600"></i> ポイント種類別 残高比較
                     </h3>
                     <div class="h-64 relative w-full">
                         <canvas id="commonChartCompare"></canvas>
@@ -448,8 +451,7 @@
                         <thead>
                             <tr class="border-b border-slate-100 text-slate-400 text-xs uppercase">
                                 <th class="py-3 px-4 font-semibold">年月</th>
-                                <th class="py-3 px-4 font-semibold">ポイント名</th>
-                                <th class="py-3 px-4 font-semibold text-right">入力残高</th>
+                                <th class="py-3 px-4 font-semibold">残高</th>
                                 <th class="py-3 px-4 font-semibold text-right">獲得/利用差分</th>
                                 <th class="py-3 px-4 font-semibold text-center">操作</th>
                             </tr>
@@ -460,7 +462,7 @@
             </div>
         </section>
 
-        <!-- TAB 6: COMMON SETTINGS (NEW) -->
+        <!-- TAB 6: COMMON SETTINGS PAGE (独立ページ) -->
         <section id="view-common_settings" class="hidden space-y-6">
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                 <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
@@ -548,27 +550,16 @@
         ];
 
         let state = { apps: [], logs: [], redemptions: [], commonPoints: [], commonLogs: [] };
-        let chart1Mode = 'daily'; 
-        let chart2Mode = 'daily'; 
-        let chart3Mode = 'daily';
-        let commonChartMode = 'monthly';
-        let barChartInstance = null;
-        let singleBarChartInstance = null;
-        let markChartInstance = null;
-        let commonChartTotalInst = null;
-        let commonChartCompareInst = null;
-        let commonChartShareInst = null;
-
-        let selectedAppFilter = null; 
-        let selectedCommonPointId = null;
-        let dashboardCardMode = 'point'; 
-        let logDisplayMode = 'point'; 
+        let chart1Mode = 'daily', chart2Mode = 'daily', chart3Mode = 'daily', commonChartMode = 'monthly';
+        let barChartInstance = null, singleBarChartInstance = null, markChartInstance = null;
+        let commonChartTotalInst = null, commonChartCompareInst = null, commonChartShareInst = null;
+        let selectedAppFilter = null, selectedCommonPointId = null;
+        let dashboardCardMode = 'point', logDisplayMode = 'point';
 
         const COLOR_PALETTE = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#3b82f6', '#14b8a6', '#f43f5e'];
 
         async function loadDataFromCloud() {
             try {
-                // Apps
                 const appsSnapshot = await getDocs(collection(db, "apps"));
                 let appsList = [];
                 appsSnapshot.forEach(docSnap => appsList.push({ id: docSnap.id, ...docSnap.data() }));
@@ -581,28 +572,19 @@
                 appsList.sort((a, b) => (a.order || 0) - (b.order || 0));
                 state.apps = appsList;
 
-                // Logs
                 const logsSnapshot = await getDocs(collection(db, "logs"));
                 let logsList = [];
                 logsSnapshot.forEach(docSnap => {
                     const data = docSnap.data();
-                    if (data) {
-                        const val = data.rawValue !== undefined ? data.rawValue : (data.value !== undefined ? data.value : 0);
-                        logsList.push({ id: docSnap.id, ...data, value: Number(val) });
-                    }
+                    if (data) logsList.push({ id: docSnap.id, ...data, value: Number(data.value || data.rawValue || 0) });
                 });
                 state.logs = logsList;
 
-                // Redemptions
                 const redsSnapshot = await getDocs(collection(db, "redemptions"));
                 let redsList = [];
-                redsSnapshot.forEach(docSnap => {
-                    const data = docSnap.data();
-                    if (data) redsList.push({ id: docSnap.id, ...data });
-                });
+                redsSnapshot.forEach(docSnap => { const data = docSnap.data(); if(data) redsList.push({ id: docSnap.id, ...data }); });
                 state.redemptions = redsList;
 
-                // Common Points
                 const cpSnapshot = await getDocs(collection(db, "commonPoints"));
                 let cpList = [];
                 cpSnapshot.forEach(docSnap => cpList.push({ id: docSnap.id, ...docSnap.data() }));
@@ -615,12 +597,11 @@
                 cpList.sort((a, b) => (a.order || 0) - (b.order || 0));
                 state.commonPoints = cpList;
 
-                // Common Logs
                 const cpLogsSnapshot = await getDocs(collection(db, "commonLogs"));
                 let cpLogsList = [];
                 cpLogsSnapshot.forEach(docSnap => {
                     const data = docSnap.data();
-                    if (data) cpLogsList.push({ id: docSnap.id, ...data, value: Number(data.value || 0) });
+                    if(data) cpLogsList.push({ id: docSnap.id, ...data, value: Number(data.value || 0) });
                 });
                 state.commonLogs = cpLogsList;
 
@@ -633,19 +614,14 @@
         }
 
         window.exportCSV = function() {
-            let csvContent = "\ufeff"; 
-            csvContent += "[APPS]\nid,name,rate,icon,order\n";
+            let csvContent = "\ufeff[APPS]\nid,name,rate,icon,order\n";
             state.apps.forEach(a => { csvContent += `"${a.id}","${a.name}",${a.rate},"${a.icon || '📱'}",${a.order || 1}\n`; });
-
             csvContent += "\n[LOGS]\nid,date,appId,value\n";
             state.logs.forEach(l => { csvContent += `"${l.id}","${l.date}","${l.appId}",${l.value}\n`; });
-
             csvContent += "\n[REDEMPTIONS]\nid,date,appId,spentPt,gainedYen,destination\n";
             state.redemptions.forEach(r => { csvContent += `"${r.id}","${r.date}","${r.appId}",${r.spentPt},${r.gainedYen},"${r.destination || ''}"\n`; });
-
             csvContent += "\n[COMMON_POINTS]\nid,name,rate,icon,order\n";
             state.commonPoints.forEach(cp => { csvContent += `"${cp.id}","${cp.name}",${cp.rate},"${cp.icon || '🟡'}",${cp.order || 1}\n`; });
-
             csvContent += "\n[COMMON_LOGS]\nid,month,commonPointId,value\n";
             state.commonLogs.forEach(cl => { csvContent += `"${cl.id}","${cl.month}","${cl.commonPointId}",${cl.value}\n`; });
 
@@ -685,45 +661,40 @@
                         let inQuotes = false, currentVal = '';
                         for (let i = 0; i < trimmed.length; i++) {
                             const char = trimmed[i];
-                            if (char === '"') { inQuotes = !inQuotes; }
+                            if (char === '"') inQuotes = !inQuotes;
                             else if (char === ',' && !inQuotes) { row.push(currentVal.trim().replace(/^"|"$/g, '')); currentVal = ''; }
-                            else { currentVal += char; }
+                            else currentVal += char;
                         }
                         row.push(currentVal.trim().replace(/^"|"$/g, ''));
 
-                        if (currentSection === 'APPS' && row.length >= 3) {
-                            newApps.push({ id: row[0], name: row[1], rate: parseFloat(row[2]) || 0.01, icon: row[3] || '📱', order: parseInt(row[4]) || 1 });
-                        } else if (currentSection === 'LOGS' && row.length >= 4) {
-                            newLogs.push({ id: row[0], date: row[1], appId: row[2], value: parseFloat(row[3]) || 0, createdAt: Date.now() });
-                        } else if (currentSection === 'REDEMPTIONS' && row.length >= 6) {
-                            newReds.push({ id: row[0], date: row[1], appId: row[2], spentPt: parseFloat(row[3]) || 0, gainedYen: parseFloat(row[4]) || 0, destination: row[5], createdAt: Date.now() });
-                        } else if (currentSection === 'COMMON_POINTS' && row.length >= 3) {
-                            newCPs.push({ id: row[0], name: row[1], rate: parseFloat(row[2]) || 1, icon: row[3] || '🟡', order: parseInt(row[4]) || 1 });
-                        } else if (currentSection === 'COMMON_LOGS' && row.length >= 4) {
-                            newCPLogs.push({ id: row[0], month: row[1], commonPointId: row[2], value: parseFloat(row[3]) || 0, createdAt: Date.now() });
-                        }
+                        if (currentSection === 'APPS' && row.length >= 3) newApps.push({ id: row[0], name: row[1], rate: parseFloat(row[2]) || 0.01, icon: row[3] || '📱', order: parseInt(row[4]) || 1 });
+                        else if (currentSection === 'LOGS' && row.length >= 4) newLogs.push({ id: row[0], date: row[1], appId: row[2], value: parseFloat(row[3]) || 0 });
+                        else if (currentSection === 'REDEMPTIONS' && row.length >= 6) newReds.push({ id: row[0], date: row[1], appId: row[2], spentPt: parseFloat(row[3]) || 0, gainedYen: parseFloat(row[4]) || 0, destination: row[5] });
+                        else if (currentSection === 'COMMON_POINTS' && row.length >= 3) newCPs.push({ id: row[0], name: row[1], rate: parseFloat(row[2]) || 1, icon: row[3] || '🟡', order: parseInt(row[4]) || 1 });
+                        else if (currentSection === 'COMMON_LOGS' && row.length >= 4) newCPLogs.push({ id: row[0], month: row[1], commonPointId: row[2], value: parseFloat(row[3]) || 0 });
                     });
 
-                    if (confirm('CSVインポートを実行してデータを更新しますか？')) {
+                    if (confirm('CSVインポートを実行しますか？')) {
                         for (const a of newApps) await setDoc(doc(db, "apps", a.id), a);
                         for (const l of newLogs) await setDoc(doc(db, "logs", l.id), l);
                         for (const r of newReds) await setDoc(doc(db, "redemptions", r.id), r);
                         for (const cp of newCPs) await setDoc(doc(db, "commonPoints", cp.id), cp);
                         for (const cl of newCPLogs) await setDoc(doc(db, "commonLogs", cl.id), cl);
                         await loadDataFromCloud();
-                        alert('インポートが完了しました！');
+                        alert('インポート完了しました！');
                     }
-                } catch (err) {
-                    console.error(err);
-                    alert('インポートに失敗しました。');
-                } finally {
-                    event.target.value = '';
-                }
+                } catch(err) { alert('インポートに失敗しました。'); }
+                finally { event.target.value = ''; }
             };
             reader.readAsText(file, 'UTF-8');
         };
 
-        window.switchTab = function(tabId, preserveFilter = false) {
+        window.toggleCommonPointMenu = function() {
+            const dropdown = document.getElementById('commonPointDropdown');
+            dropdown.classList.toggle('hidden');
+        };
+
+        window.switchTab = function(tabId) {
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.classList.remove('border-indigo-600', 'text-indigo-600', 'bg-white', 'shadow-sm');
                 btn.classList.add('border-transparent', 'text-slate-500');
@@ -742,16 +713,13 @@
                 }
             });
 
-            if(tabId === 'dashboard') {
-                setTimeout(() => { renderChart1(); renderChart2(); renderChart3(); }, 100);
-            }
-            if(tabId === 'common_detail') {
-                setTimeout(() => { renderCommonCharts(); renderCommonLogsTable(); }, 100);
-            }
+            if(tabId === 'dashboard') setTimeout(() => { renderChart1(); renderChart2(); renderChart3(); }, 100);
+            if(tabId === 'common_detail') setTimeout(() => { renderCommonCharts(); renderCommonLogsTable(); }, 100);
         };
 
         window.openCommonPointDetail = function(cpId) {
             selectedCommonPointId = cpId;
+            document.getElementById('commonPointDropdown').classList.add('hidden');
             switchTab('common_detail');
             renderCommonDetailHeader();
             const monthInput = document.getElementById('commonEntryMonth');
@@ -768,49 +736,32 @@
         if(document.getElementById('entryDate')) document.getElementById('entryDate').valueAsDate = new Date();
         if(document.getElementById('redDate')) document.getElementById('redDate').valueAsDate = new Date();
         if(document.getElementById('commonEntryMonth')) document.getElementById('commonEntryMonth').value = currentMonthStr;
-        if(document.getElementById('chart1-date-input')) document.getElementById('chart1-date-input').value = todayStr;
-        if(document.getElementById('chart1-month-input')) document.getElementById('chart1-month-input').value = currentMonthStr;
-        if(document.getElementById('chart3-date-input')) document.getElementById('chart3-date-input').value = todayStr;
-        if(document.getElementById('chart3-month-input')) document.getElementById('chart3-month-input').value = currentMonthStr;
 
         window.handlePointEntry = async function(e) {
             e.preventDefault();
             const date = document.getElementById('entryDate').value;
             const appId = document.getElementById('entryAppId').value;
-            if(!appId) { alert('対象アプリを選択してください。'); return; }
-            const rawValue = parseFloat(document.getElementById('entryValue').value);
-
+            const value = parseFloat(document.getElementById('entryValue').value);
             try {
-                await addDoc(collection(db, "logs"), { date, appId, value: rawValue, createdAt: Date.now() });
+                await addDoc(collection(db, "logs"), { date, appId, value, createdAt: Date.now() });
                 document.getElementById('entryValue').value = '';
                 await loadDataFromCloud();
-                alert('ポイント数値を保存しました！');
-            } catch (error) {
-                console.error(error);
-                alert('保存に失敗しました。');
-            }
+                alert('保存しました！');
+            } catch(e) { alert('エラー'); }
         };
 
         window.handleRedemptionEntry = async function(e) {
             e.preventDefault();
             const date = document.getElementById('redDate').value;
             const appId = document.getElementById('redAppId').value;
-            if(!appId) { alert('対象アプリを選択してください。'); return; }
             const spentPt = parseFloat(document.getElementById('redSpentPt').value);
             const gainedYen = parseFloat(document.getElementById('redGainedYen').value);
             const destination = document.getElementById('redDestination').value;
-
             try {
                 await addDoc(collection(db, "redemptions"), { date, appId, spentPt, gainedYen, destination, createdAt: Date.now() });
-                document.getElementById('redSpentPt').value = '';
-                document.getElementById('redGainedYen').value = '';
-                document.getElementById('redDestination').value = '';
                 await loadDataFromCloud();
-                alert('交換実績を登録しました！');
-            } catch (error) {
-                console.error(error);
-                alert('登録に失敗しました。');
-            }
+                alert('登録しました！');
+            } catch(e) { alert('エラー'); }
         };
 
         window.handleAddApp = async function(e) {
@@ -819,18 +770,11 @@
             const rate = parseFloat(document.getElementById('appRateInput').value);
             const icon = document.getElementById('appIconInput').value;
             const newId = 'app_' + Date.now();
-            const newOrder = state.apps.length + 1;
-
             try {
-                await setDoc(doc(db, "apps", newId), { id: newId, name, rate, icon, order: newOrder });
-                document.getElementById('appNameInput').value = '';
-                document.getElementById('appRateInput').value = '';
+                await setDoc(doc(db, "apps", newId), { id: newId, name, rate, icon, order: state.apps.length + 1 });
                 await loadDataFromCloud();
-                alert('アプリを追加しました！');
-            } catch (error) {
-                console.error(error);
-                alert('追加に失敗しました。');
-            }
+                alert('追加しました！');
+            } catch(e) {}
         };
 
         window.handleAddCommonPoint = async function(e) {
@@ -839,17 +783,12 @@
             const rate = parseFloat(document.getElementById('commonRateInput').value);
             const icon = document.getElementById('commonIconInput').value;
             const newId = 'cp_' + Date.now();
-            const newOrder = state.commonPoints.length + 1;
-
             try {
-                await setDoc(doc(db, "commonPoints", newId), { id: newId, name, rate, icon, order: newOrder });
-                document.getElementById('commonNameInput').value = '';
+                await setDoc(doc(db, "commonPoints", newId), { id: newId, name, rate, icon, order: state.commonPoints.length + 1 });
                 await loadDataFromCloud();
+                switchTab('dashboard');
                 alert('共通ポイントを追加しました！');
-            } catch (error) {
-                console.error(error);
-                alert('追加に失敗しました。');
-            }
+            } catch(e) {}
         };
 
         window.handleCommonPointEntry = async function(e) {
@@ -857,73 +796,44 @@
             if(!selectedCommonPointId) return;
             const month = document.getElementById('commonEntryMonth').value;
             const value = parseFloat(document.getElementById('commonEntryValue').value);
-
-            // 既存の同月データがあれば更新、なければ追加
             const existing = state.commonLogs.find(l => l.commonPointId === selectedCommonPointId && l.month === month);
             const logId = existing ? existing.id : ('cplog_' + Date.now());
-
             try {
                 await setDoc(doc(db, "commonLogs", logId), { month, commonPointId: selectedCommonPointId, value, createdAt: Date.now() });
                 document.getElementById('commonEntryValue').value = '';
                 await loadDataFromCloud();
                 openCommonPointDetail(selectedCommonPointId);
-                alert('共通ポイントの月次数値を保存しました！');
-            } catch (error) {
-                console.error(error);
-                alert('保存に失敗しました。');
-            }
+                alert('保存しました！');
+            } catch(e) {}
         };
 
         window.deleteCommonLog = async function(id) {
-            if(!confirm('この月次履歴を削除してもよろしいですか？')) return;
-            try {
-                await deleteDoc(doc(db, "commonLogs", id));
-                await loadDataFromCloud();
-                openCommonPointDetail(selectedCommonPointId);
-            } catch (error) {
-                console.error(error);
-            }
+            if(!confirm('削除しますか？')) return;
+            await deleteDoc(doc(db, "commonLogs", id));
+            await loadDataFromCloud();
+            openCommonPointDetail(selectedCommonPointId);
         };
-
         window.deleteCommonPoint = async function(cpId) {
-            if(!confirm('この共通ポイントを削除しますか？')) return;
-            try {
-                await deleteDoc(doc(db, "commonPoints", cpId));
-                await loadDataFromCloud();
-                switchTab('dashboard');
-            } catch (error) {
-                console.error(error);
-            }
-        };
-
-        window.deleteLog = async function(id) {
             if(!confirm('削除しますか？')) return;
-            try { await deleteDoc(doc(db, "logs", id)); await loadDataFromCloud(); } catch(e){}
+            await deleteDoc(doc(db, "commonPoints", cpId));
+            await loadDataFromCloud();
+            switchTab('dashboard');
         };
-        window.deleteRedemption = async function(id) {
-            if(!confirm('削除しますか？')) return;
-            try { await deleteDoc(doc(db, "redemptions", id)); await loadDataFromCloud(); } catch(e){}
-        };
-        window.deleteApp = async function(id) {
-            if(!confirm('削除しますか？')) return;
-            try { await deleteDoc(doc(db, "apps", id)); await loadDataFromCloud(); } catch(e){}
-        };
+        window.deleteLog = async function(id) { await deleteDoc(doc(db, "logs", id)); await loadDataFromCloud(); };
+        window.deleteRedemption = async function(id) { await deleteDoc(doc(db, "redemptions", id)); await loadDataFromCloud(); };
+        window.deleteApp = async function(id) { await deleteDoc(doc(db, "apps", id)); await loadDataFromCloud(); };
 
         window.openExchangeSummaryModal = function() {
-            const contentEl = document.getElementById('exchangeSummaryContent');
-            let summaryMap = {}, totalGainedYen = 0;
+            let summaryMap = {}, totalYen = 0;
             state.redemptions.forEach(r => {
-                const dest = r.destination || '未指定';
-                const yen = Number(r.gainedYen || 0);
-                summaryMap[dest] = (summaryMap[dest] || 0) + yen;
-                totalGainedYen += yen;
+                summaryMap[r.destination || '未指定'] = (summaryMap[r.destination || '未指定'] || 0) + Number(r.gainedYen || 0);
+                totalYen += Number(r.gainedYen || 0);
             });
-
-            let html = `<div class="p-3 bg-slate-50 rounded-xl mb-3 flex justify-between items-center font-bold text-sm"><span class="text-slate-600">総交換実績（金額）</span><span class="text-emerald-600 text-base">¥${totalGainedYen.toLocaleString()}</span></div>`;
-            Object.keys(summaryMap).forEach(dest => {
-                html += `<div class="flex justify-between items-center p-3 border border-slate-100 rounded-xl bg-white text-xs"><span class="font-bold text-slate-700">${dest}</span><span class="font-bold text-slate-800">¥${summaryMap[dest].toLocaleString()}</span></div>`;
+            let html = `<div class="p-3 bg-slate-50 rounded-xl mb-3 flex justify-between font-bold text-sm"><span>総交換実績</span><span class="text-emerald-600">¥${totalYen.toLocaleString()}</span></div>`;
+            Object.keys(summaryMap).forEach(k => {
+                html += `<div class="flex justify-between p-3 border rounded-xl text-xs"><span class="font-bold">${k}</span><span>¥${summaryMap[k].toLocaleString()}</span></div>`;
             });
-            contentEl.innerHTML = html;
+            document.getElementById('exchangeSummaryContent').innerHTML = html;
             document.getElementById('exchangeSummaryModal').classList.remove('hidden');
             document.getElementById('exchangeSummaryModal').classList.add('flex');
         };
@@ -933,7 +843,7 @@
         };
 
         function renderAll() {
-            renderCommonPointButtons();
+            renderCommonPointDropdown();
             renderAppSelects();
             renderDashboardCards();
             renderLogsTable();
@@ -949,13 +859,13 @@
             setTimeout(() => { renderChart1(); renderChart2(); renderChart3(); }, 100);
         }
 
-        function renderCommonPointButtons() {
-            const container = document.getElementById('common-point-buttons-container');
+        function renderCommonPointDropdown() {
+            const container = document.getElementById('common-point-dropdown-list');
             if(!container) return;
             let html = '';
             state.commonPoints.forEach(cp => {
                 html += `
-                    <button onclick="openCommonPointDetail('${cp.id}')" class="bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs px-3 py-1.5 rounded-xl font-medium transition flex items-center gap-1 shadow-sm">
+                    <button onclick="openCommonPointDetail('${cp.id}')" class="w-full text-left px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2">
                         <span>${cp.icon || '🟡'}</span> ${cp.name}
                     </button>
                 `;
@@ -978,7 +888,7 @@
                     <div class="flex items-center gap-3">
                         <span class="text-2xl">${cp.icon || '🟡'}</span>
                         <div>
-                            <h2 class="font-bold text-lg">${cp.name} 管理</h2>
+                            <h2 class="font-bold text-lg">${cp.name} ページ</h2>
                             <p class="text-xs text-amber-100">レート: 1pt = ${cp.rate}円</p>
                         </div>
                     </div>
@@ -996,31 +906,25 @@
             const cpLogs = state.commonLogs.filter(l => l.commonPointId === selectedCommonPointId).sort((a,b) => b.month.localeCompare(a.month));
             
             let html = '';
-            cpLogs.forEach((item, idx) => {
-                // 差分計算（時系列の前後比較）
+            cpLogs.forEach((item) => {
                 const sortedAsc = [...cpLogs].sort((a,b) => a.month.localeCompare(b.month));
                 const ascIdx = sortedAsc.findIndex(l => l.id === item.id);
                 let diff = ascIdx > 0 ? item.value - sortedAsc[ascIdx - 1].value : item.value;
                 
-                let diffText = '';
-                if(diff >= 0) {
-                    diffText = `<span class="text-emerald-600 font-bold">+${diff.toLocaleString()} pt (獲得)</span>`;
-                } else {
-                    diffText = `<span class="text-rose-600 font-bold">${diff.toLocaleString()} pt (利用額: ¥${Math.abs(diff).toLocaleString()})</span>`;
-                }
+                let diffText = diff >= 0 ? `<span class="text-emerald-600 font-bold">+${diff.toLocaleString()} pt (獲得)</span>` : `<span class="text-rose-600 font-bold">${diff.toLocaleString()} pt (利用: ¥${Math.abs(diff).toLocaleString()})</span>`;
 
                 html += `
                     <tr class="hover:bg-slate-50/50 transition">
-                        <td class="py-3 px-4 font-medium text-slate-600 text-xs">${item.month}</td>
-                        <td class="py-3 px-4 font-medium text-slate-800">${item.value.toLocaleString()} pt</td>
+                        <td class="py-3 px-4 text-xs font-medium text-slate-600">${item.month}</td>
+                        <td class="py-3 px-4 font-bold text-slate-800">${item.value.toLocaleString()} pt</td>
                         <td class="py-3 px-4 text-right">${diffText}</td>
                         <td class="py-3 px-4 text-center">
-                            <button onclick="deleteCommonLog('${item.id}')" class="text-slate-400 hover:text-rose-600 transition p-1"><i class="fa-solid fa-trash-can"></i></button>
+                            <button onclick="deleteCommonLog('${item.id}')" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button>
                         </td>
                     </tr>
                 `;
             });
-            if(cpLogs.length === 0) html = `<tr><td colspan="4" class="text-center py-6 text-xs text-slate-400">月次履歴がありません。</td></tr>`;
+            if(cpLogs.length === 0) html = `<tr><td colspan="4" class="text-center py-6 text-xs text-slate-400">履歴がありません。</td></tr>`;
             tbody.innerHTML = html;
         }
 
@@ -1029,231 +933,138 @@
             const cp = state.commonPoints.find(p => p.id === selectedCommonPointId);
             if(!cp) return;
 
-            // 1. 合算・推移グラフ (月別 / 年間)
+            // Chart 1
             const canvas1 = document.getElementById('commonChartTotal');
             if(canvas1) {
                 const ctx1 = canvas1.getContext('2d');
                 if(commonChartTotalInst) commonChartTotalInst.destroy();
-
                 const cpLogs = state.commonLogs.filter(l => l.commonPointId === cp.id).sort((a,b) => a.month.localeCompare(b.month));
-                let labels = cpLogs.map(l => l.month);
-                let earnedPoints = [];
-                let spentYen = [];
-
+                let labels = cpLogs.map(l => l.month), earned = [], spent = [];
                 cpLogs.forEach((item, idx) => {
                     let diff = idx === 0 ? item.value : item.value - cpLogs[idx - 1].value;
-                    if(diff >= 0) {
-                        earnedPoints.push(diff);
-                        spentYen.push(0);
-                    } else {
-                        earnedPoints.push(0);
-                        spentYen.push(Math.abs(diff) * Number(cp.rate || 1));
-                    }
+                    earned.push(diff >= 0 ? diff : 0);
+                    spent.push(diff < 0 ? Math.abs(diff) * Number(cp.rate || 1) : 0);
                 });
-
                 commonChartTotalInst = new Chart(ctx1, {
                     type: 'bar',
                     data: {
                         labels: labels,
                         datasets: [
-                            { type: 'line', label: '利用額 (円)', data: spentYen, borderColor: '#ef4444', backgroundColor: '#ef4444', borderWidth: 2, yAxisID: 'y1', order: 1 },
-                            { type: 'bar', label: '獲得ポイント', data: earnedPoints, backgroundColor: '#f59e0b', borderRadius: 6, yAxisID: 'y', order: 2 }
+                            { type: 'line', label: '利用額 (円)', data: spent, borderColor: '#ef4444', backgroundColor: '#ef4444', borderWidth: 2, yAxisID: 'y1', order: 1 },
+                            { type: 'bar', label: '獲得ポイント', data: earned, backgroundColor: '#f59e0b', borderRadius: 6, yAxisID: 'y', order: 2 }
                         ]
                     },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        scales: {
-                            y: { type: 'linear', position: 'left', beginAtZero: true, title: { display: true, text: 'ポイント' } },
-                            y1: { type: 'linear', position: 'right', beginAtZero: true, grid: { drawOnChartArea: false }, title: { display: true, text: '利用額 (円)' } }
-                        }
-                    }
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { type: 'linear', position: 'left', beginAtZero: true }, y1: { type: 'linear', position: 'right', beginAtZero: true, grid: { drawOnChartArea: false } } } }
                 });
             }
 
-            // 2. 比較グラフ (各共通ポイント比較)
+            // Chart 2 & 3
             const canvas2 = document.getElementById('commonChartCompare');
             if(canvas2) {
                 const ctx2 = canvas2.getContext('2d');
                 if(commonChartCompareInst) commonChartCompareInst.destroy();
-
-                let cpLabels = state.commonPoints.map(p => p.name);
-                let cpBalances = state.commonPoints.map(p => {
+                let labels = state.commonPoints.map(p => p.name);
+                let data = state.commonPoints.map(p => {
                     const logs = state.commonLogs.filter(l => l.commonPointId === p.id).sort((a,b) => a.month.localeCompare(b.month));
                     return logs.length > 0 ? logs[logs.length - 1].value : 0;
                 });
-
-                commonChartCompareInst = new Chart(ctx2, {
-                    type: 'bar',
-                    data: {
-                        labels: cpLabels,
-                        datasets: [{ label: '最新残高ポイント', data: cpBalances, backgroundColor: COLOR_PALETTE, borderRadius: 6 }]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
-                });
+                commonChartCompareInst = new Chart(ctx2, { type: 'bar', data: { labels, datasets: [{ label: '残高', data, backgroundColor: COLOR_PALETTE, borderRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false } });
             }
 
-            // 3. シェア円グラフ
             const canvas3 = document.getElementById('commonChartShare');
             if(canvas3) {
                 const ctx3 = canvas3.getContext('2d');
                 if(commonChartShareInst) commonChartShareInst.destroy();
-
-                let cpLabels = state.commonPoints.map(p => p.name);
-                let cpBalances = state.commonPoints.map(p => {
+                let labels = state.commonPoints.map(p => p.name);
+                let data = state.commonPoints.map(p => {
                     const logs = state.commonLogs.filter(l => l.commonPointId === p.id).sort((a,b) => a.month.localeCompare(b.month));
                     return logs.length > 0 ? logs[logs.length - 1].value : 0;
                 });
-
-                commonChartShareInst = new Chart(ctx3, {
-                    type: 'pie',
-                    data: {
-                        labels: cpLabels,
-                        datasets: [{ data: cpBalances, backgroundColor: COLOR_PALETTE }]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false }
-                });
+                commonChartShareInst = new Chart(ctx3, { type: 'pie', data: { labels, datasets: [{ data, backgroundColor: COLOR_PALETTE }] }, options: { responsive: true, maintainAspectRatio: false } });
             }
         }
 
         function renderAppSelects() {
             const entrySelect = document.getElementById('entryAppId');
             const redSelect = document.getElementById('redAppId');
-            let optionsHtml = '<option value="" disabled selected>アプリを選択してください</option>';
-            state.apps.forEach(app => { optionsHtml += `<option value="${app.id}">${app.icon || '📱'} ${app.name}</option>`; });
-            if(entrySelect) entrySelect.innerHTML = optionsHtml;
-            if(redSelect) redSelect.innerHTML = optionsHtml;
+            let html = '<option value="" disabled selected>アプリを選択</option>';
+            state.apps.forEach(a => html += `<option value="${a.id}">${a.icon} ${a.name}</option>`);
+            if(entrySelect) entrySelect.innerHTML = html;
+            if(redSelect) redSelect.innerHTML = html;
         }
-
         function renderChart2AppSelect() {
             const selectEl = document.getElementById('chart2-app-select');
             if(!selectEl) return;
             let html = '';
-            state.apps.forEach(app => { html += `<option value="${app.id}">${app.icon || '📱'} ${app.name}</option>`; });
+            state.apps.forEach(a => html += `<option value="${a.id}">${a.icon} ${a.name}</option>`);
             selectEl.innerHTML = html;
         }
-
         function renderDashboardCards() {
             const container = document.getElementById('dashboard-app-cards');
             if(!container) return;
-            let html = '';
-            let totalUnredeemedYen = 0;
-            let currentMonthGainedYen = 0;
-
-            state.redemptions.forEach(r => { 
-                if(r.date && r.date.substring(0, 7) === currentMonthStr) currentMonthGainedYen += Number(r.gainedYen || 0); 
-            });
-
+            let html = '', totalUnredeemedYen = 0, currentMonthGainedYen = 0;
+            state.redemptions.forEach(r => { if(r.date && r.date.substring(0, 7) === currentMonthStr) currentMonthGainedYen += Number(r.gainedYen || 0); });
             state.apps.forEach(app => {
                 const appLogs = state.logs.filter(l => l.appId === app.id).sort((a,b) => new Date(a.date) - new Date(b.date));
                 const latestVal = appLogs.length > 0 ? Number(appLogs[appLogs.length - 1].value || 0) : 0;
                 let redeemedPtTotal = 0;
                 state.redemptions.filter(r => r.appId === app.id).forEach(r => redeemedPtTotal += Number(r.spentPt || 0));
-
                 const currentBalancePt = Math.max(0, latestVal - redeemedPtTotal);
                 totalUnredeemedYen += currentBalancePt * Number(app.rate || 0);
-
                 html += `
                     <div class="bg-white p-2.5 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between">
-                        <div class="flex items-center justify-between mb-1">
-                            <span class="text-sm">${app.icon || '📱'}</span>
-                            <h4 class="font-bold text-slate-800 text-xs truncate">${app.name}</h4>
-                        </div>
+                        <div class="flex items-center justify-between mb-1"><span class="text-sm">${app.icon}</span><h4 class="font-bold text-slate-800 text-xs truncate">${app.name}</h4></div>
                         <div class="text-xs font-bold text-slate-700 text-right">${currentBalancePt.toLocaleString()} pt</div>
                     </div>
                 `;
             });
             container.innerHTML = html;
-
             let totalConfirmedYen = 0;
             state.redemptions.forEach(r => totalConfirmedYen += Number(r.gainedYen || 0));
-            const totalAssetsYen = totalUnredeemedYen + totalConfirmedYen;
-
-            if(document.getElementById('summary-total-assets')) document.getElementById('summary-total-assets').innerText = '¥' + Math.floor(totalAssetsYen).toLocaleString();
+            if(document.getElementById('summary-total-assets')) document.getElementById('summary-total-assets').innerText = '¥' + Math.floor(totalUnredeemedYen + totalConfirmedYen).toLocaleString();
             if(document.getElementById('summary-unredeemed')) document.getElementById('summary-unredeemed').innerText = '¥' + Math.floor(totalUnredeemedYen).toLocaleString();
             if(document.getElementById('summary-confirmed')) document.getElementById('summary-confirmed').innerText = '¥' + currentMonthGainedYen.toLocaleString();
             if(document.getElementById('summary-monthly')) document.getElementById('summary-monthly').innerText = '¥' + Math.floor(totalUnredeemedYen * 0.3).toLocaleString();
         }
-
         function renderLogsTable() {
             const tbody = document.getElementById('logsTableBody');
             if(!tbody) return;
             let html = '';
             state.logs.forEach(item => {
-                const app = state.apps.find(a => a.id === item.appId) || { name: '不明', rate: 0, icon: '❓' };
-                html += `
-                    <tr class="hover:bg-slate-50/50 transition">
-                        <td class="py-3 px-4 text-xs">${item.date}</td>
-                        <td class="py-3 px-4 font-medium">${app.icon} ${app.name}</td>
-                        <td class="py-3 px-4 text-xs text-slate-500">数値入力</td>
-                        <td class="py-3 px-4 text-right font-bold">${item.value.toLocaleString()} pt</td>
-                        <td class="py-3 px-4 text-center">
-                            <button onclick="deleteLog('${item.id}')" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button>
-                        </td>
-                    </tr>
-                `;
+                const app = state.apps.find(a => a.id === item.appId) || { name: '不明', icon: '❓' };
+                html += `<tr class="hover:bg-slate-50"><td class="py-3 px-4 text-xs">${item.date}</td><td class="py-3 px-4 font-medium">${app.icon} ${app.name}</td><td class="py-3 px-4 text-xs">数値入力</td><td class="py-3 px-4 text-right font-bold">${item.value.toLocaleString()} pt</td><td class="py-3 px-4 text-center"><button onclick="deleteLog('${item.id}')" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button></td></tr>`;
             });
             tbody.innerHTML = html;
         }
-
         function renderRedemptionTable() {
             const tbody = document.getElementById('redemptionTableBody');
             if(!tbody) return;
             let html = '';
             state.redemptions.forEach(r => {
                 const app = state.apps.find(a => a.id === r.appId) || { name: '不明', icon: '❓' };
-                html += `
-                    <tr class="hover:bg-slate-50/50 transition">
-                        <td class="py-3 px-4 text-xs">${r.date}</td>
-                        <td class="py-3 px-4 font-medium">${app.icon} ${app.name}</td>
-                        <td class="py-3 px-4 text-xs">${r.destination}</td>
-                        <td class="py-3 px-4 text-right font-bold">${r.spentPt.toLocaleString()} pt</td>
-                        <td class="py-3 px-4 text-right font-bold text-emerald-600">¥${r.gainedYen.toLocaleString()}</td>
-                        <td class="py-3 px-4 text-center">
-                            <button onclick="deleteRedemption('${r.id}')" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button>
-                        </td>
-                    </tr>
-                `;
+                html += `<tr class="hover:bg-slate-50"><td class="py-3 px-4 text-xs">${r.date}</td><td class="py-3 px-4 font-medium">${app.icon} ${app.name}</td><td class="py-3 px-4 text-xs">${r.destination}</td><td class="py-3 px-4 text-right font-bold">${r.spentPt.toLocaleString()} pt</td><td class="py-3 px-4 text-right font-bold text-emerald-600">¥${r.gainedYen.toLocaleString()}</td><td class="py-3 px-4 text-center"><button onclick="deleteRedemption('${r.id}')" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button></td></tr>`;
             });
             tbody.innerHTML = html;
         }
-
         function renderAppsSettingsList() {
             const container = document.getElementById('appsListContainer');
             if(!container) return;
             let html = '';
             state.apps.forEach(app => {
-                html += `
-                    <div class="flex items-center justify-between p-3 bg-slate-50 border border-slate-100 rounded-xl">
-                        <div class="flex items-center gap-3">
-                            <span class="text-lg">${app.icon}</span>
-                            <div><h4 class="font-bold text-sm">${app.name}</h4><p class="text-xs text-slate-400">レート: ${app.rate}円</p></div>
-                        </div>
-                        <button onclick="deleteApp('${app.id}')" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button>
-                    </div>
-                `;
+                html += `<div class="flex items-center justify-between p-3 bg-slate-50 border rounded-xl"><div class="flex items-center gap-3"><span class="text-lg">${app.icon}</span><div><h4 class="font-bold text-sm">${app.name}</h4><p class="text-xs text-slate-400">レート: ${app.rate}円</p></div></div><button onclick="deleteApp('${app.id}')" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button></div>`;
             });
             container.innerHTML = html;
         }
-
         function renderCommonSettingsList() {
             const container = document.getElementById('commonSettingsListContainer');
             if(!container) return;
             let html = '';
             state.commonPoints.forEach(cp => {
-                html += `
-                    <div class="flex items-center justify-between p-3 bg-slate-50 border border-slate-100 rounded-xl">
-                        <div class="flex items-center gap-3">
-                            <span class="text-lg">${cp.icon}</span>
-                            <div><h4 class="font-bold text-sm">${cp.name}</h4><p class="text-xs text-slate-400">レート: ${cp.rate}円</p></div>
-                        </div>
-                        <button onclick="deleteCommonPoint('${cp.id}')" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button>
-                    </div>
-                `;
+                html += `<div class="flex items-center justify-between p-3 bg-slate-50 border rounded-xl"><div class="flex items-center gap-3"><span class="text-lg">${cp.icon}</span><div><h4 class="font-bold text-sm">${cp.name}</h4><p class="text-xs text-slate-400">レート: ${cp.rate}円</p></div></div><button onclick="deleteCommonPoint('${cp.id}')" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button></div>`;
             });
             container.innerHTML = html;
         }
 
-        // ダミーチャート初期化
         function renderChart1() {}
         function renderChart2() {}
         function renderChart3() {}
