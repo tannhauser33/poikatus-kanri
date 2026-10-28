@@ -39,7 +39,7 @@
                 </span>
             </div>
 
-            <!-- ヘッダー右側：初期化の横に「共通ポイント」ボタンを並べて配置 -->
+            <!-- ヘッダー右側：初期化の横に「共通ポイント」ボタンを配置 -->
             <div class="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full md:w-auto justify-end">
                 <span id="sync-status-pc" class="hidden md:flex bg-indigo-700/80 text-indigo-200 text-xs px-3 py-2 rounded-lg items-center gap-1.5">
                     <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> クラウド接続中
@@ -54,7 +54,6 @@
                 <button onclick="resetCloudData()" class="bg-rose-600/80 hover:bg-rose-600 text-xs px-3 py-2 rounded-lg font-medium transition flex items-center justify-center gap-1.5 shadow-sm">
                     <i class="fa-solid fa-trash-can"></i> 初期化
                 </button>
-                <!-- 「初期化」の横に並ぶ共通ポイントボタン（設定用） -->
                 <button onclick="switchTab('common_settings')" class="bg-amber-600 hover:bg-amber-700 text-white text-xs px-3 py-2 rounded-lg font-medium transition flex items-center justify-center gap-1.5 shadow-sm">
                     <i class="fa-solid fa-coins"></i> 共通ポイント
                 </button>
@@ -373,11 +372,18 @@
 
         <!-- TAB 5: COMMON POINT DETAIL PAGE -->
         <section id="view-common_detail" class="hidden space-y-6">
-            <!-- 戻るボタンをカードの外（上部）に配置 -->
-            <div class="flex items-center justify-between">
-                <button onclick="switchTab('dashboard')" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs px-3 py-2 rounded-xl font-medium transition flex items-center gap-1.5 shadow-sm">
-                    <i class="fa-solid fa-arrow-left"></i> アプリ側画面に戻る
-                </button>
+            <!-- アプリ管理に戻るボタン ＆ その下に共通ポイント切り替え機能を配置 -->
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <button onclick="switchTab('dashboard')" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs px-3 py-2 rounded-xl font-medium transition flex items-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-arrow-left"></i> アプリ管理に戻る
+                    </button>
+                </div>
+                <!-- 共通ポイント切替バー -->
+                <div class="bg-amber-50 border border-amber-200 p-3 rounded-2xl flex flex-wrap items-center gap-2">
+                    <span class="text-xs font-bold text-amber-800 mr-2"><i class="fa-solid fa-coins"></i> 共通ポイント切替:</span>
+                    <div id="common-point-quick-buttons" class="flex flex-wrap items-center gap-2"></div>
+                </div>
             </div>
 
             <div id="commonDetailHeaderCard"></div>
@@ -465,35 +471,42 @@
 
         <!-- TAB 6: COMMON SETTINGS PAGE -->
         <section id="view-common_settings" class="hidden space-y-6">
-            <!-- 戻るボタンをカードの外（上部）に配置 -->
-            <div class="flex items-center justify-between">
-                <button onclick="switchTab('dashboard')" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs px-3 py-2 rounded-xl font-medium transition flex items-center gap-1.5 shadow-sm">
-                    <i class="fa-solid fa-arrow-left"></i> アプリ側画面に戻る
-                </button>
+            <!-- アプリ管理に戻るボタン ＆ その下に共通ポイント切り替え機能を配置 -->
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <button onclick="switchTab('dashboard')" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs px-3 py-2 rounded-xl font-medium transition flex items-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-arrow-left"></i> アプリ管理に戻る
+                    </button>
+                </div>
+                <!-- 共通ポイント切替バー -->
+                <div class="bg-amber-50 border border-amber-200 p-3 rounded-2xl flex flex-wrap items-center gap-2">
+                    <span class="text-xs font-bold text-amber-800 mr-2"><i class="fa-solid fa-coins"></i> 共通ポイント切替:</span>
+                    <div id="common-point-quick-buttons-settings" class="flex flex-wrap items-center gap-2"></div>
+                </div>
             </div>
 
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                 <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
                     <i class="fa-solid fa-circle-plus text-amber-500"></i> 新しい共通ポイントを追加
                 </h3>
-                <form id="commonAddForm" onsubmit="handleAddCommonPoint(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+                <form id="commonAddForm" onsubmit="handleAddCommonPoint(event)" class="space-y-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">アイコン</label>
-                        <select id="commonIconInput" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
-                            <option value="🟡">🟡 dポイント</option>
-                            <option value="🟢">🟢 Vポイント</option>
-                            <option value="🔵">🔵 楽天ポイント</option>
-                            <option value="🔴">🔴 Pontaポイント</option>
-                            <option value="⭐">⭐ etc</option>
-                        </select>
+                        <label class="block text-xs font-semibold text-slate-500 mb-2">カラー・アイコンを選択</label>
+                        <!-- 8〜10個のカラー・アイコン選択式パレット -->
+                        <div id="iconPickerContainer" class="flex flex-wrap gap-2">
+                            <!-- JSで動的生成または下記のように配置 -->
+                        </div>
+                        <input type="hidden" id="selectedCommonIcon" value="🟡" required>
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-500 mb-1">ポイント名</label>
                         <input type="text" id="commonNameInput" placeholder="例: dポイント" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
                     </div>
-                    <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white font-medium px-4 py-2.5 rounded-xl text-sm transition shadow-sm flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-plus"></i> 追加する
-                    </button>
+                    <div class="flex justify-end">
+                        <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white font-medium px-6 py-2.5 rounded-xl text-sm transition shadow-sm flex items-center gap-2">
+                            <i class="fa-solid fa-plus"></i> 追加する
+                        </button>
+                    </div>
                 </form>
             </div>
 
@@ -504,14 +517,6 @@
         </section>
 
     </main>
-
-    <!-- 共通ポイント切り替え用バー（画面下部などに各共通ポイントボタンを常設表示する場合） -->
-    <div id="common-points-bar" class="hidden max-w-6xl mx-auto px-4 mt-6">
-        <div class="bg-amber-50 border border-amber-200 p-3 rounded-2xl flex flex-wrap items-center gap-2">
-            <span class="text-xs font-bold text-amber-800 mr-2"><i class="fa-solid fa-coins"></i> 共通ポイント切替:</span>
-            <div id="common-point-quick-buttons" class="flex flex-wrap items-center gap-2"></div>
-        </div>
-    </div>
 
     <!-- 交換先別集計モーダル -->
     <div id="exchangeSummaryModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
@@ -560,6 +565,8 @@
             { id: 'cp_2', name: 'Vポイント', icon: '🟢', order: 2 },
             { id: 'cp_3', name: '楽天ポイント', icon: '🔵', order: 3 }
         ];
+
+        const COLOR_ICONS = ['🟡', '🟢', '🔵', '🔴', '🟠', '🟣', '🟤', '⭐', '💎', '🔥'];
 
         let state = { apps: [], logs: [], redemptions: [], commonPoints: [], commonLogs: [] };
         let chart1Mode = 'daily', chart2Mode = 'daily', chart3Mode = 'daily', commonChartMode = 'monthly';
@@ -709,14 +716,11 @@
             });
 
             const appNavTabs = document.getElementById('app-nav-tabs');
-            const commonPointsBar = document.getElementById('common-points-bar');
 
             if (tabId === 'common_detail' || tabId === 'common_settings') {
                 if(appNavTabs) appNavTabs.classList.add('hidden');
-                if(commonPointsBar) commonPointsBar.classList.remove('hidden'); // 共通ポイント画面の時だけクイック切替バーを表示
             } else {
                 if(appNavTabs) appNavTabs.classList.remove('hidden');
-                if(commonPointsBar) commonPointsBar.classList.add('hidden'); // アプリ画面の時は非表示
 
                 document.querySelectorAll('.tab-btn').forEach(btn => {
                     btn.classList.remove('border-indigo-600', 'text-indigo-600', 'bg-white', 'shadow-sm');
@@ -794,7 +798,7 @@
         window.handleAddCommonPoint = async function(e) {
             e.preventDefault();
             const name = document.getElementById('commonNameInput').value;
-            const icon = document.getElementById('commonIconInput').value;
+            const icon = document.getElementById('selectedCommonIcon').value || '🟡';
             const newId = 'cp_' + Date.now();
             try {
                 await setDoc(doc(db, "commonPoints", newId), { id: newId, name, icon, order: state.commonPoints.length + 1 });
@@ -802,6 +806,12 @@
                 switchTab('dashboard');
                 alert('共通ポイントを追加しました！');
             } catch(e) {}
+        };
+
+        window.selectCommonIcon = function(icon, el) {
+            document.getElementById('selectedCommonIcon').value = icon;
+            document.querySelectorAll('.icon-picker-btn').forEach(btn => btn.classList.remove('ring-4', 'ring-amber-400', 'scale-110'));
+            el.classList.add('ring-4', 'ring-amber-400', 'scale-110');
         };
 
         window.handleCommonPointEntry = async function(e) {
@@ -857,6 +867,7 @@
 
         function renderAll() {
             renderCommonPointQuickButtons();
+            renderIconPicker();
             renderAppSelects();
             renderDashboardCards();
             renderLogsTable();
@@ -872,20 +883,37 @@
             setTimeout(() => { renderChart1(); renderChart2(); renderChart3(); }, 100);
         }
 
-        function renderCommonPointQuickButtons() {
-            const container = document.getElementById('common-point-quick-buttons');
+        function renderIconPicker() {
+            const container = document.getElementById('iconPickerContainer');
             if(!container) return;
             let html = '';
-            state.commonPoints.forEach(cp => {
-                const isActive = selectedCommonPointId === cp.id;
+            COLOR_ICONS.forEach((icon, idx) => {
+                const isSelected = idx === 0;
                 html += `
-                    <button onclick="openCommonPointDetail('${cp.id}')" class="${isActive ? 'bg-amber-600 text-white font-bold' : 'bg-white hover:bg-amber-100 text-amber-800 border border-amber-200'} text-xs px-3 py-1.5 rounded-xl transition flex items-center gap-1 shadow-sm">
-                        <span>${cp.icon || '🟡'}</span> ${cp.name}
+                    <button type="button" onclick="selectCommonIcon('${icon}', this)" class="icon-picker-btn w-10 h-10 rounded-xl text-xl flex items-center justify-center bg-slate-100 hover:bg-slate-200 transition ${isSelected ? 'ring-4 ring-amber-400 scale-110' : ''}">
+                        ${icon}
                     </button>
                 `;
             });
-            html += `<button onclick="switchTab('common_settings')" class="bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 text-xs px-2.5 py-1.5 rounded-xl transition flex items-center gap-1"><i class="fa-solid fa-gear"></i> 設定</button>`;
             container.innerHTML = html;
+        }
+
+        function renderCommonPointQuickButtons() {
+            ['common-point-quick-buttons', 'common-point-quick-buttons-settings'].forEach(containerId => {
+                const container = document.getElementById(containerId);
+                if(!container) return;
+                let html = '';
+                state.commonPoints.forEach(cp => {
+                    const isActive = selectedCommonPointId === cp.id;
+                    html += `
+                        <button onclick="openCommonPointDetail('${cp.id}')" class="${isActive ? 'bg-amber-600 text-white font-bold' : 'bg-white hover:bg-amber-100 text-amber-800 border border-amber-200'} text-xs px-3 py-1.5 rounded-xl transition flex items-center gap-1 shadow-sm">
+                            <span>${cp.icon || '🟡'}</span> ${cp.name}
+                        </button>
+                    `;
+                });
+                html += `<button onclick="switchTab('common_settings')" class="bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 text-xs px-2.5 py-1.5 rounded-xl transition flex items-center gap-1"><i class="fa-solid fa-gear"></i> 設定</button>`;
+                container.innerHTML = html;
+            });
         }
 
         function renderCommonDetailHeader() {
