@@ -491,11 +491,8 @@
                 </h3>
                 <form id="commonAddForm" onsubmit="handleAddCommonPoint(event)" class="space-y-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-500 mb-2">カラー・アイコンを選択</label>
-                        <!-- 8〜10個のカラー・アイコン選択式パレット -->
-                        <div id="iconPickerContainer" class="flex flex-wrap gap-2">
-                            <!-- JSで動的生成または下記のように配置 -->
-                        </div>
+                        <!-- アイコンの文字を削除し、カラー別アイコンを10個選択式で配置 -->
+                        <div id="iconPickerContainer" class="flex flex-wrap gap-2"></div>
                         <input type="hidden" id="selectedCommonIcon" value="🟡" required>
                     </div>
                     <div>
@@ -566,14 +563,25 @@
             { id: 'cp_3', name: '楽天ポイント', icon: '🔵', order: 3 }
         ];
 
-        const COLOR_ICONS = ['🟡', '🟢', '🔵', '🔴', '🟠', '🟣', '🟤', '⭐', '💎', '🔥'];
+        // アイコンとグラフカラーを完全に一致させるためのカラーマップ
+        const COLOR_ICONS = [
+            { icon: '🟡', color: '#f59e0b' },
+            { icon: '🟢', color: '#10b981' },
+            { icon: '🔵', color: '#3b82f6' },
+            { icon: '🔴', color: '#ef4444' },
+            { icon: '🟠', color: '#f97316' },
+            { icon: '🟣', color: '#8b5cf6' },
+            { icon: '🟤', color: '#78716c' },
+            { icon: '⭐', color: '#eab308' },
+            { icon: '💎', color: '#06b6d4' },
+            { icon: '🔥', color: '#f43f5e' }
+        ];
 
         let state = { apps: [], logs: [], redemptions: [], commonPoints: [], commonLogs: [] };
         let chart1Mode = 'daily', chart2Mode = 'daily', chart3Mode = 'daily', commonChartMode = 'monthly';
         let commonChartTotalInst = null, commonChartCompareInst = null, commonChartShareInst = null;
         let selectedAppFilter = null, selectedCommonPointId = null;
-
-        const COLOR_PALETTE = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#3b82f6', '#14b8a6', '#f43f5e'];
+        let dashboardCardMode = 'point';
 
         async function loadDataFromCloud() {
             try {
@@ -846,6 +854,24 @@
         window.deleteRedemption = async function(id) { await deleteDoc(doc(db, "redemptions", id)); await loadDataFromCloud(); };
         window.deleteApp = async function(id) { await deleteDoc(doc(db, "apps", id)); await loadDataFromCloud(); };
 
+        window.toggleCardDisplayMode = function() {
+            dashboardCardMode = document.getElementById('cardModeToggle').checked ? 'yen' : 'point';
+            const lblPt = document.getElementById('toggle-label-pt');
+            const lblYen = document.getElementById('toggle-label-yen');
+            if(dashboardCardMode === 'yen') {
+                lblYen.classList.add('text-emerald-600', 'font-bold');
+                lblYen.classList.remove('text-slate-400');
+                lblPt.classList.remove('text-indigo-600', 'font-bold');
+                lblPt.classList.add('text-slate-400');
+            } else {
+                lblPt.classList.add('text-indigo-600', 'font-bold');
+                lblPt.classList.remove('text-slate-400');
+                lblYen.classList.remove('text-emerald-600', 'font-bold');
+                lblYen.classList.add('text-slate-400');
+            }
+            renderDashboardCards();
+        };
+
         window.openExchangeSummaryModal = function() {
             let summaryMap = {}, totalYen = 0;
             state.redemptions.forEach(r => {
@@ -887,11 +913,11 @@
             const container = document.getElementById('iconPickerContainer');
             if(!container) return;
             let html = '';
-            COLOR_ICONS.forEach((icon, idx) => {
+            COLOR_ICONS.forEach((item, idx) => {
                 const isSelected = idx === 0;
                 html += `
-                    <button type="button" onclick="selectCommonIcon('${icon}', this)" class="icon-picker-btn w-10 h-10 rounded-xl text-xl flex items-center justify-center bg-slate-100 hover:bg-slate-200 transition ${isSelected ? 'ring-4 ring-amber-400 scale-110' : ''}">
-                        ${icon}
+                    <button type="button" onclick="selectCommonIcon('${item.icon}', this)" class="icon-picker-btn w-10 h-10 rounded-xl text-xl flex items-center justify-center bg-slate-100 hover:bg-slate-200 transition ${isSelected ? 'ring-4 ring-amber-400 scale-110' : ''}">
+                        ${item.icon}
                     </button>
                 `;
             });
@@ -1000,7 +1026,7 @@
                 });
             }
 
-            // Chart 2 & 3
+            // Chart 2 & 3 (アイコンに設定された色をグラフに反映)
             const canvas2 = document.getElementById('commonChartCompare');
             if(canvas2) {
                 const ctx2 = canvas2.getContext('2d');
@@ -1010,7 +1036,11 @@
                     const logs = state.commonLogs.filter(l => l.commonPointId === p.id).sort((a,b) => a.month.localeCompare(b.month));
                     return logs.length > 0 ? logs[logs.length - 1].value : 0;
                 });
-                commonChartCompareInst = new Chart(ctx2, { type: 'bar', data: { labels, datasets: [{ label: '残高', data, backgroundColor: COLOR_PALETTE, borderRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false } });
+                let bgColors = state.commonPoints.map(p => {
+                    const found = COLOR_ICONS.find(ci => ci.icon === p.icon);
+                    return found ? found.color : '#f59e0b';
+                });
+                commonChartCompareInst = new Chart(ctx2, { type: 'bar', data: { labels, datasets: [{ label: '残高', data, backgroundColor: bgColors, borderRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false } });
             }
 
             const canvas3 = document.getElementById('commonChartShare');
@@ -1022,7 +1052,11 @@
                     const logs = state.commonLogs.filter(l => l.commonPointId === p.id).sort((a,b) => a.month.localeCompare(b.month));
                     return logs.length > 0 ? logs[logs.length - 1].value : 0;
                 });
-                commonChartShareInst = new Chart(ctx3, { type: 'pie', data: { labels, datasets: [{ data, backgroundColor: COLOR_PALETTE }] }, options: { responsive: true, maintainAspectRatio: false } });
+                let bgColors = state.commonPoints.map(p => {
+                    const found = COLOR_ICONS.find(ci => ci.icon === p.icon);
+                    return found ? found.color : '#f59e0b';
+                });
+                commonChartShareInst = new Chart(ctx3, { type: 'pie', data: { labels, datasets: [{ data, backgroundColor: bgColors }] }, options: { responsive: true, maintainAspectRatio: false } });
             }
         }
 
@@ -1046,6 +1080,7 @@
             if(!container) return;
             let html = '', totalUnredeemedYen = 0, currentMonthGainedYen = 0;
             state.redemptions.forEach(r => { if(r.date && r.date.substring(0, 7) === currentMonthStr) currentMonthGainedYen += Number(r.gainedYen || 0); });
+            
             state.apps.forEach(app => {
                 const appLogs = state.logs.filter(l => l.appId === app.id).sort((a,b) => new Date(a.date) - new Date(b.date));
                 const latestVal = appLogs.length > 0 ? Number(appLogs[appLogs.length - 1].value || 0) : 0;
@@ -1053,10 +1088,50 @@
                 state.redemptions.filter(r => r.appId === app.id).forEach(r => redeemedPtTotal += Number(r.spentPt || 0));
                 const currentBalancePt = Math.max(0, latestVal - redeemedPtTotal);
                 totalUnredeemedYen += currentBalancePt * Number(app.rate || 0);
+
+                let diffVal = 0;
+                if(appLogs.length >= 2) {
+                    diffVal = appLogs[appLogs.length - 1].value - appLogs[appLogs.length - 2].value;
+                } else if(appLogs.length === 1) {
+                    diffVal = appLogs[0].value;
+                }
+
+                let appRedeemedYen = 0;
+                state.redemptions.filter(r => r.appId === app.id).forEach(r => appRedeemedYen += Number(r.gainedYen || 0));
+
+                let mainValStr = '', diffValStr = '';
+                if(dashboardCardMode === 'yen') {
+                    mainValStr = '¥' + Math.floor(currentBalancePt * Number(app.rate || 0)).toLocaleString();
+                    diffValStr = (diffVal >= 0 ? '+' : '') + '¥' + Math.floor(diffVal * Number(app.rate || 0)).toLocaleString();
+                } else {
+                    mainValStr = currentBalancePt.toLocaleString() + ' pt';
+                    diffValStr = (diffVal >= 0 ? '+' : '') + diffVal.toLocaleString() + ' pt';
+                }
+
                 html += `
-                    <div class="bg-white p-2.5 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between">
-                        <div class="flex items-center justify-between mb-1"><span class="text-sm">${app.icon}</span><h4 class="font-bold text-slate-800 text-xs truncate">${app.name}</h4></div>
-                        <div class="text-xs font-bold text-slate-700 text-right">${currentBalancePt.toLocaleString()} pt</div>
+                    <div onclick="filterLogsByApp('${app.id}')" class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-100 hover:border-indigo-400 cursor-pointer transition flex flex-col justify-between space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xl">${app.icon}</span>
+                            <span class="text-xs font-bold text-slate-700 truncate max-w-[100px]">${app.name}</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-50 text-[11px]">
+                            <div>
+                                <span class="text-slate-400 block text-[9px]">直近増減</span>
+                                <span class="font-bold ${diffVal >= 0 ? 'text-emerald-600' : 'text-rose-600'}">${diffValStr}</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-slate-400 block text-[9px]">累計残高</span>
+                                <span class="font-bold text-slate-800">${mainValStr}</span>
+                            </div>
+                            <div>
+                                <span class="text-slate-400 block text-[9px]">今月交換</span>
+                                <span class="font-bold text-indigo-600">¥${appRedeemedYen.toLocaleString()}</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-slate-400 block text-[9px]">累計実績</span>
+                                <span class="font-bold text-emerald-600">¥${appRedeemedYen.toLocaleString()}</span>
+                            </div>
+                        </div>
                     </div>
                 `;
             });
@@ -1068,16 +1143,43 @@
             if(document.getElementById('summary-confirmed')) document.getElementById('summary-confirmed').innerText = '¥' + currentMonthGainedYen.toLocaleString();
             if(document.getElementById('summary-monthly')) document.getElementById('summary-monthly').innerText = '¥' + Math.floor(totalUnredeemedYen * 0.3).toLocaleString();
         }
+
+        window.filterLogsByApp = function(appId) {
+            selectedAppFilter = appId;
+            switchTab('entry');
+            renderLogsTable();
+            const app = state.apps.find(a => a.id === appId);
+            const banner = document.getElementById('filter-banner');
+            const bannerText = document.getElementById('filter-banner-text');
+            if(banner && bannerText && app) {
+                banner.classList.remove('hidden');
+                bannerText.innerText = `${app.icon} ${app.name} の履歴で絞り込み中`;
+            }
+        };
+
+        window.clearFilter = function() {
+            selectedAppFilter = null;
+            document.getElementById('filter-banner').classList.add('hidden');
+            renderLogsTable();
+        };
+
         function renderLogsTable() {
             const tbody = document.getElementById('logsTableBody');
             if(!tbody) return;
+            let filtered = state.logs;
+            if(selectedAppFilter) filtered = filtered.filter(l => l.appId === selectedAppFilter);
+            filtered.sort((a,b) => new Date(b.date) - new Date(a.date));
+
             let html = '';
-            state.logs.forEach(item => {
+            filtered.forEach(item => {
                 const app = state.apps.find(a => a.id === item.appId) || { name: '不明', icon: '❓' };
-                html += `<tr class="hover:bg-slate-50"><td class="py-3 px-4 text-xs">${item.date}</td><td class="py-3 px-4 font-medium">${app.icon} ${app.name}</td><td class="py-3 px-4 text-xs">数値入力</td><td class="py-3 px-4 text-right font-bold">${item.value.toLocaleString()} pt</td><td class="py-3 px-4 text-center"><button onclick="deleteLog('${item.id}')" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button></td></tr>`;
+                html += `<tr class="hover:bg-slate-50"><td class="py-3 px-4 text-xs">${item.date}</td><td class="py-3 px-4 font-medium">${app.icon} ${app.name}</td><td class="py-3 px-4 text-xs">数値入力</td><td class="py-3 px-4 text-right font-bold">${item.value.toLocaleString()} pt</td><td class="py-3 px-4 text-right text-xs">-</td><td class="py-3 px-4 text-center"><button onclick="deleteLog('${item.id}')" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button></td></tr>`;
             });
+            if(filtered.length === 0) html = `<tr><td colspan="6" class="text-center py-6 text-xs text-slate-400">履歴がありません。</td></tr>`;
             tbody.innerHTML = html;
+            if(document.getElementById('log-count')) document.getElementById('log-count').innerText = `全 ${filtered.length} 件`;
         }
+
         function renderRedemptionTable() {
             const tbody = document.getElementById('redemptionTableBody');
             if(!tbody) return;
@@ -1088,6 +1190,7 @@
             });
             tbody.innerHTML = html;
         }
+
         function renderAppsSettingsList() {
             const container = document.getElementById('appsListContainer');
             if(!container) return;
@@ -1097,6 +1200,7 @@
             });
             container.innerHTML = html;
         }
+
         function renderCommonSettingsList() {
             const container = document.getElementById('commonSettingsListContainer');
             if(!container) return;
