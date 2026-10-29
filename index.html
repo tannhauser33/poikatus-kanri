@@ -54,7 +54,7 @@
                 <button onclick="resetCloudData()" class="bg-rose-600/80 hover:bg-rose-600 text-xs px-3 py-2 rounded-lg font-medium transition flex items-center justify-center gap-1.5 shadow-sm">
                     <i class="fa-solid fa-trash-can"></i> 初期化
                 </button>
-                <button onclick="switchTab('common_settings')" class="bg-amber-600 hover:bg-amber-700 text-white text-xs px-3 py-2 rounded-lg font-medium transition flex items-center justify-center gap-1.5 shadow-sm">
+                <button onclick="openCommonPointDetail('total')" class="bg-amber-600 hover:bg-amber-700 text-white text-xs px-3 py-2 rounded-lg font-medium transition flex items-center justify-center gap-1.5 shadow-sm">
                     <i class="fa-solid fa-coins"></i> 共通ポイント
                 </button>
             </div>
@@ -126,8 +126,7 @@
                         <span id="toggle-label-yen" class="text-slate-400">交換金額表示</span>
                     </div>
                 </div>
-                <!-- 以前と同じレイアウトの4カラムカード -->
-                <div id="dashboard-app-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3"></div>
+                <div id="dashboard-app-cards" class="grid grid-cols-2 lg:grid-cols-4 gap-3"></div>
             </div>
 
             <!-- グラフ1：アプリ別比較 -->
@@ -390,11 +389,13 @@
                 </div>
             </div>
 
+            <!-- ヘッダーカード -->
             <div id="commonDetailHeaderCard"></div>
 
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+            <!-- 個別用入力フォーム -->
+            <div id="commonEntryFormWrapper" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                 <h3 id="commonFormTitle" class="font-bold text-slate-700 mb-4 flex items-center gap-2">
-                    <i class="fa-solid fa-pen-nib text-amber-500"></i> ポイント数値入力
+                    <i class="fa-solid fa-pen-nib" id="commonFormIconStyle"></i> ポイント数値入力
                 </h3>
                 <form id="commonEntryForm" onsubmit="handleCommonPointEntry(event)" class="space-y-4">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -408,23 +409,46 @@
                         </div>
                     </div>
                     <div class="flex justify-end">
-                        <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white font-medium px-6 py-2.5 rounded-xl text-sm transition shadow-sm flex items-center gap-2">
+                        <button type="submit" id="commonSubmitBtn" class="bg-amber-600 hover:bg-amber-700 text-white font-medium px-6 py-2.5 rounded-xl text-sm transition shadow-sm flex items-center gap-2">
                             <i class="fa-solid fa-plus"></i> 共通ポイント入力を保存
                         </button>
                     </div>
                 </form>
             </div>
 
-            <!-- 共通ポイント用 3つのグラフ -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4 lg:col-span-3">
+            <!-- 合計選択時：各ポイントカード一覧（縦2列） -->
+            <div id="commonTotalCardsSection" class="space-y-3 hidden">
+                <h3 class="font-bold text-slate-700 text-sm">各ポイントの最新状況</h3>
+                <div id="commonTotalCardsGrid" class="grid grid-cols-2 gap-3"></div>
+            </div>
+
+            <!-- 共通ポイント用 グラフエリア -->
+            <div class="space-y-6">
+                <!-- グラフ1：横軸に各ポイント、縦軸はポイント数 -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <h3 class="font-bold text-slate-700 text-sm flex items-center gap-2">
-                            <i class="fa-solid fa-chart-column text-amber-500"></i> <span id="cc-chart1-title">選択ポイント推移グラフ</span>
+                            <i class="fa-solid fa-chart-column text-amber-500"></i> ポイント種類別 比較グラフ
                         </h3>
                         <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-medium">
-                            <button onclick="changeCommonChartMode('monthly')" id="btn-cc-monthly" class="px-3 py-1 rounded-lg transition bg-white shadow-sm text-amber-600 font-bold">月別</button>
-                            <button onclick="changeCommonChartMode('yearly')" id="btn-cc-yearly" class="px-3 py-1 rounded-lg transition text-slate-600">年間</button>
+                            <button onclick="changeCommonChart1Mode('monthly')" id="btn-cc1-monthly" class="px-3 py-1 rounded-lg transition bg-white shadow-sm text-amber-600 font-bold">月別</button>
+                            <button onclick="changeCommonChart1Mode('yearly')" id="btn-cc1-yearly" class="px-3 py-1 rounded-lg transition text-slate-600">年間</button>
+                        </div>
+                    </div>
+                    <div class="h-64 relative w-full">
+                        <canvas id="commonChartCompare"></canvas>
+                    </div>
+                </div>
+
+                <!-- グラフ2：個別または合計推移グラフ -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <h3 class="font-bold text-slate-700 text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-chart-column text-emerald-600"></i> <span id="commonChart2Title">合計ポイント推移グラフ</span>
+                        </h3>
+                        <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-medium">
+                            <button onclick="changeCommonChart2Mode('monthly')" id="btn-cc2-monthly" class="px-3 py-1 rounded-lg transition bg-white shadow-sm text-emerald-600 font-bold">月別</button>
+                            <button onclick="changeCommonChart2Mode('yearly')" id="btn-cc2-yearly" class="px-3 py-1 rounded-lg transition text-slate-600">年間</button>
                         </div>
                     </div>
                     <div class="h-64 relative w-full">
@@ -432,15 +456,7 @@
                     </div>
                 </div>
 
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4 lg:col-span-2">
-                    <h3 class="font-bold text-slate-700 text-sm flex items-center gap-2">
-                        <i class="fa-solid fa-chart-column text-emerald-600"></i> ポイント種類別 残高比較
-                    </h3>
-                    <div class="h-64 relative w-full">
-                        <canvas id="commonChartCompare"></canvas>
-                    </div>
-                </div>
-
+                <!-- グラフ3：シェア円グラフ -->
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
                     <h3 class="font-bold text-slate-700 text-sm flex items-center gap-2">
                         <i class="fa-solid fa-chart-pie text-indigo-600"></i> 残高シェア割合
@@ -451,16 +467,17 @@
                 </div>
             </div>
 
+            <!-- 入力・利用履歴テーブル -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-4">
-                <h3 class="font-bold text-slate-700">履歴 ＆ 利用額（マイナス差分）一覧</h3>
+                <h3 class="font-bold text-slate-700" id="commonHistoryTitle">履歴 ＆ 利用額一覧</h3>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse text-sm">
                         <thead>
                             <tr class="border-b border-slate-100 text-slate-400 text-xs uppercase">
                                 <th class="py-3 px-4 font-semibold">年月</th>
-                                <th class="py-3 px-4 font-semibold">残高</th>
-                                <th class="py-3 px-4 font-semibold text-right">獲得/利用差分</th>
-                                <th class="py-3 px-4 font-semibold text-center">操作</th>
+                                <th class="py-3 px-4 font-semibold" id="tableHeaderName">残高</th>
+                                <th class="py-3 px-4 font-semibold text-right" id="tableHeaderDiff">獲得/利用差分</th>
+                                <th class="py-3 px-4 font-semibold text-center" id="tableHeaderAction">操作</th>
                             </tr>
                         </thead>
                         <tbody id="commonLogsTableBody" class="divide-y divide-slate-50"></tbody>
@@ -572,10 +589,16 @@
         ];
 
         let state = { apps: [], logs: [], redemptions: [], commonPoints: [], commonLogs: [] };
-        let chart1Mode = 'daily', chart2Mode = 'daily', chart3Mode = 'daily', commonChartMode = 'monthly';
+        let chart1Mode = 'daily', chart2Mode = 'daily', chart3Mode = 'daily';
+        let commonChart1Mode = 'monthly', commonChart2Mode = 'monthly';
         let commonChartTotalInst = null, commonChartCompareInst = null, commonChartShareInst = null;
-        let selectedAppFilter = null, selectedCommonPointId = null;
+        let selectedAppFilter = null, selectedCommonPointId = 'total';
         let dashboardCardMode = 'point';
+
+        function getHexColorForIcon(icon) {
+            const found = COLOR_ICONS.find(ci => ci.icon === icon);
+            return found ? found.color : '#f59e0b';
+        }
 
         async function loadDataFromCloud() {
             try {
@@ -818,7 +841,7 @@
 
         window.handleCommonPointEntry = async function(e) {
             e.preventDefault();
-            if(!selectedCommonPointId) return;
+            if(!selectedCommonPointId || selectedCommonPointId === 'total') return;
             const month = document.getElementById('commonEntryMonth').value;
             const value = parseFloat(document.getElementById('commonEntryValue').value);
             const existing = state.commonLogs.find(l => l.commonPointId === selectedCommonPointId && l.month === month);
@@ -885,6 +908,20 @@
             document.getElementById('exchangeSummaryModal').classList.add('hidden');
         };
 
+        window.changeCommonChart1Mode = function(mode) {
+            commonChart1Mode = mode;
+            document.getElementById('btn-cc1-monthly').className = mode === 'monthly' ? 'px-3 py-1 rounded-lg transition bg-white shadow-sm text-amber-600 font-bold' : 'px-3 py-1 rounded-lg transition text-slate-600';
+            document.getElementById('btn-cc1-yearly').className = mode === 'yearly' ? 'px-3 py-1 rounded-lg transition bg-white shadow-sm text-amber-600 font-bold' : 'px-3 py-1 rounded-lg transition text-slate-600';
+            renderCommonCharts();
+        };
+
+        window.changeCommonChart2Mode = function(mode) {
+            commonChart2Mode = mode;
+            document.getElementById('btn-cc2-monthly').className = mode === 'monthly' ? 'px-3 py-1 rounded-lg transition bg-white shadow-sm text-emerald-600 font-bold' : 'px-3 py-1 rounded-lg transition text-slate-600';
+            document.getElementById('btn-cc2-yearly').className = mode === 'yearly' ? 'px-3 py-1 rounded-lg transition bg-white shadow-sm text-emerald-600 font-bold' : 'px-3 py-1 rounded-lg transition text-slate-600';
+            renderCommonCharts();
+        };
+
         function renderAll() {
             renderCommonPointQuickButtons();
             renderIconPicker();
@@ -923,6 +960,12 @@
                 const container = document.getElementById(containerId);
                 if(!container) return;
                 let html = '';
+                const isTotalActive = selectedCommonPointId === 'total';
+                html += `
+                    <button onclick="openCommonPointDetail('total')" class="${isTotalActive ? 'bg-amber-600 text-white font-bold' : 'bg-white hover:bg-amber-100 text-amber-800 border border-amber-200'} text-xs px-3 py-1.5 rounded-xl transition flex items-center gap-1 shadow-sm">
+                        <i class="fa-solid fa-calculator"></i> 合計
+                    </button>
+                `;
                 state.commonPoints.forEach(cp => {
                     const isActive = selectedCommonPointId === cp.id;
                     html += `
@@ -938,117 +981,258 @@
 
         function renderCommonDetailHeader() {
             const container = document.getElementById('commonDetailHeaderCard');
-            if(!container || !selectedCommonPointId) return;
-            const cp = state.commonPoints.find(p => p.id === selectedCommonPointId);
-            if(!cp) return;
+            const formWrapper = document.getElementById('commonEntryFormWrapper');
+            const totalCardsSection = document.getElementById('commonTotalCardsSection');
+            const submitBtn = document.getElementById('commonSubmitBtn');
+            const formIconStyle = document.getElementById('commonFormIconStyle');
+            if(!container) return;
 
-            const cpLogs = state.commonLogs.filter(l => l.commonPointId === cp.id).sort((a,b) => a.month.localeCompare(b.month));
-            const latestVal = cpLogs.length > 0 ? cpLogs[cpLogs.length - 1].value : 0;
+            if(selectedCommonPointId === 'total') {
+                if(formWrapper) formWrapper.classList.add('hidden');
+                if(totalCardsSection) totalCardsSection.classList.remove('hidden');
 
-            container.innerHTML = `
-                <div class="p-5 rounded-2xl shadow-sm text-white bg-amber-600 flex justify-between items-center">
-                    <div class="flex items-center gap-3">
-                        <span class="text-2xl">${cp.icon || '🟡'}</span>
+                let totalLatestVal = 0;
+                state.commonPoints.forEach(cp => {
+                    const cpLogs = state.commonLogs.filter(l => l.commonPointId === cp.id).sort((a,b) => a.month.localeCompare(b.month));
+                    if(cpLogs.length > 0) totalLatestVal += cpLogs[cpLogs.length - 1].value;
+                });
+
+                container.innerHTML = `
+                    <div class="p-5 rounded-2xl shadow-sm text-white bg-amber-600 flex justify-between items-center">
                         <div>
-                            <h2 class="font-bold text-lg">${cp.name}</h2>
-                            <p class="text-xs text-amber-100">1pt = 1円</p>
+                            <h2 class="font-bold text-lg">共通ポイント 合計</h2>
+                            <p class="text-xs text-amber-100">全ポイントの合算管理</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs text-amber-100 block">総残高</span>
+                            <span class="text-xl font-bold">${totalLatestVal.toLocaleString()} pt</span>
                         </div>
                     </div>
-                    <div class="text-right">
-                        <span class="text-xs text-amber-100 block">最新残高</span>
-                        <span class="text-xl font-bold">${latestVal.toLocaleString()} pt</span>
+                `;
+                renderCommonTotalCardsGrid();
+            } else {
+                if(formWrapper) formWrapper.classList.remove('hidden');
+                if(totalCardsSection) totalCardsSection.classList.add('hidden');
+
+                const cp = state.commonPoints.find(p => p.id === selectedCommonPointId);
+                if(!cp) return;
+
+                const hexColor = getHexColorForIcon(cp.icon || '🟡');
+                const cpLogs = state.commonLogs.filter(l => l.commonPointId === cp.id).sort((a,b) => a.month.localeCompare(b.month));
+                const latestVal = cpLogs.length > 0 ? cpLogs[cpLogs.length - 1].value : 0;
+
+                if(submitBtn) {
+                    submitBtn.style.backgroundColor = hexColor;
+                    submitBtn.className = `text-white font-medium px-6 py-2.5 rounded-xl text-sm transition shadow-sm flex items-center gap-2 hover:opacity-90`;
+                }
+                if(formIconStyle) {
+                    formIconStyle.style.color = hexColor;
+                }
+
+                container.innerHTML = `
+                    <div class="p-5 rounded-2xl shadow-sm text-white flex justify-between items-center" style="background-color: ${hexColor};">
+                        <div>
+                            <h2 class="font-bold text-lg">${cp.name}</h2>
+                            <p class="text-xs text-white/85">1pt = 1円</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs text-white/85 block">最新残高</span>
+                            <span class="text-xl font-bold">${latestVal.toLocaleString()} pt</span>
+                        </div>
                     </div>
-                </div>
-            `;
+                `;
+            }
+        }
+
+        function renderCommonTotalCardsGrid() {
+            const grid = document.getElementById('commonTotalCardsGrid');
+            if(!grid) return;
+            let html = '';
+            state.commonPoints.forEach(cp => {
+                const cpLogs = state.commonLogs.filter(l => l.commonPointId === cp.id).sort((a,b) => a.month.localeCompare(b.month));
+                const latestVal = cpLogs.length > 0 ? cpLogs[cpLogs.length - 1].value : 0;
+                let diff = 0;
+                if(cpLogs.length >= 2) {
+                    diff = cpLogs[cpLogs.length - 1].value - cpLogs[cpLogs.length - 2].value;
+                } else if(cpLogs.length === 1) {
+                    diff = cpLogs[0].value;
+                }
+                let diffText = (diff >= 0 ? '+' : '') + diff.toLocaleString() + ' pt';
+
+                html += `
+                    <div onclick="openCommonPointDetail('${cp.id}')" class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-100 hover:border-amber-400 cursor-pointer transition flex flex-col justify-between space-y-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-lg">${cp.icon || '🟡'}</span>
+                            <span class="text-xs font-bold text-slate-800 truncate">${cp.name}</span>
+                        </div>
+                        <div class="space-y-1 pt-2 border-t border-slate-50 text-[11px]">
+                            <div class="flex justify-between items-center">
+                                <span class="text-slate-400">最新ポイント</span>
+                                <span class="font-bold text-slate-800">${latestVal.toLocaleString()} pt</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-slate-400">前回増減</span>
+                                <span class="font-bold ${diff >= 0 ? 'text-emerald-600' : 'text-rose-600'}">${diffText}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            grid.innerHTML = html;
         }
 
         function renderCommonLogsTable() {
             const tbody = document.getElementById('commonLogsTableBody');
-            if(!tbody || !selectedCommonPointId) return;
-            const cpLogs = state.commonLogs.filter(l => l.commonPointId === selectedCommonPointId).sort((a,b) => b.month.localeCompare(a.month));
-            
-            let html = '';
-            cpLogs.forEach((item) => {
-                const sortedAsc = [...cpLogs].sort((a,b) => a.month.localeCompare(b.month));
-                const ascIdx = sortedAsc.findIndex(l => l.id === item.id);
-                let diff = ascIdx > 0 ? item.value - sortedAsc[ascIdx - 1].value : item.value;
-                
-                let diffText = diff >= 0 ? `<span class="text-emerald-600 font-bold">+${diff.toLocaleString()} pt (獲得)</span>` : `<span class="text-rose-600 font-bold">${diff.toLocaleString()} pt (利用: ¥${Math.abs(diff).toLocaleString()})</span>`;
+            const titleEl = document.getElementById('commonHistoryTitle');
+            if(!tbody) return;
 
-                html += `
-                    <tr class="hover:bg-slate-50/50 transition">
-                        <td class="py-3 px-4 text-xs font-medium text-slate-600">${item.month}</td>
-                        <td class="py-3 px-4 font-bold text-slate-800">${item.value.toLocaleString()} pt</td>
-                        <td class="py-3 px-4 text-right">${diffText}</td>
-                        <td class="py-3 px-4 text-center">
-                            <button onclick="deleteCommonLog('${item.id}')" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button>
-                        </td>
-                    </tr>
-                `;
-            });
-            if(cpLogs.length === 0) html = `<tr><td colspan="4" class="text-center py-6 text-xs text-slate-400">履歴がありません。</td></tr>`;
-            tbody.innerHTML = html;
+            if(selectedCommonPointId === 'total') {
+                if(titleEl) titleEl.innerText = '合計 月別推移履歴';
+                let monthMap = {};
+                state.commonLogs.forEach(l => {
+                    if(!monthMap[l.month]) monthMap[l.month] = 0;
+                    monthMap[l.month] += Number(l.value || 0);
+                });
+                let sortedMonths = Object.keys(monthMap).sort((a,b) => b.localeCompare(a));
+                let html = '';
+                sortedMonths.forEach((m) => {
+                    const val = monthMap[m];
+                    const sortedAsc = [...sortedMonths].sort((a,b) => a.localeCompare(b));
+                    const ascIdx = sortedAsc.indexOf(m);
+                    let prevVal = ascIdx > 0 ? monthMap[sortedAsc[ascIdx - 1]] : 0;
+                    let diff = ascIdx > 0 ? val - prevVal : val;
+                    let diffText = diff >= 0 ? `<span class="text-emerald-600 font-bold">+${diff.toLocaleString()} pt</span>` : `<span class="text-rose-600 font-bold">${diff.toLocaleString()} pt</span>`;
+
+                    html += `
+                        <tr class="hover:bg-slate-50/50 transition">
+                            <td class="py-3 px-4 text-xs font-medium text-slate-600">${m}</td>
+                            <td class="py-3 px-4 font-bold text-slate-800">${val.toLocaleString()} pt</td>
+                            <td class="py-3 px-4 text-right">${diffText}</td>
+                            <td class="py-3 px-4 text-center text-xs text-slate-400">-</td>
+                        </tr>
+                    `;
+                });
+                if(sortedMonths.length === 0) html = `<tr><td colspan="4" class="text-center py-6 text-xs text-slate-400">履歴がありません。</td></tr>`;
+                tbody.innerHTML = html;
+            } else {
+                if(titleEl) titleEl.innerText = '履歴 ＆ 利用額（マイナス差分）一覧';
+                const cpLogs = state.commonLogs.filter(l => l.commonPointId === selectedCommonPointId).sort((a,b) => b.month.localeCompare(a.month));
+                
+                let html = '';
+                cpLogs.forEach((item) => {
+                    const sortedAsc = [...cpLogs].sort((a,b) => a.month.localeCompare(b.month));
+                    const ascIdx = sortedAsc.findIndex(l => l.id === item.id);
+                    let diff = ascIdx > 0 ? item.value - sortedAsc[ascIdx - 1].value : item.value;
+                    
+                    let diffText = diff >= 0 ? `<span class="text-emerald-600 font-bold">+${diff.toLocaleString()} pt (獲得)</span>` : `<span class="text-rose-600 font-bold">${diff.toLocaleString()} pt (利用: ¥${Math.abs(diff).toLocaleString()})</span>`;
+
+                    html += `
+                        <tr class="hover:bg-slate-50/50 transition">
+                            <td class="py-3 px-4 text-xs font-medium text-slate-600">${item.month}</td>
+                            <td class="py-3 px-4 font-bold text-slate-800">${item.value.toLocaleString()} pt</td>
+                            <td class="py-3 px-4 text-right">${diffText}</td>
+                            <td class="py-3 px-4 text-center">
+                                <button onclick="deleteCommonLog('${item.id}')" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                if(cpLogs.length === 0) html = `<tr><td colspan="4" class="text-center py-6 text-xs text-slate-400">履歴がありません。</td></tr>`;
+                tbody.innerHTML = html;
+            }
         }
 
         function renderCommonCharts() {
-            if(!selectedCommonPointId) return;
-            const cp = state.commonPoints.find(p => p.id === selectedCommonPointId);
-            if(!cp) return;
+            const compareContainer = document.getElementById('commonChartCompare').closest('.bg-white');
+            const shareContainer = document.getElementById('commonChartShare').closest('.bg-white');
+            const chart2Title = document.getElementById('commonChart2Title');
 
-            const canvas1 = document.getElementById('commonChartTotal');
-            if(canvas1) {
-                const ctx1 = canvas1.getContext('2d');
+            if(selectedCommonPointId !== 'total') {
+                if(compareContainer) compareContainer.classList.add('hidden');
+                if(shareContainer) shareContainer.classList.add('hidden');
+                const cp = state.commonPoints.find(p => p.id === selectedCommonPointId);
+                if(cp && chart2Title) chart2Title.innerText = `${cp.name} ポイント推移グラフ`;
+            } else {
+                if(compareContainer) compareContainer.classList.remove('hidden');
+                if(shareContainer) shareContainer.classList.remove('hidden');
+                if(chart2Title) chart2Title.innerText = '合計ポイント推移グラフ';
+
+                const canvas1 = document.getElementById('commonChartCompare');
+                if(canvas1) {
+                    const ctx1 = canvas1.getContext('2d');
+                    if(commonChartCompareInst) commonChartCompareInst.destroy();
+                    let labels = state.commonPoints.map(p => p.name);
+                    let data = state.commonPoints.map(p => {
+                        const logs = state.commonLogs.filter(l => l.commonPointId === p.id).sort((a,b) => a.month.localeCompare(b.month));
+                        return logs.length > 0 ? logs[logs.length - 1].value : 0;
+                    });
+                    if(commonChart1Mode === 'yearly') {
+                        let yearMap = {};
+                        state.commonPoints.forEach(p => {
+                            const logs = state.commonLogs.filter(l => l.commonPointId === p.id);
+                            logs.forEach(l => {
+                                const yr = l.month.substring(0, 4);
+                                yearMap[yr] = (yearMap[yr] || 0) + Number(l.value || 0);
+                            });
+                        });
+                        labels = Object.keys(yearMap).sort();
+                        data = labels.map(yr => yearMap[yr]);
+                    }
+                    let bgColors = state.commonPoints.map(p => getHexColorForIcon(p.icon));
+                    commonChartCompareInst = new Chart(ctx1, { type: 'bar', data: { labels, datasets: [{ label: 'ポイント数', data, backgroundColor: bgColors, borderRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false } });
+                }
+
+                const canvas3 = document.getElementById('commonChartShare');
+                if(canvas3) {
+                    const ctx3 = canvas3.getContext('2d');
+                    if(commonChartShareInst) commonChartShareInst.destroy();
+                    let labels = state.commonPoints.map(p => p.name);
+                    let data = state.commonPoints.map(p => {
+                        const logs = state.commonLogs.filter(l => l.commonPointId === p.id).sort((a,b) => a.month.localeCompare(b.month));
+                        return logs.length > 0 ? logs[logs.length - 1].value : 0;
+                    });
+                    let bgColors = state.commonPoints.map(p => getHexColorForIcon(p.icon));
+                    commonChartShareInst = new Chart(ctx3, { type: 'pie', data: { labels, datasets: [{ data, backgroundColor: bgColors }] }, options: { responsive: true, maintainAspectRatio: false } });
+                }
+            }
+
+            const canvas2 = document.getElementById('commonChartTotal');
+            if(canvas2) {
+                const ctx2 = canvas2.getContext('2d');
                 if(commonChartTotalInst) commonChartTotalInst.destroy();
-                const cpLogs = state.commonLogs.filter(l => l.commonPointId === cp.id).sort((a,b) => a.month.localeCompare(b.month));
-                let labels = cpLogs.map(l => l.month), earned = [], spent = [];
-                cpLogs.forEach((item, idx) => {
-                    let diff = idx === 0 ? item.value : item.value - cpLogs[idx - 1].value;
-                    earned.push(diff >= 0 ? diff : 0);
-                    spent.push(diff < 0 ? Math.abs(diff) : 0);
-                });
-                commonChartTotalInst = new Chart(ctx1, {
+
+                let mapData = {};
+                let chartColor = '#10b981'; // 合計のときのカラー
+
+                if(selectedCommonPointId === 'total') {
+                    state.commonLogs.forEach(l => {
+                        let key = commonChart2Mode === 'yearly' ? l.month.substring(0, 4) : l.month;
+                        mapData[key] = (mapData[key] || 0) + Number(l.value || 0);
+                    });
+                } else {
+                    const cp = state.commonPoints.find(p => p.id === selectedCommonPointId);
+                    if(cp) {
+                        // 選択された個別ポイントのアイコンの色をグラフの棒の色に反映
+                        chartColor = getHexColorForIcon(cp.icon);
+                    }
+                    const logs = state.commonLogs.filter(l => l.commonPointId === selectedCommonPointId);
+                    logs.forEach(l => {
+                        let key = commonChart2Mode === 'yearly' ? l.month.substring(0, 4) : l.month;
+                        mapData[key] = (mapData[key] || 0) + Number(l.value || 0);
+                    });
+                }
+
+                let labels = Object.keys(mapData).sort();
+                let data = labels.map(k => mapData[k]);
+
+                commonChartTotalInst = new Chart(ctx2, {
                     type: 'bar',
                     data: {
                         labels: labels,
-                        datasets: [
-                            { type: 'line', label: '利用額 (円)', data: spent, borderColor: '#ef4444', backgroundColor: '#ef4444', borderWidth: 2, yAxisID: 'y1', order: 1 },
-                            { type: 'bar', label: '獲得ポイント', data: earned, backgroundColor: '#f59e0b', borderRadius: 6, yAxisID: 'y', order: 2 }
-                        ]
+                        datasets: [{ label: 'ポイント数', data: data, backgroundColor: chartColor, borderRadius: 6 }]
                     },
-                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { type: 'linear', position: 'left', beginAtZero: true }, y1: { type: 'linear', position: 'right', beginAtZero: true, grid: { drawOnChartArea: false } } } }
+                    options: { responsive: true, maintainAspectRatio: false }
                 });
-            }
-
-            const canvas2 = document.getElementById('commonChartCompare');
-            if(canvas2) {
-                const ctx2 = canvas2.getContext('2d');
-                if(commonChartCompareInst) commonChartCompareInst.destroy();
-                let labels = state.commonPoints.map(p => p.name);
-                let data = state.commonPoints.map(p => {
-                    const logs = state.commonLogs.filter(l => l.commonPointId === p.id).sort((a,b) => a.month.localeCompare(b.month));
-                    return logs.length > 0 ? logs[logs.length - 1].value : 0;
-                });
-                let bgColors = state.commonPoints.map(p => {
-                    const found = COLOR_ICONS.find(ci => ci.icon === p.icon);
-                    return found ? found.color : '#3b82f6';
-                });
-                commonChartCompareInst = new Chart(ctx2, { type: 'bar', data: { labels, datasets: [{ label: '残高', data, backgroundColor: bgColors, borderRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false } });
-            }
-
-            const canvas3 = document.getElementById('commonChartShare');
-            if(canvas3) {
-                const ctx3 = canvas3.getContext('2d');
-                if(commonChartShareInst) commonChartShareInst.destroy();
-                let labels = state.commonPoints.map(p => p.name);
-                let data = state.commonPoints.map(p => {
-                    const logs = state.commonLogs.filter(l => l.commonPointId === p.id).sort((a,b) => a.month.localeCompare(b.month));
-                    return logs.length > 0 ? logs[logs.length - 1].value : 0;
-                });
-                let bgColors = state.commonPoints.map(p => {
-                    const found = COLOR_ICONS.find(ci => ci.icon === p.icon);
-                    return found ? found.color : '#3b82f6';
-                });
-                commonChartShareInst = new Chart(ctx3, { type: 'pie', data: { labels, datasets: [{ data, backgroundColor: bgColors }] }, options: { responsive: true, maintainAspectRatio: false } });
             }
         }
 
@@ -1113,7 +1297,6 @@
                     row3Val = currentBalancePt.toLocaleString() + ' pt';
                 }
 
-                // スクリーンショットのレイアウトに合わせたカードデザイン（1行目にアイコン＋アプリ名＋右側に率、2・3行目に直近増減／累計残高）
                 html += `
                     <div onclick="filterLogsByApp('${app.id}')" class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 hover:border-indigo-400 cursor-pointer transition flex flex-col justify-between space-y-3">
                         <div class="flex items-center justify-between">
