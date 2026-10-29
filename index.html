@@ -565,16 +565,16 @@
         const db = getFirestore(app);
 
         const DEFAULT_APPS = [
-            { id: 'app_1', name: 'トリマ', rate: 0.01, icon: '🔵', order: 1 },
-            { id: 'app_2', name: 'Miles', rate: 0.1, icon: '🟢', order: 2 },
-            { id: 'app_3', name: 'クラシルリワード', rate: 0.01, icon: '🟡', order: 3 },
-            { id: 'app_4', name: 'Powl', rate: 0.1, icon: '🔴', order: 4 }
+            { id: 'app_01', name: 'トリマ', rate: 0.01, icon: '🔵', order: 1 },
+            { id: 'app_02', name: 'Miles', rate: 0.1, icon: '🟢', order: 2 },
+            { id: 'app_03', name: 'クラシルリワード', rate: 0.01, icon: '🟡', order: 3 },
+            { id: 'app_04', name: 'Powl', rate: 0.1, icon: '🔴', order: 4 }
         ];
 
         const DEFAULT_COMMON_POINTS = [
-            { id: 'cp_1', name: 'dポイント', icon: '🟡', order: 1 },
-            { id: 'cp_2', name: 'Vポイント', icon: '🟢', order: 2 },
-            { id: 'cp_3', name: '楽天ポイント', icon: '🔵', order: 3 }
+            { id: 'cp_01', name: 'dポイント', icon: '🟡', order: 1 },
+            { id: 'cp_02', name: 'Vポイント', icon: '🟢', order: 2 },
+            { id: 'cp_03', name: '楽天ポイント', icon: '🔵', order: 3 }
         ];
 
         const COLOR_ICONS = [
@@ -812,7 +812,8 @@
             const name = document.getElementById('appNameInput').value;
             const rate = parseFloat(document.getElementById('appRateInput').value);
             const icon = document.getElementById('appIconInput').value;
-            const newId = 'app_' + Date.now();
+            const nextNum = Math.min(99, Math.max(1, state.apps.length + 1));
+            const newId = 'app_' + String(nextNum).padStart(2, '0');
             try {
                 await setDoc(doc(db, "apps", newId), { id: newId, name, rate, icon, order: state.apps.length + 1 });
                 await loadDataFromCloud();
@@ -824,7 +825,8 @@
             e.preventDefault();
             const name = document.getElementById('commonNameInput').value;
             const icon = document.getElementById('selectedCommonIcon').value || '🔵';
-            const newId = 'cp_' + Date.now();
+            const nextNum = Math.min(99, Math.max(1, state.commonPoints.length + 1));
+            const newId = 'cp_' + String(nextNum).padStart(2, '0');
             try {
                 await setDoc(doc(db, "commonPoints", newId), { id: newId, name, icon, order: state.commonPoints.length + 1 });
                 await loadDataFromCloud();
@@ -1202,7 +1204,7 @@
                 if(commonChartTotalInst) commonChartTotalInst.destroy();
 
                 let mapData = {};
-                let chartColor = '#10b981'; // 合計のときのカラー
+                let chartColor = '#10b981';
 
                 if(selectedCommonPointId === 'total') {
                     state.commonLogs.forEach(l => {
@@ -1212,7 +1214,6 @@
                 } else {
                     const cp = state.commonPoints.find(p => p.id === selectedCommonPointId);
                     if(cp) {
-                        // 選択された個別ポイントのアイコンの色をグラフの棒の色に反映
                         chartColor = getHexColorForIcon(cp.icon);
                     }
                     const logs = state.commonLogs.filter(l => l.commonPointId === selectedCommonPointId);
