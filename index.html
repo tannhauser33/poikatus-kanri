@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ポイ活・共通ポイント収益管理 (クラウド同期版)</title>
+    <title>ポイ活・共通ポイント管理 (クラウド同期版)</title>
     <!-- Tailwind CSS for modern UI -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js for graphs -->
@@ -52,7 +52,7 @@
                     <input type="file" id="csvFileInput" accept=".csv" onchange="importCSV(event)" class="hidden">
                 </label>
                 <button onclick="resetCloudData()" class="bg-rose-600/80 hover:bg-rose-600 text-xs px-3 py-2 rounded-lg font-medium transition flex items-center justify-center gap-1.5 shadow-sm">
-                    <i class="fa-solid fa-trash-can"></i> 初期化
+                    <i class="fa-solid fa-trash-can"></i> データ初期化
                 </button>
                 <button onclick="openCommonPointDetail('total')" class="bg-amber-600 hover:bg-amber-700 text-white text-xs px-3 py-2 rounded-lg font-medium transition flex items-center justify-center gap-1.5 shadow-sm">
                     <i class="fa-solid fa-coins"></i> 共通ポイント
@@ -344,14 +344,10 @@
                     <div>
                         <label class="block text-xs font-semibold text-slate-500 mb-1">カテゴリマーク</label>
                         <select id="appIconInput" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            <option value="🔵">🔵 ブルー</option>
-                            <option value="🟢">🟢 グリーン</option>
-                            <option value="🟡">🟡 イエロー</option>
-                            <option value="🔴">🔴 レッド</option>
-                            <option value="🟠">🟠 オレンジ</option>
-                            <option value="🟣">🟣 パープル</option>
-                            <option value="🟤">🟤 ブラウン</option>
-                            <option value="🔘">🔘 グレー</option>
+                            <option value="🚶">🚶 歩く</option>
+                            <option value="💤">💤 放置</option>
+                            <option value="🪙">🪙 ポイントサイト</option>
+                            <option value="⭐">⭐ etc</option>
                         </select>
                     </div>
                     <div>
@@ -506,6 +502,7 @@
                 </h3>
                 <form id="commonAddForm" onsubmit="handleAddCommonPoint(event)" class="space-y-4">
                     <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">ポイントアイコン（カラー）</label>
                         <div id="iconPickerContainer" class="flex flex-wrap gap-2"></div>
                         <input type="hidden" id="selectedCommonIcon" value="🔵" required>
                     </div>
@@ -565,10 +562,10 @@
         const db = getFirestore(app);
 
         const DEFAULT_APPS = [
-            { id: 'app_01', name: 'トリマ', rate: 0.01, icon: '🔵', order: 1 },
-            { id: 'app_02', name: 'Miles', rate: 0.1, icon: '🟢', order: 2 },
-            { id: 'app_03', name: 'クラシルリワード', rate: 0.01, icon: '🟡', order: 3 },
-            { id: 'app_04', name: 'Powl', rate: 0.1, icon: '🔴', order: 4 }
+            { id: 'app_01', name: 'トリマ', rate: 0.01, icon: '🚶', order: 1 },
+            { id: 'app_02', name: 'Miles', rate: 0.1, icon: '🪙', order: 2 },
+            { id: 'app_03', name: 'クラシルリワード', rate: 0.01, icon: '🚶', order: 3 },
+            { id: 'app_04', name: 'Powl', rate: 0.1, icon: '🪙', order: 4 }
         ];
 
         const DEFAULT_COMMON_POINTS = [
@@ -577,7 +574,8 @@
             { id: 'cp_03', name: '楽天ポイント', icon: '🔵', order: 3 }
         ];
 
-        const COLOR_ICONS = [
+        // 共通ポイント用カラーアイコンパレット
+        const COMMON_COLOR_ICONS = [
             { icon: '🔵', color: '#3b82f6' },
             { icon: '🟢', color: '#10b981' },
             { icon: '🟡', color: '#f59e0b' },
@@ -588,16 +586,25 @@
             { icon: '🔘', color: '#64748b' }
         ];
 
+        // アプリカテゴリ用カラー
+        const APP_COLOR_PALETTE = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#3b82f6', '#14b8a6', '#f43f5e'];
+
         let state = { apps: [], logs: [], redemptions: [], commonPoints: [], commonLogs: [] };
-        let chart1Mode = 'daily', chart2Mode = 'daily', chart3Mode = 'daily';
+        
+        let chart1Mode = 'daily', chart1PeriodTab = 'day';
+        let chart2Mode = 'daily';
+        let chart3Mode = 'daily';
+        let chartAppsInst = null, chartSingleAppInst = null, chartMarkCategoryInst = null;
+
         let commonChart1Mode = 'monthly', commonChart2Mode = 'monthly';
         let commonChartTotalInst = null, commonChartCompareInst = null, commonChartShareInst = null;
         let selectedAppFilter = null, selectedCommonPointId = 'total';
         let dashboardCardMode = 'point';
+        let logDisplayMode = 'point';
 
-        function getHexColorForIcon(icon) {
-            const found = COLOR_ICONS.find(ci => ci.icon === icon);
-            return found ? found.color : '#f59e0b';
+        function getHexColorForCommonIcon(icon) {
+            const found = COMMON_COLOR_ICONS.find(ci => ci.icon === icon);
+            return found ? found.color : '#3b82f6';
         }
 
         async function loadDataFromCloud() {
@@ -657,7 +664,7 @@
 
         window.exportCSV = function() {
             let csvContent = "\ufeff[APPS]\nid,name,rate,icon,order\n";
-            state.apps.forEach(a => { csvContent += `"${a.id}","${a.name}",${a.rate},"${a.icon || '🔵'}",${a.order || 1}\n`; });
+            state.apps.forEach(a => { csvContent += `"${a.id}","${a.name}",${a.rate},"${a.icon || '🚶'}",${a.order || 1}\n`; });
             csvContent += "\n[LOGS]\nid,date,appId,value\n";
             state.logs.forEach(l => { csvContent += `"${l.id}","${l.date}","${l.appId}",${l.value}\n`; });
             csvContent += "\n[REDEMPTIONS]\nid,date,appId,spentPt,gainedYen,destination\n";
@@ -709,7 +716,7 @@
                         }
                         row.push(currentVal.trim().replace(/^"|"$/g, ''));
 
-                        if (currentSection === 'APPS' && row.length >= 3) newApps.push({ id: row[0], name: row[1], rate: parseFloat(row[2]) || 0.01, icon: row[3] || '🔵', order: parseInt(row[4]) || 1 });
+                        if (currentSection === 'APPS' && row.length >= 3) newApps.push({ id: row[0], name: row[1], rate: parseFloat(row[2]) || 0.01, icon: row[3] || '🚶', order: parseInt(row[4]) || 1 });
                         else if (currentSection === 'LOGS' && row.length >= 4) newLogs.push({ id: row[0], date: row[1], appId: row[2], value: parseFloat(row[3]) || 0 });
                         else if (currentSection === 'REDEMPTIONS' && row.length >= 6) newReds.push({ id: row[0], date: row[1], appId: row[2], spentPt: parseFloat(row[3]) || 0, gainedYen: parseFloat(row[4]) || 0, destination: row[5] });
                         else if (currentSection === 'COMMON_POINTS' && row.length >= 2) newCPs.push({ id: row[0], name: row[1], icon: row[2] || '🟡', order: parseInt(row[3]) || 1 });
@@ -729,6 +736,50 @@
                 finally { event.target.value = ''; }
             };
             reader.readAsText(file, 'UTF-8');
+        };
+
+        window.resetCloudData = async function() {
+            if(!confirm('クラウド上の全データを初期化（デフォルト状態に戻す）しますか？')) return;
+            try {
+                for (const a of state.apps) await deleteDoc(doc(db, "apps", a.id));
+                for (const l of state.logs) await deleteDoc(doc(db, "logs", l.id));
+                for (const r of state.redemptions) await deleteDoc(doc(db, "redemptions", r.id));
+                for (const cp of state.commonPoints) await deleteDoc(doc(db, "commonPoints", cp.id));
+                for (const cl of state.commonLogs) await deleteDoc(doc(db, "commonLogs", cl.id));
+
+                for (const defApp of DEFAULT_APPS) await setDoc(doc(db, "apps", defApp.id), defApp);
+                for (const defCp of DEFAULT_COMMON_POINTS) await setDoc(doc(db, "commonPoints", defCp.id), defCp);
+
+                await loadDataFromCloud();
+                alert('データを初期化しました。');
+            } catch(err) {
+                console.error(err);
+                alert('初期化に失敗しました。');
+            }
+        };
+
+        window.moveAppOrder = async function(appId, direction) {
+            const sortedApps = [...state.apps].sort((a, b) => (a.order || 0) - (b.order || 0));
+            const index = sortedApps.findIndex(a => a.id === appId);
+            if (index === -1) return;
+
+            const targetIndex = direction === 'up' ? index - 1 : index + 1;
+            if (targetIndex < 0 || targetIndex >= sortedApps.length) return;
+
+            const temp = sortedApps[index];
+            sortedApps[index] = sortedApps[targetIndex];
+            sortedApps[targetIndex] = temp;
+
+            sortedApps.forEach((app, i) => { app.order = i + 1; });
+            
+            try {
+                for (const app of sortedApps) {
+                    await setDoc(doc(db, "apps", app.id), app);
+                }
+                await loadDataFromCloud();
+            } catch(e) {
+                console.error(e);
+            }
         };
 
         window.switchTab = function(tabId) {
@@ -779,6 +830,78 @@
         if(document.getElementById('entryDate')) document.getElementById('entryDate').valueAsDate = new Date();
         if(document.getElementById('redDate')) document.getElementById('redDate').valueAsDate = new Date();
         if(document.getElementById('commonEntryMonth')) document.getElementById('commonEntryMonth').value = currentMonthStr;
+
+        // Chart 1 Control Helpers
+        window.changeChart1Mode = function(mode) {
+            chart1Mode = mode;
+            ['daily', 'monthly', 'yearly'].forEach(m => {
+                const btn = document.getElementById(`btn-c1-${m}`);
+                if(btn) {
+                    if(m === mode) { btn.className = "px-2.5 py-1 rounded-lg transition bg-white shadow-sm text-indigo-600 font-bold"; }
+                    else { btn.className = "px-2.5 py-1 rounded-lg transition text-slate-600"; }
+                }
+            });
+            renderChart1();
+        };
+
+        window.changeChart1PeriodTab = function(tab) {
+            chart1PeriodTab = tab;
+            ['day', 'month', 'year'].forEach(t => {
+                const btn = document.getElementById(`c1-ptab-${t}`);
+                if(btn) {
+                    if(t === tab) { btn.className = "px-2.5 py-1 rounded-md transition bg-indigo-600 text-white font-medium"; }
+                    else { btn.className = "px-2.5 py-1 rounded-md transition text-slate-600"; }
+                }
+            });
+            const dateIn = document.getElementById('chart1-date-input');
+            const monthIn = document.getElementById('chart1-month-input');
+            const selectIn = document.getElementById('chart1-select-input');
+            if(dateIn) dateIn.classList.add('hidden');
+            if(monthIn) monthIn.classList.add('hidden');
+            if(selectIn) selectIn.classList.add('hidden');
+
+            if(tab === 'day' && dateIn) dateIn.classList.remove('hidden');
+            if(tab === 'month' && monthIn) monthIn.classList.remove('hidden');
+            if(tab === 'year' && selectIn) {
+                selectIn.classList.remove('hidden');
+                populateYearSelect(selectIn);
+            }
+            renderChart1();
+        };
+
+        window.changeChart2Mode = function(mode) {
+            chart2Mode = mode;
+            ['daily', 'monthly', 'yearly'].forEach(m => {
+                const btn = document.getElementById(`btn-c2-${m}`);
+                if(btn) {
+                    if(m === mode) { btn.className = "px-2.5 py-1 rounded-lg transition bg-white shadow-sm text-indigo-600 font-bold"; }
+                    else { btn.className = "px-2.5 py-1 rounded-lg transition text-slate-600"; }
+                }
+            });
+            renderChart2();
+        };
+
+        window.changeChart3Mode = function(mode) {
+            chart3Mode = mode;
+            ['daily', 'monthly', 'yearly'].forEach(m => {
+                const btn = document.getElementById(`btn-c3-${m}`);
+                if(btn) {
+                    if(m === mode) { btn.className = "px-2.5 py-1 rounded-lg transition bg-white shadow-sm text-indigo-600 font-bold"; }
+                    else { btn.className = "px-2.5 py-1 rounded-lg transition text-slate-600"; }
+                }
+            });
+            renderChart3();
+        };
+
+        function populateYearSelect(selectEl) {
+            let years = new Set();
+            state.logs.forEach(l => { if(l.date) years.add(l.date.substring(0, 4)); });
+            let arr = Array.from(years).sort().reverse();
+            if(arr.length === 0) arr = [new Date().getFullYear().toString()];
+            let html = '';
+            arr.forEach(y => html += `<option value="${y}">${y}年</option>`);
+            selectEl.innerHTML = html;
+        }
 
         window.handlePointEntry = async function(e) {
             e.preventDefault();
@@ -891,6 +1014,24 @@
             renderDashboardCards();
         };
 
+        window.toggleLogDisplayMode = function() {
+            logDisplayMode = document.getElementById('logModeToggle').checked ? 'all' : 'point';
+            const lblPt = document.getElementById('log-toggle-pt');
+            const lblAll = document.getElementById('log-toggle-all');
+            if(logDisplayMode === 'all') {
+                lblAll.classList.add('text-emerald-600', 'font-bold');
+                lblAll.classList.remove('text-slate-400');
+                lblPt.classList.remove('text-indigo-600', 'font-bold');
+                lblPt.classList.add('text-slate-400');
+            } else {
+                lblPt.classList.add('text-indigo-600', 'font-bold');
+                lblPt.classList.remove('text-slate-400');
+                lblAll.classList.remove('text-emerald-600', 'font-bold');
+                lblAll.classList.add('text-slate-400');
+            }
+            renderLogsTable();
+        };
+
         window.openExchangeSummaryModal = function() {
             let summaryMap = {}, totalYen = 0;
             state.redemptions.forEach(r => {
@@ -934,19 +1075,33 @@
             renderAppsSettingsList();
             renderCommonSettingsList();
             renderChart2AppSelect();
+            renderSelectedAppCard();
             if(selectedCommonPointId) {
                 renderCommonDetailHeader();
                 renderCommonCharts();
                 renderCommonLogsTable();
             }
-            setTimeout(() => { renderChart1(); renderChart2(); renderChart3(); }, 100);
+            setTimeout(() => { 
+                const dateIn = document.getElementById('chart1-date-input');
+                const monthIn = document.getElementById('chart1-month-input');
+                const chart3DateIn = document.getElementById('chart3-date-input');
+                const chart3MonthIn = document.getElementById('chart3-month-input');
+                if(dateIn && !dateIn.value) dateIn.value = todayStr;
+                if(monthIn && !monthIn.value) monthIn.value = currentMonthStr;
+                if(chart3DateIn && !chart3DateIn.value) chart3DateIn.value = todayStr;
+                if(chart3MonthIn && !chart3MonthIn.value) chart3MonthIn.value = currentMonthStr;
+
+                renderChart1(); 
+                renderChart2(); 
+                renderChart3(); 
+            }, 100);
         }
 
         function renderIconPicker() {
             const container = document.getElementById('iconPickerContainer');
             if(!container) return;
             let html = '';
-            COLOR_ICONS.forEach((item, idx) => {
+            COMMON_COLOR_ICONS.forEach((item, idx) => {
                 const isSelected = idx === 0;
                 html += `
                     <button type="button" onclick="selectCommonIcon('${item.icon}', this)" class="icon-picker-btn w-10 h-10 rounded-xl text-xl flex items-center justify-center bg-slate-100 hover:bg-slate-200 transition ${isSelected ? 'ring-4 ring-amber-400 scale-110' : ''}">
@@ -1019,7 +1174,7 @@
                 const cp = state.commonPoints.find(p => p.id === selectedCommonPointId);
                 if(!cp) return;
 
-                const hexColor = getHexColorForIcon(cp.icon || '🟡');
+                const hexColor = getHexColorForCommonIcon(cp.icon || '🟡');
                 const cpLogs = state.commonLogs.filter(l => l.commonPointId === cp.id).sort((a,b) => a.month.localeCompare(b.month));
                 const latestVal = cpLogs.length > 0 ? cpLogs[cpLogs.length - 1].value : 0;
 
@@ -1060,10 +1215,12 @@
                     diff = cpLogs[0].value;
                 }
                 let diffText = (diff >= 0 ? '+' : '') + diff.toLocaleString() + ' pt';
+                const cardBgColor = getHexColorForCommonIcon(cp.icon || '🟡');
 
                 html += `
                     <div onclick="openCommonPointDetail('${cp.id}')" class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-100 hover:border-amber-400 cursor-pointer transition flex flex-col justify-between space-y-2">
                         <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full inline-block" style="background-color: ${cardBgColor};"></span>
                             <span class="text-lg">${cp.icon || '🟡'}</span>
                             <span class="text-xs font-bold text-slate-800 truncate">${cp.name}</span>
                         </div>
@@ -1180,7 +1337,7 @@
                         labels = Object.keys(yearMap).sort();
                         data = labels.map(yr => yearMap[yr]);
                     }
-                    let bgColors = state.commonPoints.map(p => getHexColorForIcon(p.icon));
+                    let bgColors = state.commonPoints.map(p => getHexColorForCommonIcon(p.icon));
                     commonChartCompareInst = new Chart(ctx1, { type: 'bar', data: { labels, datasets: [{ label: 'ポイント数', data, backgroundColor: bgColors, borderRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false } });
                 }
 
@@ -1193,7 +1350,7 @@
                         const logs = state.commonLogs.filter(l => l.commonPointId === p.id).sort((a,b) => a.month.localeCompare(b.month));
                         return logs.length > 0 ? logs[logs.length - 1].value : 0;
                     });
-                    let bgColors = state.commonPoints.map(p => getHexColorForIcon(p.icon));
+                    let bgColors = state.commonPoints.map(p => getHexColorForCommonIcon(p.icon));
                     commonChartShareInst = new Chart(ctx3, { type: 'pie', data: { labels, datasets: [{ data, backgroundColor: bgColors }] }, options: { responsive: true, maintainAspectRatio: false } });
                 }
             }
@@ -1214,7 +1371,7 @@
                 } else {
                     const cp = state.commonPoints.find(p => p.id === selectedCommonPointId);
                     if(cp) {
-                        chartColor = getHexColorForIcon(cp.icon);
+                        chartColor = getHexColorForCommonIcon(cp.icon);
                     }
                     const logs = state.commonLogs.filter(l => l.commonPointId === selectedCommonPointId);
                     logs.forEach(l => {
@@ -1237,20 +1394,215 @@
             }
         }
 
+        // --- グラフ1：アプリ別比較グラフ描画ロジック ---
+        window.renderChart1 = function() {
+            const canvas = document.getElementById('barChartApps');
+            if(!canvas) return;
+            const ctx = canvas.getContext('2d');
+            if(chartAppsInst) chartAppsInst.destroy();
+
+            let labels = state.apps.map(a => a.name);
+            let data = state.apps.map(a => {
+                const appLogs = state.logs.filter(l => l.appId === a.id).sort((x,y) => new Date(x.date) - new Date(y.date));
+                if(chart1Mode === 'daily') {
+                    const dateInput = document.getElementById('chart1-date-input');
+                    const targetDate = dateInput ? dateInput.value : todayStr;
+                    const log = appLogs.find(l => l.date === targetDate);
+                    return log ? log.value : 0;
+                } else if(chart1Mode === 'monthly') {
+                    const monthInput = document.getElementById('chart1-month-input');
+                    const targetMonth = monthInput ? monthInput.value : currentMonthStr;
+                    const monthLogs = appLogs.filter(l => l.date && l.date.startsWith(targetMonth));
+                    return monthLogs.length > 0 ? monthLogs[monthLogs.length - 1].value : 0;
+                } else {
+                    const selectInput = document.getElementById('chart1-select-input');
+                    const targetYear = selectInput ? selectInput.value : new Date().getFullYear().toString();
+                    const yearLogs = appLogs.filter(l => l.date && l.date.startsWith(targetYear));
+                    return yearLogs.length > 0 ? yearLogs[yearLogs.length - 1].value : 0;
+                }
+            });
+            let bgColors = state.apps.map((_, i) => APP_COLOR_PALETTE[i % APP_COLOR_PALETTE.length]);
+
+            chartAppsInst = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: labels, datasets: [{ label: 'ポイント数値', data: data, backgroundColor: bgColors, borderRadius: 6 }] },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        };
+
+        // --- グラフ2：個別アプリ推移グラフ描画ロジック ---
+        window.renderChart2 = function() {
+            const canvas = document.getElementById('barChartSingleApp');
+            if(!canvas) return;
+            const ctx = canvas.getContext('2d');
+            if(chartSingleAppInst) chartSingleAppInst.destroy();
+
+            const selectEl = document.getElementById('chart2-app-select');
+            const appId = selectEl ? selectEl.value : (state.apps[0] ? state.apps[0].id : null);
+            const app = state.apps.find(a => a.id === appId);
+            if(!app) return;
+
+            const appIndex = state.apps.findIndex(a => a.id === appId);
+            const appColor = APP_COLOR_PALETTE[appIndex % APP_COLOR_PALETTE.length];
+
+            const appLogs = state.logs.filter(l => l.appId === appId).sort((x,y) => new Date(x.date) - new Date(y.date));
+            let mapData = {};
+            appLogs.forEach(l => {
+                let key = l.date;
+                if(chart2Mode === 'monthly') key = l.date.substring(0, 7);
+                if(chart2Mode === 'yearly') key = l.date.substring(0, 4);
+                mapData[key] = l.value; 
+            });
+
+            let labels = Object.keys(mapData).sort();
+            let data = labels.map(k => mapData[k]);
+
+            chartSingleAppInst = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: labels, datasets: [{ label: `${app.name} 推移`, data: data, backgroundColor: appColor, borderRadius: 6 }] },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        };
+
+        // --- グラフ3：カテゴリ別集計グラフ描画ロジック ---
+        window.renderChart3 = function() {
+            const canvas = document.getElementById('barChartMarkCategory');
+            if(!canvas) return;
+            const ctx = canvas.getContext('2d');
+            if(chartMarkCategoryInst) chartMarkCategoryInst.destroy();
+
+            const catIcons = ['🚶', '💤', '🪙', '⭐'];
+            const catColors = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6'];
+            let iconMap = {};
+            catIcons.forEach(icon => iconMap[icon] = 0);
+
+            state.apps.forEach(app => {
+                const appLogs = state.logs.filter(l => l.appId === app.id).sort((x,y) => new Date(x.date) - new Date(y.date));
+                if(appLogs.length > 0) {
+                    const latestVal = appLogs[appLogs.length - 1].value;
+                    const icon = app.icon || '🚶';
+                    if(iconMap[icon] !== undefined) {
+                        iconMap[icon] += latestVal;
+                    }
+                }
+            });
+
+            let labels = catIcons;
+            let data = catIcons.map(icon => iconMap[icon]);
+            let bgColors = catColors;
+
+            chartMarkCategoryInst = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: labels, datasets: [{ label: 'カテゴリ別ポイント', data: data, backgroundColor: bgColors, borderRadius: 6 }] },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        };
+
         function renderAppSelects() {
             const entrySelect = document.getElementById('entryAppId');
             const redSelect = document.getElementById('redAppId');
             let html = '<option value="" disabled selected>アプリを選択</option>';
             state.apps.forEach(a => html += `<option value="${a.id}">${a.icon} ${a.name}</option>`);
-            if(entrySelect) entrySelect.innerHTML = html;
+            if(entrySelect) {
+                entrySelect.innerHTML = html;
+                if(selectedAppFilter) entrySelect.value = selectedAppFilter;
+            }
             if(redSelect) redSelect.innerHTML = html;
         }
+
         function renderChart2AppSelect() {
             const selectEl = document.getElementById('chart2-app-select');
             if(!selectEl) return;
             let html = '';
             state.apps.forEach(a => html += `<option value="${a.id}">${a.icon} ${a.name}</option>`);
             selectEl.innerHTML = html;
+        }
+
+        window.onEntryAppSelectChange = function(appId) {
+            selectedAppFilter = appId;
+            renderSelectedAppCard();
+            renderLogsTable();
+        };
+
+        function renderSelectedAppCard() {
+            const container = document.getElementById('selectedAppCardContainer');
+            if(!container) return;
+
+            if(!selectedAppFilter) {
+                container.classList.add('hidden');
+                container.innerHTML = '';
+                return;
+            }
+
+            const appIndex = state.apps.findIndex(a => a.id === selectedAppFilter);
+            const app = state.apps[appIndex];
+            if(!app) {
+                container.classList.add('hidden');
+                container.innerHTML = '';
+                return;
+            }
+
+            const cardColor = APP_COLOR_PALETTE[appIndex % APP_COLOR_PALETTE.length];
+            const appLogs = state.logs.filter(l => l.appId === app.id).sort((a,b) => new Date(a.date) - new Date(b.date));
+            const latestVal = appLogs.length > 0 ? Number(appLogs[appLogs.length - 1].value || 0) : 0;
+            
+            let redeemedPtTotal = 0;
+            let currentMonthYen = 0;
+            state.redemptions.filter(r => r.appId === app.id).forEach(r => {
+                redeemedPtTotal += Number(r.spentPt || 0);
+                const yen = Number(r.gainedYen || 0);
+                if(r.date && r.date.substring(0, 7) === currentMonthStr) {
+                    currentMonthYen += yen;
+                }
+            });
+
+            const currentBalancePt = Math.max(0, latestVal - redeemedPtTotal);
+            let diffLast = 0;
+            if(appLogs.length > 0) {
+                const lastLog = appLogs[appLogs.length - 1];
+                const currentIndex = appLogs.findIndex(l => l.id === lastLog.id);
+                if(currentIndex > 0) {
+                    diffLast = Number(lastLog.value || 0) - Number(appLogs[currentIndex - 1].value || 0);
+                } else {
+                    diffLast = Number(lastLog.value || 0);
+                }
+            }
+
+            let appTotalRedeemYen = 0;
+            state.redemptions.filter(r => r.appId === app.id).forEach(r => {
+                appTotalRedeemYen += Number(r.gainedYen || 0);
+            });
+
+            container.innerHTML = `
+                <div class="p-4 rounded-2xl shadow-sm text-white flex flex-col justify-between" style="background-color: ${cardColor};">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">${app.icon}</span>
+                            <h4 class="font-bold text-sm tracking-tight">${app.name}</h4>
+                        </div>
+                        <span class="text-[11px] opacity-90 bg-white/20 px-2 py-0.5 rounded-lg">レート: ${app.rate}円</span>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-white/20 text-xs">
+                        <div>
+                            <span class="opacity-75 text-[10px] block">現在のポイント</span>
+                            <span class="font-bold text-sm">${currentBalancePt.toLocaleString()} pt</span>
+                        </div>
+                        <div>
+                            <span class="opacity-75 text-[10px] block">直近の増減</span>
+                            <span class="font-bold text-sm">${diffLast >= 0 ? '+' : ''}${diffLast.toLocaleString()} pt</span>
+                        </div>
+                        <div>
+                            <span class="opacity-75 text-[10px] block">累計交換金額</span>
+                            <span class="font-bold text-sm">¥${appTotalRedeemYen.toLocaleString()}</span>
+                        </div>
+                        <div>
+                            <span class="opacity-75 text-[10px] block">今月の交換金額</span>
+                            <span class="font-bold text-sm">¥${currentMonthYen.toLocaleString()}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.classList.remove('hidden');
         }
 
         function renderDashboardCards() {
@@ -1332,6 +1684,9 @@
         window.filterLogsByApp = function(appId) {
             selectedAppFilter = appId;
             switchTab('entry');
+            const entrySelect = document.getElementById('entryAppId');
+            if(entrySelect) entrySelect.value = appId;
+            renderSelectedAppCard();
             renderLogsTable();
             const app = state.apps.find(a => a.id === appId);
             const banner = document.getElementById('filter-banner');
@@ -1344,25 +1699,72 @@
 
         window.clearFilter = function() {
             selectedAppFilter = null;
+            const entrySelect = document.getElementById('entryAppId');
+            if(entrySelect) entrySelect.value = "";
             document.getElementById('filter-banner').classList.add('hidden');
+            renderSelectedAppCard();
             renderLogsTable();
         };
 
         function renderLogsTable() {
             const tbody = document.getElementById('logsTableBody');
             if(!tbody) return;
-            let filtered = state.logs;
-            if(selectedAppFilter) filtered = filtered.filter(l => l.appId === selectedAppFilter);
-            filtered.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+            let filteredLogs = state.logs;
+            let filteredReds = state.redemptions;
+            if(selectedAppFilter) {
+                filteredLogs = filteredLogs.filter(l => l.appId === selectedAppFilter);
+                filteredReds = filteredReds.filter(r => r.appId === selectedAppFilter);
+            }
+
+            let combinedItems = [];
+            filteredLogs.forEach(l => {
+                combinedItems.push({ ...l, recordType: 'point' });
+            });
+
+            if (logDisplayMode === 'all') {
+                filteredReds.forEach(r => {
+                    combinedItems.push({ ...r, recordType: 'redemption' });
+                });
+            }
+
+            combinedItems.sort((a, b) => new Date(b.date) - new Date(a.date));
 
             let html = '';
-            filtered.forEach(item => {
-                const app = state.apps.find(a => a.id === item.appId) || { name: '不明', icon: '🔵' };
-                html += `<tr class="hover:bg-slate-50"><td class="py-3 px-4 text-xs">${item.date}</td><td class="py-3 px-4 font-medium">${app.icon} ${app.name}</td><td class="py-3 px-4 text-xs">数値入力</td><td class="py-3 px-4 text-right font-bold">${item.value.toLocaleString()} pt</td><td class="py-3 px-4 text-right text-xs">-</td><td class="py-3 px-4 text-center"><button onclick="deleteLog('${item.id}')" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button></td></tr>`;
+            combinedItems.forEach(item => {
+                const app = state.apps.find(a => a.id === item.appId) || { name: '不明', icon: '🚶' };
+                if(item.recordType === 'redemption') {
+                    html += `
+                        <tr class="hover:bg-slate-50 transition bg-emerald-50/30">
+                            <td class="py-3 px-4 text-xs font-medium text-slate-600">${item.date || ''}</td>
+                            <td class="py-3 px-4 font-medium">${app.icon} ${app.name}</td>
+                            <td class="py-3 px-4 text-xs font-semibold text-emerald-600"><i class="fa-solid fa-gift mr-1"></i> 交換 (${item.destination || '未指定'})</td>
+                            <td class="py-3 px-4 text-right font-bold text-slate-800">${Number(item.spentPt || 0).toLocaleString()} pt</td>
+                            <td class="py-3 px-4 text-right font-bold text-emerald-600">¥${Number(item.gainedYen || 0).toLocaleString()}</td>
+                            <td class="py-3 px-4 text-center">
+                                <button onclick="deleteRedemption('${item.id}')" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    html += `
+                        <tr class="hover:bg-slate-50 transition">
+                            <td class="py-3 px-4 text-xs">${item.date}</td>
+                            <td class="py-3 px-4 font-medium">${app.icon} ${app.name}</td>
+                            <td class="py-3 px-4 text-xs">数値入力</td>
+                            <td class="py-3 px-4 text-right font-bold">${item.value.toLocaleString()} pt</td>
+                            <td class="py-3 px-4 text-right text-xs">-</td>
+                            <td class="py-3 px-4 text-center">
+                                <button onclick="deleteLog('${item.id}')" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                }
             });
-            if(filtered.length === 0) html = `<tr><td colspan="6" class="text-center py-6 text-xs text-slate-400">履歴がありません。</td></tr>`;
+
+            if(combinedItems.length === 0) html = `<tr><td colspan="6" class="text-center py-6 text-xs text-slate-400">履歴がありません。</td></tr>`;
             tbody.innerHTML = html;
-            if(document.getElementById('log-count')) document.getElementById('log-count').innerText = `全 ${filtered.length} 件`;
+            if(document.getElementById('log-count')) document.getElementById('log-count').innerText = `全 ${combinedItems.length} 件`;
         }
 
         function renderRedemptionTable() {
@@ -1370,7 +1772,7 @@
             if(!tbody) return;
             let html = '';
             state.redemptions.forEach(r => {
-                const app = state.apps.find(a => a.id === r.appId) || { name: '不明', icon: '🔵' };
+                const app = state.apps.find(a => a.id === r.appId) || { name: '不明', icon: '🚶' };
                 html += `<tr class="hover:bg-slate-50"><td class="py-3 px-4 text-xs">${r.date}</td><td class="py-3 px-4 font-medium">${app.icon} ${app.name}</td><td class="py-3 px-4 text-xs">${r.destination}</td><td class="py-3 px-4 text-right font-bold">${r.spentPt.toLocaleString()} pt</td><td class="py-3 px-4 text-right font-bold text-emerald-600">¥${r.gainedYen.toLocaleString()}</td><td class="py-3 px-4 text-center"><button onclick="deleteRedemption('${r.id}')" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button></td></tr>`;
             });
             tbody.innerHTML = html;
@@ -1380,8 +1782,34 @@
             const container = document.getElementById('appsListContainer');
             if(!container) return;
             let html = '';
-            state.apps.forEach(app => {
-                html += `<div class="flex items-center justify-between p-3 bg-slate-50 border rounded-xl"><div class="flex items-center gap-3"><span class="text-lg">${app.icon}</span><div><h4 class="font-bold text-sm">${app.name}</h4><p class="text-xs text-slate-400">レート: ${app.rate}円</p></div></div><button onclick="deleteApp('${app.id}')" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button></div>`;
+            const sortedApps = [...state.apps].sort((a, b) => (a.order || 0) - (b.order || 0));
+
+            sortedApps.forEach((app, idx) => {
+                const isFirst = idx === 0;
+                const isLast = idx === sortedApps.length - 1;
+
+                html += `
+                    <div class="flex items-center justify-between p-3 bg-slate-50 border rounded-xl gap-2">
+                        <div class="flex items-center gap-3">
+                            <span class="text-lg">${app.icon}</span>
+                            <div>
+                                <h4 class="font-bold text-sm">${app.name}</h4>
+                                <p class="text-xs text-slate-400">レート: ${app.rate}円</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-1">
+                                <button onclick="moveAppOrder('${app.id}', 'up')" ${isFirst ? 'disabled class="text-slate-300 cursor-not-allowed p-1.5"' : 'class="text-slate-500 hover:text-indigo-600 transition p-1.5 bg-white border rounded-lg shadow-sm"'}>
+                                    <i class="fa-solid fa-arrow-up text-xs"></i>
+                                </button>
+                                <button onclick="moveAppOrder('${app.id}', 'down')" ${isLast ? 'disabled class="text-slate-300 cursor-not-allowed p-1.5"' : 'class="text-slate-500 hover:text-indigo-600 transition p-1.5 bg-white border rounded-lg shadow-sm"'}>
+                                    <i class="fa-solid fa-arrow-down text-xs"></i>
+                                </button>
+                            </div>
+                            <button onclick="deleteApp('${app.id}')" class="text-slate-400 hover:text-rose-600 p-1.5 ml-2 bg-white border rounded-lg shadow-sm"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                        </div>
+                    </div>
+                `;
             });
             container.innerHTML = html;
         }
@@ -1391,14 +1819,23 @@
             if(!container) return;
             let html = '';
             state.commonPoints.forEach(cp => {
-                html += `<div class="flex items-center justify-between p-3 bg-slate-50 border rounded-xl"><div class="flex items-center gap-3"><span class="text-lg">${cp.icon}</span><div><h4 class="font-bold text-sm">${cp.name}</h4><p class="text-xs text-slate-400">1pt = 1円</p></div></div><button onclick="deleteCommonPoint('${cp.id}')" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button></div>`;
+                const dotColor = getHexColorForCommonIcon(cp.icon);
+                html += `
+                    <div class="flex items-center justify-between p-3 bg-slate-50 border rounded-xl">
+                        <div class="flex items-center gap-3">
+                            <span class="w-3 h-3 rounded-full inline-block" style="background-color: ${dotColor};"></span>
+                            <span class="text-lg">${cp.icon}</span>
+                            <div>
+                                <h4 class="font-bold text-sm">${cp.name}</h4>
+                                <p class="text-xs text-slate-400">1pt = 1円</p>
+                            </div>
+                        </div>
+                        <button onclick="deleteCommonPoint('${cp.id}')" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
+                `;
             });
             container.innerHTML = html;
         }
-
-        function renderChart1() {}
-        function renderChart2() {}
-        function renderChart3() {}
 
         loadDataFromCloud();
     </script>
