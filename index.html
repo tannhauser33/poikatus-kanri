@@ -133,25 +133,28 @@
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <h3 class="font-bold text-slate-700 text-sm flex items-center gap-2">
-                        <i class="fa-solid fa-chart-column text-indigo-600"></i> <span id="chart1-title">アプリ別 獲得比較</span>
+                        <i class="fa-solid fa-chart-column text-indigo-600"></i> アプリ別 獲得比較
                     </h3>
-                    <div class="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-medium">
-                        <button onclick="changeChart1Mode('daily')" id="btn-c1-daily" class="px-2.5 py-1 rounded-lg transition bg-white shadow-sm text-indigo-600">日別</button>
-                        <button onclick="changeChart1Mode('monthly')" id="btn-c1-monthly" class="px-2.5 py-1 rounded-lg transition text-slate-600">月別</button>
-                        <button onclick="changeChart1Mode('yearly')" id="btn-c1-yearly" class="px-2.5 py-1 rounded-lg transition text-slate-600">年間</button>
+                    <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-medium">
+                        <button onclick="changeChart1PeriodTab('day')" id="c1-ptab-day" class="px-3 py-1.5 rounded-lg transition bg-indigo-600 text-white font-medium">日選択</button>
+                        <button onclick="changeChart1PeriodTab('month')" id="c1-ptab-month" class="px-3 py-1.5 rounded-lg transition text-slate-600">月選択</button>
+                        <button onclick="changeChart1PeriodTab('year')" id="c1-ptab-year" class="px-3 py-1.5 rounded-lg transition text-slate-600">年選択</button>
                     </div>
                 </div>
-                <div class="flex flex-wrap items-center gap-2 bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs">
-                    <div class="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200">
-                        <button onclick="changeChart1PeriodTab('day')" id="c1-ptab-day" class="px-2.5 py-1 rounded-md transition bg-indigo-600 text-white font-medium">日選択</button>
-                        <button onclick="changeChart1PeriodTab('month')" id="c1-ptab-month" class="px-2.5 py-1 rounded-md transition text-slate-600">月選択</button>
-                        <button onclick="changeChart1PeriodTab('year')" id="c1-ptab-year" class="px-2.5 py-1 rounded-md transition text-slate-600">年選択</button>
-                    </div>
+                <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs">
                     <div class="flex items-center gap-2">
                         <span id="chart1-target-label" class="text-slate-500 font-medium">対象日:</span>
                         <input type="date" id="chart1-date-input" onchange="renderChart1()" class="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         <input type="month" id="chart1-month-input" onchange="renderChart1()" class="hidden bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         <select id="chart1-select-input" onchange="renderChart1()" class="hidden bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"></select>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button onclick="shiftChart1Date(-1)" class="bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg font-medium shadow-sm transition flex items-center gap-1">
+                            <i class="fa-solid fa-chevron-left text-[10px]"></i> 前へ
+                        </button>
+                        <button onclick="shiftChart1Date(1)" class="bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg font-medium shadow-sm transition flex items-center gap-1">
+                            次へ <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                        </button>
                     </div>
                 </div>
                 <div class="h-64 relative w-full">
@@ -163,17 +166,33 @@
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <h3 class="font-bold text-slate-700 text-sm flex items-center gap-2">
-                        <i class="fa-solid fa-chart-column text-emerald-600"></i> <span id="chart2-title">アプリ個別推移グラフ</span>
+                        <i class="fa-solid fa-chart-column text-emerald-600"></i> アプリ個別推移グラフ
                     </h3>
-                    <div class="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-medium">
-                        <button onclick="changeChart2Mode('daily')" id="btn-c2-daily" class="px-2.5 py-1 rounded-lg transition bg-white shadow-sm text-indigo-600">日別</button>
-                        <button onclick="changeChart2Mode('monthly')" id="btn-c2-monthly" class="px-2.5 py-1 rounded-lg transition text-slate-600">月別</button>
-                        <button onclick="changeChart2Mode('yearly')" id="btn-c2-yearly" class="px-2.5 py-1 rounded-lg transition text-slate-600">年間</button>
+                    <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-medium">
+                        <button onclick="changeChart2Mode('daily')" id="btn-c2-daily" class="px-3 py-1.5 rounded-lg transition bg-emerald-600 text-white font-medium">日別 (月選択)</button>
+                        <button onclick="changeChart2Mode('monthly')" id="btn-c2-monthly" class="px-3 py-1.5 rounded-lg transition text-slate-600">月別 (年選択)</button>
                     </div>
                 </div>
-                <div class="flex flex-wrap items-center gap-2 text-xs">
-                    <span class="text-slate-500 font-medium">対象アプリ:</span>
-                    <select id="chart2-app-select" onchange="renderChart2()" class="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"></select>
+                <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs">
+                    <div class="flex flex-wrap items-center gap-3">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-slate-500 font-medium">アプリ:</span>
+                            <select id="chart2-app-select" onchange="renderChart2()" class="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"></select>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span id="chart2-target-label" class="text-slate-500 font-medium">対象月:</span>
+                            <input type="month" id="chart2-month-input" onchange="renderChart2()" class="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <select id="chart2-year-select" onchange="renderChart2()" class="hidden bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"></select>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button onclick="shiftChart2Date(-1)" class="bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg font-medium shadow-sm transition flex items-center gap-1">
+                            <i class="fa-solid fa-chevron-left text-[10px]"></i> 前へ
+                        </button>
+                        <button onclick="shiftChart2Date(1)" class="bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg font-medium shadow-sm transition flex items-center gap-1">
+                            次へ <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="h-64 relative w-full">
                     <canvas id="barChartSingleApp"></canvas>
@@ -184,19 +203,29 @@
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <h3 class="font-bold text-slate-700 text-sm flex items-center gap-2">
-                        <i class="fa-solid fa-chart-column text-amber-600"></i> <span id="chart3-title">カテゴリ別 集計グラフ</span>
+                        <i class="fa-solid fa-chart-column text-amber-600"></i> カテゴリ別 集計グラフ
                     </h3>
-                    <div class="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-medium">
-                        <button onclick="changeChart3Mode('daily')" id="btn-c3-daily" class="px-2.5 py-1 rounded-lg transition bg-white shadow-sm text-indigo-600">日別</button>
-                        <button onclick="changeChart3Mode('monthly')" id="btn-c3-monthly" class="px-2.5 py-1 rounded-lg transition text-slate-600">月別</button>
-                        <button onclick="changeChart3Mode('yearly')" id="btn-c3-yearly" class="px-2.5 py-1 rounded-lg transition text-slate-600">年間</button>
+                    <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-medium">
+                        <button onclick="changeChart3PeriodTab('day')" id="c3-ptab-day" class="px-3 py-1.5 rounded-lg transition bg-amber-600 text-white font-medium">日選択</button>
+                        <button onclick="changeChart3PeriodTab('month')" id="c3-ptab-month" class="px-3 py-1.5 rounded-lg transition text-slate-600">月選択</button>
+                        <button onclick="changeChart3PeriodTab('year')" id="c3-ptab-year" class="px-3 py-1.5 rounded-lg transition text-slate-600">年選択</button>
                     </div>
                 </div>
-                <div class="flex flex-wrap items-center gap-2 text-xs">
-                    <span id="chart3-target-label" class="text-slate-500 font-medium">対象日:</span>
-                    <input type="date" id="chart3-date-input" onchange="renderChart3()" class="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <input type="month" id="chart3-month-input" onchange="renderChart3()" class="hidden bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <select id="chart3-select-input" onchange="renderChart3()" class="hidden bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"></select>
+                <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs">
+                    <div class="flex items-center gap-2">
+                        <span id="chart3-target-label" class="text-slate-500 font-medium">対象日:</span>
+                        <input type="date" id="chart3-date-input" onchange="renderChart3()" class="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        <input type="month" id="chart3-month-input" onchange="renderChart3()" class="hidden bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        <select id="chart3-select-input" onchange="renderChart3()" class="hidden bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500"></select>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button onclick="shiftChart3Date(-1)" class="bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg font-medium shadow-sm transition flex items-center gap-1">
+                            <i class="fa-solid fa-chevron-left text-[10px]"></i> 前へ
+                        </button>
+                        <button onclick="shiftChart3Date(1)" class="bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg font-medium shadow-sm transition flex items-center gap-1">
+                            次へ <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="h-64 relative w-full">
                     <canvas id="barChartMarkCategory"></canvas>
@@ -289,7 +318,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-500 mb-1">対象アプリ</label>
-                            <select id="redAppId" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"></select>
+                            <select id="redAppId" onchange="onRedAppSelectChange(this.value)" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"></select>
                         </div>
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -315,7 +344,10 @@
             </div>
 
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-4">
-                <h3 class="font-bold text-slate-700">交換履歴一覧</h3>
+                <div class="flex justify-between items-center">
+                    <h3 class="font-bold text-slate-700" id="redemption-table-title">交換履歴一覧</h3>
+                    <span id="redemption-filter-badge" class="text-xs bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-lg font-medium">全表示</span>
+                </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse text-sm">
                         <thead>
@@ -574,7 +606,6 @@
             { id: 'cp_03', name: '楽天ポイント', icon: '🔵', order: 3 }
         ];
 
-        // 共通ポイント用カラーアイコンパレット
         const COMMON_COLOR_ICONS = [
             { icon: '🔵', color: '#3b82f6' },
             { icon: '🟢', color: '#10b981' },
@@ -586,19 +617,19 @@
             { icon: '🔘', color: '#64748b' }
         ];
 
-        // アプリカテゴリ用カラー
         const APP_COLOR_PALETTE = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#3b82f6', '#14b8a6', '#f43f5e'];
 
         let state = { apps: [], logs: [], redemptions: [], commonPoints: [], commonLogs: [] };
         
-        let chart1Mode = 'daily', chart1PeriodTab = 'day';
+        let chart1PeriodTab = 'day';
         let chart2Mode = 'daily';
-        let chart3Mode = 'daily';
+        let chart3PeriodTab = 'day';
         let chartAppsInst = null, chartSingleAppInst = null, chartMarkCategoryInst = null;
 
         let commonChart1Mode = 'monthly', commonChart2Mode = 'monthly';
         let commonChartTotalInst = null, commonChartCompareInst = null, commonChartShareInst = null;
-        let selectedAppFilter = null, selectedCommonPointId = 'total';
+        let selectedAppFilter = null, selectedRedemptionAppFilter = 'all';
+        let selectedCommonPointId = 'total';
         let dashboardCardMode = 'point';
         let logDisplayMode = 'point';
 
@@ -782,6 +813,18 @@
             }
         };
 
+        window.updateAppCategory = async function(appId, newIcon) {
+            const app = state.apps.find(a => a.id === appId);
+            if(!app) return;
+            app.icon = newIcon;
+            try {
+                await setDoc(doc(db, "apps", app.id), app);
+                renderAll();
+            } catch(e) {
+                console.error(e);
+            }
+        };
+
         window.switchTab = function(tabId) {
             ['dashboard', 'entry', 'redemption', 'apps', 'common_detail', 'common_settings'].forEach(id => {
                 const el = document.getElementById(`view-${id}`);
@@ -831,26 +874,14 @@
         if(document.getElementById('redDate')) document.getElementById('redDate').valueAsDate = new Date();
         if(document.getElementById('commonEntryMonth')) document.getElementById('commonEntryMonth').value = currentMonthStr;
 
-        // Chart 1 Control Helpers
-        window.changeChart1Mode = function(mode) {
-            chart1Mode = mode;
-            ['daily', 'monthly', 'yearly'].forEach(m => {
-                const btn = document.getElementById(`btn-c1-${m}`);
-                if(btn) {
-                    if(m === mode) { btn.className = "px-2.5 py-1 rounded-lg transition bg-white shadow-sm text-indigo-600 font-bold"; }
-                    else { btn.className = "px-2.5 py-1 rounded-lg transition text-slate-600"; }
-                }
-            });
-            renderChart1();
-        };
-
+        // Chart 1 Period Tab Helpers
         window.changeChart1PeriodTab = function(tab) {
             chart1PeriodTab = tab;
             ['day', 'month', 'year'].forEach(t => {
                 const btn = document.getElementById(`c1-ptab-${t}`);
                 if(btn) {
-                    if(t === tab) { btn.className = "px-2.5 py-1 rounded-md transition bg-indigo-600 text-white font-medium"; }
-                    else { btn.className = "px-2.5 py-1 rounded-md transition text-slate-600"; }
+                    if(t === tab) { btn.className = "px-3 py-1.5 rounded-lg transition bg-indigo-600 text-white font-medium"; }
+                    else { btn.className = "px-3 py-1.5 rounded-lg transition text-slate-600"; }
                 }
             });
             const dateIn = document.getElementById('chart1-date-input');
@@ -869,31 +900,159 @@
             renderChart1();
         };
 
+        window.shiftChart1Date = function(direction) {
+            if(chart1PeriodTab === 'day') {
+                const dateIn = document.getElementById('chart1-date-input');
+                if(!dateIn || !dateIn.value) return;
+                let d = new Date(dateIn.value);
+                d.setDate(d.getDate() + direction);
+                dateIn.value = d.toISOString().split('T')[0];
+            } else if(chart1PeriodTab === 'month') {
+                const monthIn = document.getElementById('chart1-month-input');
+                if(!monthIn || !monthIn.value) return;
+                let [y, m] = monthIn.value.split('-').map(Number);
+                m += direction;
+                if(m > 12) { m = 1; y++; }
+                else if(m < 1) { m = 12; y--; }
+                monthIn.value = `${y}-${String(m).padStart(2, '0')}`;
+            } else if(chart1PeriodTab === 'year') {
+                const selectIn = document.getElementById('chart1-select-input');
+                if(!selectIn) return;
+                let curYear = parseInt(selectIn.value) || new Date().getFullYear();
+                curYear += direction;
+                let exists = Array.from(selectIn.options).some(opt => opt.value === String(curYear));
+                if(!exists) {
+                    let opt = document.createElement('option');
+                    opt.value = curYear;
+                    opt.text = `${curYear}年`;
+                    selectIn.add(opt);
+                }
+                selectIn.value = String(curYear);
+            }
+            renderChart1();
+        };
+
         window.changeChart2Mode = function(mode) {
             chart2Mode = mode;
-            ['daily', 'monthly', 'yearly'].forEach(m => {
-                const btn = document.getElementById(`btn-c2-${m}`);
-                if(btn) {
-                    if(m === mode) { btn.className = "px-2.5 py-1 rounded-lg transition bg-white shadow-sm text-indigo-600 font-bold"; }
-                    else { btn.className = "px-2.5 py-1 rounded-lg transition text-slate-600"; }
+            const btnDaily = document.getElementById('btn-c2-daily');
+            const btnMonthly = document.getElementById('btn-c2-monthly');
+            const monthIn = document.getElementById('chart2-month-input');
+            const yearSelect = document.getElementById('chart2-year-select');
+            const targetLabel = document.getElementById('chart2-target-label');
+
+            if(mode === 'daily') {
+                btnDaily.className = "px-3 py-1.5 rounded-lg transition bg-emerald-600 text-white font-medium";
+                btnMonthly.className = "px-3 py-1.5 rounded-lg transition text-slate-600";
+                if(monthIn) monthIn.classList.remove('hidden');
+                if(yearSelect) yearSelect.classList.add('hidden');
+                if(targetLabel) targetLabel.innerText = "対象月:";
+            } else {
+                btnMonthly.className = "px-3 py-1.5 rounded-lg transition bg-emerald-600 text-white font-medium";
+                btnDaily.className = "px-3 py-1.5 rounded-lg transition text-slate-600";
+                if(monthIn) monthIn.classList.add('hidden');
+                if(yearSelect) {
+                    yearSelect.classList.remove('hidden');
+                    populateChart2YearSelect(yearSelect);
                 }
-            });
+                if(targetLabel) targetLabel.innerText = "対象年:";
+            }
             renderChart2();
         };
 
-        window.changeChart3Mode = function(mode) {
-            chart3Mode = mode;
-            ['daily', 'monthly', 'yearly'].forEach(m => {
-                const btn = document.getElementById(`btn-c3-${m}`);
+        window.shiftChart2Date = function(direction) {
+            if(chart2Mode === 'daily') {
+                const monthIn = document.getElementById('chart2-month-input');
+                if(!monthIn || !monthIn.value) return;
+                let [y, m] = monthIn.value.split('-').map(Number);
+                m += direction;
+                if(m > 12) { m = 1; y++; }
+                else if(m < 1) { m = 12; y--; }
+                monthIn.value = `${y}-${String(m).padStart(2, '0')}`;
+            } else {
+                const yearSelect = document.getElementById('chart2-year-select');
+                if(!yearSelect) return;
+                let curYear = parseInt(yearSelect.value) || new Date().getFullYear();
+                curYear += direction;
+                let exists = Array.from(yearSelect.options).some(opt => opt.value === String(curYear));
+                if(!exists) {
+                    let opt = document.createElement('option');
+                    opt.value = curYear;
+                    opt.text = `${curYear}年`;
+                    yearSelect.add(opt);
+                }
+                yearSelect.value = String(curYear);
+            }
+            renderChart2();
+        };
+
+        window.changeChart3PeriodTab = function(tab) {
+            chart3PeriodTab = tab;
+            ['day', 'month', 'year'].forEach(t => {
+                const btn = document.getElementById(`c3-ptab-${t}`);
                 if(btn) {
-                    if(m === mode) { btn.className = "px-2.5 py-1 rounded-lg transition bg-white shadow-sm text-indigo-600 font-bold"; }
-                    else { btn.className = "px-2.5 py-1 rounded-lg transition text-slate-600"; }
+                    if(t === tab) { btn.className = "px-3 py-1.5 rounded-lg transition bg-amber-600 text-white font-medium"; }
+                    else { btn.className = "px-3 py-1.5 rounded-lg transition text-slate-600"; }
                 }
             });
+            const dateIn = document.getElementById('chart3-date-input');
+            const monthIn = document.getElementById('chart3-month-input');
+            const selectIn = document.getElementById('chart3-select-input');
+            if(dateIn) dateIn.classList.add('hidden');
+            if(monthIn) monthIn.classList.add('hidden');
+            if(selectIn) selectIn.classList.add('hidden');
+
+            if(tab === 'day' && dateIn) dateIn.classList.remove('hidden');
+            if(tab === 'month' && monthIn) monthIn.classList.remove('hidden');
+            if(tab === 'year' && selectIn) {
+                selectIn.classList.remove('hidden');
+                populateYearSelect(selectIn);
+            }
+            renderChart3();
+        };
+
+        window.shiftChart3Date = function(direction) {
+            if(chart3PeriodTab === 'day') {
+                const dateIn = document.getElementById('chart3-date-input');
+                if(!dateIn || !dateIn.value) return;
+                let d = new Date(dateIn.value);
+                d.setDate(d.getDate() + direction);
+                dateIn.value = d.toISOString().split('T')[0];
+            } else if(chart3PeriodTab === 'month') {
+                const monthIn = document.getElementById('chart3-month-input');
+                if(!monthIn || !monthIn.value) return;
+                let [y, m] = monthIn.value.split('-').map(Number);
+                m += direction;
+                if(m > 12) { m = 1; y++; }
+                else if(m < 1) { m = 12; y--; }
+                monthIn.value = `${y}-${String(m).padStart(2, '0')}`;
+            } else if(chart3PeriodTab === 'year') {
+                const selectIn = document.getElementById('chart3-select-input');
+                if(!selectIn) return;
+                let curYear = parseInt(selectIn.value) || new Date().getFullYear();
+                curYear += direction;
+                let exists = Array.from(selectIn.options).some(opt => opt.value === String(curYear));
+                if(!exists) {
+                    let opt = document.createElement('option');
+                    opt.value = curYear;
+                    opt.text = `${curYear}年`;
+                    selectIn.add(opt);
+                }
+                selectIn.value = String(curYear);
+            }
             renderChart3();
         };
 
         function populateYearSelect(selectEl) {
+            let years = new Set();
+            state.logs.forEach(l => { if(l.date) years.add(l.date.substring(0, 4)); });
+            let arr = Array.from(years).sort().reverse();
+            if(arr.length === 0) arr = [new Date().getFullYear().toString()];
+            let html = '';
+            arr.forEach(y => html += `<option value="${y}">${y}年</option>`);
+            selectEl.innerHTML = html;
+        }
+
+        function populateChart2YearSelect(selectEl) {
             let years = new Set();
             state.logs.forEach(l => { if(l.date) years.add(l.date.substring(0, 4)); });
             let arr = Array.from(years).sort().reverse();
@@ -1084,10 +1243,12 @@
             setTimeout(() => { 
                 const dateIn = document.getElementById('chart1-date-input');
                 const monthIn = document.getElementById('chart1-month-input');
+                const chart2MonthIn = document.getElementById('chart2-month-input');
                 const chart3DateIn = document.getElementById('chart3-date-input');
                 const chart3MonthIn = document.getElementById('chart3-month-input');
                 if(dateIn && !dateIn.value) dateIn.value = todayStr;
                 if(monthIn && !monthIn.value) monthIn.value = currentMonthStr;
+                if(chart2MonthIn && !chart2MonthIn.value) chart2MonthIn.value = currentMonthStr;
                 if(chart3DateIn && !chart3DateIn.value) chart3DateIn.value = todayStr;
                 if(chart3MonthIn && !chart3MonthIn.value) chart3MonthIn.value = currentMonthStr;
 
@@ -1404,12 +1565,16 @@
             let labels = state.apps.map(a => a.name);
             let data = state.apps.map(a => {
                 const appLogs = state.logs.filter(l => l.appId === a.id).sort((x,y) => new Date(x.date) - new Date(y.date));
-                if(chart1Mode === 'daily') {
+                if(chart1PeriodTab === 'day') {
                     const dateInput = document.getElementById('chart1-date-input');
                     const targetDate = dateInput ? dateInput.value : todayStr;
-                    const log = appLogs.find(l => l.date === targetDate);
-                    return log ? log.value : 0;
-                } else if(chart1Mode === 'monthly') {
+                    // 【修正】データ範囲エラー修正：指定日直近（または当日）の最新データを取得
+                    let validLog = null;
+                    for(let i = 0; i < appLogs.length; i++) {
+                        if(appLogs[i].date <= targetDate) validLog = appLogs[i];
+                    }
+                    return validLog ? validLog.value : 0;
+                } else if(chart1PeriodTab === 'month') {
                     const monthInput = document.getElementById('chart1-month-input');
                     const targetMonth = monthInput ? monthInput.value : currentMonthStr;
                     const monthLogs = appLogs.filter(l => l.date && l.date.startsWith(targetMonth));
@@ -1430,7 +1595,7 @@
             });
         };
 
-        // --- グラフ2：個別アプリ推移グラフ描画ロジック ---
+        // --- グラフ2：個別アプリ推移グラフ描画ロジック (日別は1日～月末、月別は1月～12月) ---
         window.renderChart2 = function() {
             const canvas = document.getElementById('barChartSingleApp');
             if(!canvas) return;
@@ -1444,18 +1609,54 @@
 
             const appIndex = state.apps.findIndex(a => a.id === appId);
             const appColor = APP_COLOR_PALETTE[appIndex % APP_COLOR_PALETTE.length];
-
             const appLogs = state.logs.filter(l => l.appId === appId).sort((x,y) => new Date(x.date) - new Date(y.date));
-            let mapData = {};
-            appLogs.forEach(l => {
-                let key = l.date;
-                if(chart2Mode === 'monthly') key = l.date.substring(0, 7);
-                if(chart2Mode === 'yearly') key = l.date.substring(0, 4);
-                mapData[key] = l.value; 
-            });
 
-            let labels = Object.keys(mapData).sort();
-            let data = labels.map(k => mapData[k]);
+            let labels = [];
+            let data = [];
+
+            if(chart2Mode === 'daily') {
+                const monthInput = document.getElementById('chart2-month-input');
+                const targetMonth = monthInput ? monthInput.value : currentMonthStr; // 例: "2026-10"
+                const [yearStr, monthStr] = targetMonth.split('-');
+                const year = parseInt(yearStr);
+                const month = parseInt(monthStr);
+
+                // 月末日計算
+                const lastDay = new Date(year, month, 0).getDate();
+
+                for(let day = 1; day <= lastDay; day++) {
+                    const dayStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                    labels.push(`${month}/${day}`);
+
+                    // 該当日の直近最新値を取得
+                    let validVal = 0;
+                    for(let i = 0; i < appLogs.length; i++) {
+                        if(appLogs[i].date <= dayStr) validVal = appLogs[i].value;
+                    }
+                    data.push(validVal);
+                }
+            } else {
+                const yearSelect = document.getElementById('chart2-year-select');
+                const targetYear = yearSelect ? yearSelect.value : new Date().getFullYear().toString();
+
+                for(let m = 1; m <= 12; m++) {
+                    const mStr = `${targetYear}-${String(m).padStart(2, '0')}`;
+                    labels.push(`${m}月`);
+
+                    // 該当月内の最後のログ値を取得
+                    const monthLogs = appLogs.filter(l => l.date && l.date.startsWith(mStr));
+                    let val = 0;
+                    if(monthLogs.length > 0) {
+                        val = monthLogs[monthLogs.length - 1].value;
+                    } else {
+                        // 過去の最新値を探す
+                        for(let i = 0; i < appLogs.length; i++) {
+                            if(appLogs[i].date.substring(0, 7) < mStr) val = appLogs[i].value;
+                        }
+                    }
+                    data.push(val);
+                }
+            }
 
             chartSingleAppInst = new Chart(ctx, {
                 type: 'bar',
@@ -1479,10 +1680,28 @@
             state.apps.forEach(app => {
                 const appLogs = state.logs.filter(l => l.appId === app.id).sort((x,y) => new Date(x.date) - new Date(y.date));
                 if(appLogs.length > 0) {
-                    const latestVal = appLogs[appLogs.length - 1].value;
+                    let targetVal = 0;
+                    if(chart3PeriodTab === 'day') {
+                        const dateInput = document.getElementById('chart3-date-input');
+                        const targetDate = dateInput ? dateInput.value : todayStr;
+                        for(let i = 0; i < appLogs.length; i++) {
+                            if(appLogs[i].date <= targetDate) targetVal = appLogs[i].value;
+                        }
+                    } else if(chart3PeriodTab === 'month') {
+                        const monthInput = document.getElementById('chart3-month-input');
+                        const targetMonth = monthInput ? monthInput.value : currentMonthStr;
+                        const monthLogs = appLogs.filter(l => l.date && l.date.startsWith(targetMonth));
+                        targetVal = monthLogs.length > 0 ? monthLogs[monthLogs.length - 1].value : 0;
+                    } else {
+                        const selectInput = document.getElementById('chart3-select-input');
+                        const targetYear = selectInput ? selectInput.value : new Date().getFullYear().toString();
+                        const yearLogs = appLogs.filter(l => l.date && l.date.startsWith(targetYear));
+                        targetVal = yearLogs.length > 0 ? yearLogs[yearLogs.length - 1].value : 0;
+                    }
+
                     const icon = app.icon || '🚶';
                     if(iconMap[icon] !== undefined) {
-                        iconMap[icon] += latestVal;
+                        iconMap[icon] += targetVal;
                     }
                 }
             });
@@ -1507,8 +1726,18 @@
                 entrySelect.innerHTML = html;
                 if(selectedAppFilter) entrySelect.value = selectedAppFilter;
             }
-            if(redSelect) redSelect.innerHTML = html;
+            if(redSelect) {
+                let redHtml = '<option value="all">すべてのアプリ (全体表示)</option>';
+                state.apps.forEach(a => redHtml += `<option value="${a.id}">${a.icon} ${a.name}</option>`);
+                redSelect.innerHTML = redHtml;
+                redSelect.value = selectedRedemptionAppFilter;
+            }
         }
+
+        window.onRedAppSelectChange = function(appId) {
+            selectedRedemptionAppFilter = appId;
+            renderRedemptionTable();
+        };
 
         function renderChart2AppSelect() {
             const selectEl = document.getElementById('chart2-app-select');
@@ -1769,12 +1998,37 @@
 
         function renderRedemptionTable() {
             const tbody = document.getElementById('redemptionTableBody');
+            const badge = document.getElementById('redemption-filter-badge');
             if(!tbody) return;
+
+            let filteredReds = state.redemptions;
+            if(selectedRedemptionAppFilter && selectedRedemptionAppFilter !== 'all') {
+                filteredReds = filteredReds.filter(r => r.appId === selectedRedemptionAppFilter);
+                const targetApp = state.apps.find(a => a.id === selectedRedemptionAppFilter);
+                if(badge && targetApp) badge.innerText = `${targetApp.icon} ${targetApp.name} で絞り込み中`;
+            } else {
+                if(badge) badge.innerText = "全表示";
+            }
+
+            filteredReds.sort((a,b) => new Date(b.date) - new Date(a.date));
+
             let html = '';
-            state.redemptions.forEach(r => {
+            filteredReds.forEach(r => {
                 const app = state.apps.find(a => a.id === r.appId) || { name: '不明', icon: '🚶' };
-                html += `<tr class="hover:bg-slate-50"><td class="py-3 px-4 text-xs">${r.date}</td><td class="py-3 px-4 font-medium">${app.icon} ${app.name}</td><td class="py-3 px-4 text-xs">${r.destination}</td><td class="py-3 px-4 text-right font-bold">${r.spentPt.toLocaleString()} pt</td><td class="py-3 px-4 text-right font-bold text-emerald-600">¥${r.gainedYen.toLocaleString()}</td><td class="py-3 px-4 text-center"><button onclick="deleteRedemption('${r.id}')" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button></td></tr>`;
+                html += `
+                    <tr class="hover:bg-slate-50">
+                        <td class="py-3 px-4 text-xs">${r.date}</td>
+                        <td class="py-3 px-4 font-medium">${app.icon} ${app.name}</td>
+                        <td class="py-3 px-4 text-xs">${r.destination}</td>
+                        <td class="py-3 px-4 text-right font-bold">${r.spentPt.toLocaleString()} pt</td>
+                        <td class="py-3 px-4 text-right font-bold text-emerald-600">¥${r.gainedYen.toLocaleString()}</td>
+                        <td class="py-3 px-4 text-center">
+                            <button onclick="deleteRedemption('${r.id}')" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button>
+                        </td>
+                    </tr>
+                `;
             });
+            if(filteredReds.length === 0) html = `<tr><td colspan="6" class="text-center py-6 text-xs text-slate-400">交換履歴がありません。</td></tr>`;
             tbody.innerHTML = html;
         }
 
@@ -1784,29 +2038,44 @@
             let html = '';
             const sortedApps = [...state.apps].sort((a, b) => (a.order || 0) - (b.order || 0));
 
+            const categoryOptions = [
+                { icon: '🚶', label: '歩く' },
+                { icon: '💤', label: '放置' },
+                { icon: '🪙', label: 'ポイントサイト' },
+                { icon: '⭐', label: 'etc' }
+            ];
+
             sortedApps.forEach((app, idx) => {
                 const isFirst = idx === 0;
                 const isLast = idx === sortedApps.length - 1;
 
+                let optionsHtml = '';
+                categoryOptions.forEach(cat => {
+                    const selected = (app.icon === cat.icon) ? 'selected' : '';
+                    optionsHtml += `<option value="${cat.icon}" ${selected}>${cat.icon} ${cat.label}</option>`;
+                });
+
                 html += `
-                    <div class="flex items-center justify-between p-3 bg-slate-50 border rounded-xl gap-2">
-                        <div class="flex items-center gap-3">
-                            <span class="text-lg">${app.icon}</span>
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 bg-slate-50 border rounded-xl gap-3">
+                        <div class="flex items-center gap-3 w-full sm:w-auto">
+                            <select onchange="updateAppCategory('${app.id}', this.value)" class="bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
+                                ${optionsHtml}
+                            </select>
                             <div>
-                                <h4 class="font-bold text-sm">${app.name}</h4>
+                                <h4 class="font-bold text-sm text-slate-800">${app.name}</h4>
                                 <p class="text-xs text-slate-400">レート: ${app.rate}円</p>
                             </div>
                         </div>
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-2">
                             <div class="flex items-center gap-1">
                                 <button onclick="moveAppOrder('${app.id}', 'up')" ${isFirst ? 'disabled class="text-slate-300 cursor-not-allowed p-1.5"' : 'class="text-slate-500 hover:text-indigo-600 transition p-1.5 bg-white border rounded-lg shadow-sm"'}>
-                                    <i class="fa-solid fa-arrow-up text-xs"></i>
+                                    <i class="fa-solid fa-arrow-up text-xs"></i> 上へ
                                 </button>
                                 <button onclick="moveAppOrder('${app.id}', 'down')" ${isLast ? 'disabled class="text-slate-300 cursor-not-allowed p-1.5"' : 'class="text-slate-500 hover:text-indigo-600 transition p-1.5 bg-white border rounded-lg shadow-sm"'}>
-                                    <i class="fa-solid fa-arrow-down text-xs"></i>
+                                    <i class="fa-solid fa-arrow-down text-xs"></i> 下へ
                                 </button>
                             </div>
-                            <button onclick="deleteApp('${app.id}')" class="text-slate-400 hover:text-rose-600 p-1.5 ml-2 bg-white border rounded-lg shadow-sm"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                            <button onclick="deleteApp('${app.id}')" class="text-slate-400 hover:text-rose-600 px-2.5 py-1.5 ml-2 bg-white border rounded-lg shadow-sm text-xs font-medium"><i class="fa-solid fa-trash-can mr-1"></i> 削除</button>
                         </div>
                     </div>
                 `;
