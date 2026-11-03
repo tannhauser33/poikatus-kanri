@@ -264,6 +264,39 @@
                 </form>
             </div>
 
+            <!-- 【要望2対応】アプリ数値入力画面の選択アプリ連動個別推移グラフ（入力を保存するボタンの下へ移動） -->
+            <div id="entryAppGraphContainer" class="hidden bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <h3 id="entry-app-graph-title" class="font-bold text-slate-700 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-chart-column text-indigo-600"></i> 選択アプリの個別推移グラフ
+                    </h3>
+                    <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-medium">
+                        <button onclick="changeEntryChartMode('daily')" id="btn-ec2-daily" class="px-3 py-1.5 rounded-lg transition bg-indigo-600 text-white font-medium">日別 (月選択)</button>
+                        <button onclick="changeEntryChartMode('monthly')" id="btn-ec2-monthly" class="px-3 py-1.5 rounded-lg transition text-slate-600">月別 (年選択)</button>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs">
+                    <div class="flex flex-wrap items-center gap-3">
+                        <div class="flex items-center gap-1.5">
+                            <span id="entry-chart-target-label" class="text-slate-500 font-medium">対象月:</span>
+                            <input type="month" id="entry-chart-month-input" onchange="renderEntryAppGraph()" class="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <select id="entry-chart-year-select" onchange="renderEntryAppGraph()" class="hidden bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"></select>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button onclick="shiftEntryChartDate(-1)" class="bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg font-medium shadow-sm transition flex items-center gap-1">
+                            <i class="fa-solid fa-chevron-left text-[10px]"></i> 前へ
+                        </button>
+                        <button onclick="shiftEntryChartDate(1)" class="bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg font-medium shadow-sm transition flex items-center gap-1">
+                            次へ <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="h-64 relative w-full">
+                    <canvas id="barChartEntryApp"></canvas>
+                </div>
+            </div>
+
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-4">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                     <div class="flex items-center gap-3">
@@ -625,6 +658,8 @@
         let chart2Mode = 'daily';
         let chart3PeriodTab = 'day';
         let chartAppsInst = null, chartSingleAppInst = null, chartMarkCategoryInst = null;
+        let entryChartMode = 'daily';
+        let chartEntryAppInst = null;
 
         let commonChart1Mode = 'monthly', commonChart2Mode = 'monthly';
         let commonChartTotalInst = null, commonChartCompareInst = null, commonChartShareInst = null;
@@ -853,6 +888,7 @@
             }
 
             if(tabId === 'dashboard') setTimeout(() => { renderChart1(); renderChart2(); renderChart3(); }, 100);
+            if(tabId === 'entry') setTimeout(() => { renderEntryAppGraph(); }, 100);
             if(tabId === 'common_detail') setTimeout(() => { renderCommonCharts(); renderCommonLogsTable(); }, 100);
         };
 
@@ -1040,6 +1076,59 @@
                 selectIn.value = String(curYear);
             }
             renderChart3();
+        };
+
+        window.changeEntryChartMode = function(mode) {
+            entryChartMode = mode;
+            const btnDaily = document.getElementById('btn-ec2-daily');
+            const btnMonthly = document.getElementById('btn-ec2-monthly');
+            const monthIn = document.getElementById('entry-chart-month-input');
+            const yearSelect = document.getElementById('entry-chart-year-select');
+            const targetLabel = document.getElementById('entry-chart-target-label');
+
+            if(mode === 'daily') {
+                btnDaily.className = "px-3 py-1.5 rounded-lg transition bg-indigo-600 text-white font-medium";
+                btnMonthly.className = "px-3 py-1.5 rounded-lg transition text-slate-600";
+                if(monthIn) monthIn.classList.remove('hidden');
+                if(yearSelect) yearSelect.classList.add('hidden');
+                if(targetLabel) targetLabel.innerText = "対象月:";
+            } else {
+                btnMonthly.className = "px-3 py-1.5 rounded-lg transition bg-indigo-600 text-white font-medium";
+                btnDaily.className = "px-3 py-1.5 rounded-lg transition text-slate-600";
+                if(monthIn) monthIn.classList.add('hidden');
+                if(yearSelect) {
+                    yearSelect.classList.remove('hidden');
+                    populateChart2YearSelect(yearSelect);
+                }
+                if(targetLabel) targetLabel.innerText = "対象年:";
+            }
+            renderEntryAppGraph();
+        };
+
+        window.shiftEntryChartDate = function(direction) {
+            if(entryChartMode === 'daily') {
+                const monthIn = document.getElementById('entry-chart-month-input');
+                if(!monthIn || !monthIn.value) return;
+                let [y, m] = monthIn.value.split('-').map(Number);
+                m += direction;
+                if(m > 12) { m = 1; y++; }
+                else if(m < 1) { m = 12; y--; }
+                monthIn.value = `${y}-${String(m).padStart(2, '0')}`;
+            } else {
+                const yearSelect = document.getElementById('entry-chart-year-select');
+                if(!yearSelect) return;
+                let curYear = parseInt(yearSelect.value) || new Date().getFullYear();
+                curYear += direction;
+                let exists = Array.from(yearSelect.options).some(opt => opt.value === String(curYear));
+                if(!exists) {
+                    let opt = document.createElement('option');
+                    opt.value = curYear;
+                    opt.text = `${curYear}年`;
+                    yearSelect.add(opt);
+                }
+                yearSelect.value = String(curYear);
+            }
+            renderEntryAppGraph();
         };
 
         function populateYearSelect(selectEl) {
@@ -1235,6 +1324,7 @@
             renderCommonSettingsList();
             renderChart2AppSelect();
             renderSelectedAppCard();
+            renderEntryAppGraph();
             if(selectedCommonPointId) {
                 renderCommonDetailHeader();
                 renderCommonCharts();
@@ -1246,15 +1336,19 @@
                 const chart2MonthIn = document.getElementById('chart2-month-input');
                 const chart3DateIn = document.getElementById('chart3-date-input');
                 const chart3MonthIn = document.getElementById('chart3-month-input');
+                const entryMonthIn = document.getElementById('entry-chart-month-input');
+
                 if(dateIn && !dateIn.value) dateIn.value = todayStr;
                 if(monthIn && !monthIn.value) monthIn.value = currentMonthStr;
                 if(chart2MonthIn && !chart2MonthIn.value) chart2MonthIn.value = currentMonthStr;
                 if(chart3DateIn && !chart3DateIn.value) chart3DateIn.value = todayStr;
                 if(chart3MonthIn && !chart3MonthIn.value) chart3MonthIn.value = currentMonthStr;
+                if(entryMonthIn && !entryMonthIn.value) entryMonthIn.value = currentMonthStr;
 
                 renderChart1(); 
                 renderChart2(); 
                 renderChart3(); 
+                renderEntryAppGraph();
             }, 100);
         }
 
@@ -1376,12 +1470,10 @@
                     diff = cpLogs[0].value;
                 }
                 let diffText = (diff >= 0 ? '+' : '') + diff.toLocaleString() + ' pt';
-                const cardBgColor = getHexColorForCommonIcon(cp.icon || '🟡');
 
                 html += `
                     <div onclick="openCommonPointDetail('${cp.id}')" class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-100 hover:border-amber-400 cursor-pointer transition flex flex-col justify-between space-y-2">
                         <div class="flex items-center gap-2">
-                            <span class="w-3 h-3 rounded-full inline-block" style="background-color: ${cardBgColor};"></span>
                             <span class="text-lg">${cp.icon || '🟡'}</span>
                             <span class="text-xs font-bold text-slate-800 truncate">${cp.name}</span>
                         </div>
@@ -1407,32 +1499,38 @@
             if(!tbody) return;
 
             if(selectedCommonPointId === 'total') {
-                if(titleEl) titleEl.innerText = '合計 月別推移履歴';
-                let monthMap = {};
+                if(titleEl) titleEl.innerText = 'すべての共通ポイント 履歴 ＆ 利用額一覧';
+                
+                let allLogsWithCp = [];
                 state.commonLogs.forEach(l => {
-                    if(!monthMap[l.month]) monthMap[l.month] = 0;
-                    monthMap[l.month] += Number(l.value || 0);
+                    const cp = state.commonPoints.find(p => p.id === l.commonPointId);
+                    allLogsWithCp.push({ ...l, cpName: cp ? cp.name : '不明', cpIcon: cp ? cp.icon : '🟡' });
                 });
-                let sortedMonths = Object.keys(monthMap).sort((a,b) => b.localeCompare(a));
+
+                allLogsWithCp.sort((a,b) => {
+                    if(b.month !== a.month) return b.month.localeCompare(a.month);
+                    return a.cpName.localeCompare(b.cpName);
+                });
+
                 let html = '';
-                sortedMonths.forEach((m) => {
-                    const val = monthMap[m];
-                    const sortedAsc = [...sortedMonths].sort((a,b) => a.localeCompare(b));
-                    const ascIdx = sortedAsc.indexOf(m);
-                    let prevVal = ascIdx > 0 ? monthMap[sortedAsc[ascIdx - 1]] : 0;
-                    let diff = ascIdx > 0 ? val - prevVal : val;
-                    let diffText = diff >= 0 ? `<span class="text-emerald-600 font-bold">+${diff.toLocaleString()} pt</span>` : `<span class="text-rose-600 font-bold">${diff.toLocaleString()} pt</span>`;
+                allLogsWithCp.forEach((item) => {
+                    const sameCpLogs = state.commonLogs.filter(l => l.commonPointId === item.commonPointId).sort((a,b) => a.month.localeCompare(b.month));
+                    const ascIdx = sameCpLogs.findIndex(l => l.id === item.id);
+                    let diff = ascIdx > 0 ? item.value - sameCpLogs[ascIdx - 1].value : item.value;
+                    let diffText = diff >= 0 ? `<span class="text-emerald-600 font-bold">+${diff.toLocaleString()} pt (獲得)</span>` : `<span class="text-rose-600 font-bold">${diff.toLocaleString()} pt (利用: ¥${Math.abs(diff).toLocaleString()})</span>`;
 
                     html += `
                         <tr class="hover:bg-slate-50/50 transition">
-                            <td class="py-3 px-4 text-xs font-medium text-slate-600">${m}</td>
-                            <td class="py-3 px-4 font-bold text-slate-800">${val.toLocaleString()} pt</td>
+                            <td class="py-3 px-4 text-xs font-medium text-slate-600">${item.month}</td>
+                            <td class="py-3 px-4 font-medium"><span class="mr-1">${item.cpIcon}</span>${item.cpName} <span class="text-xs text-slate-400 font-normal">(${item.value.toLocaleString()} pt)</span></td>
                             <td class="py-3 px-4 text-right">${diffText}</td>
-                            <td class="py-3 px-4 text-center text-xs text-slate-400">-</td>
+                            <td class="py-3 px-4 text-center">
+                                <button onclick="deleteCommonLog('${item.id}')" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button>
+                            </td>
                         </tr>
                     `;
                 });
-                if(sortedMonths.length === 0) html = `<tr><td colspan="4" class="text-center py-6 text-xs text-slate-400">履歴がありません。</td></tr>`;
+                if(allLogsWithCp.length === 0) html = `<tr><td colspan="4" class="text-center py-6 text-xs text-slate-400">履歴がありません。</td></tr>`;
                 tbody.innerHTML = html;
             } else {
                 if(titleEl) titleEl.innerText = '履歴 ＆ 利用額（マイナス差分）一覧';
@@ -1555,7 +1653,41 @@
             }
         }
 
-        // --- グラフ1：アプリ別比較グラフ描画ロジック ---
+        // --- 共通の右軸（交換実績金額）取得ヘルパー ---
+        function getRedemptionYenForApp(appId, periodType, targetKey) {
+            let total = 0;
+            state.redemptions.filter(r => r.appId === appId).forEach(r => {
+                if(!r.date) return;
+                if(periodType === 'day' && r.date === targetKey) {
+                    total += Number(r.gainedYen || 0);
+                } else if(periodType === 'month' && r.date.startsWith(targetKey)) {
+                    total += Number(r.gainedYen || 0);
+                } else if(periodType === 'year' && r.date.substring(0, 4) === targetKey) {
+                    total += Number(r.gainedYen || 0);
+                }
+            });
+            return total;
+        }
+
+        function getRedemptionYenForCategory(categoryIcon, periodType, targetKey) {
+            let total = 0;
+            state.redemptions.forEach(r => {
+                if(!r.date) return;
+                const app = state.apps.find(a => a.id === r.appId);
+                if(app && (app.icon || '🚶') === categoryIcon) {
+                    if(periodType === 'day' && r.date === targetKey) {
+                        total += Number(r.gainedYen || 0);
+                    } else if(periodType === 'month' && r.date.startsWith(targetKey)) {
+                        total += Number(r.gainedYen || 0);
+                    } else if(periodType === 'year' && r.date.substring(0, 4) === targetKey) {
+                        total += Number(r.gainedYen || 0);
+                    }
+                }
+            });
+            return total;
+        }
+
+        // --- グラフ1：アプリ別比較グラフ (左軸:ポイント棒, 右軸:交換金額線 / orderで前面表示) ---
         window.renderChart1 = function() {
             const canvas = document.getElementById('barChartApps');
             if(!canvas) return;
@@ -1563,17 +1695,13 @@
             if(chartAppsInst) chartAppsInst.destroy();
 
             let labels = state.apps.map(a => a.name);
-            let data = state.apps.map(a => {
-                const appLogs = state.logs.filter(l => l.appId === a.id).sort((x,y) => new Date(x.date) - new Date(y.date));
+            let pointData = state.apps.map(a => {
+                const appLogs = state.logs.filter(l => l.appId === a.id);
                 if(chart1PeriodTab === 'day') {
                     const dateInput = document.getElementById('chart1-date-input');
                     const targetDate = dateInput ? dateInput.value : todayStr;
-                    // 【修正】データ範囲エラー修正：指定日直近（または当日）の最新データを取得
-                    let validLog = null;
-                    for(let i = 0; i < appLogs.length; i++) {
-                        if(appLogs[i].date <= targetDate) validLog = appLogs[i];
-                    }
-                    return validLog ? validLog.value : 0;
+                    const exactLog = appLogs.find(l => l.date === targetDate);
+                    return exactLog ? exactLog.value : 0;
                 } else if(chart1PeriodTab === 'month') {
                     const monthInput = document.getElementById('chart1-month-input');
                     const targetMonth = monthInput ? monthInput.value : currentMonthStr;
@@ -1586,16 +1714,43 @@
                     return yearLogs.length > 0 ? yearLogs[yearLogs.length - 1].value : 0;
                 }
             });
+
+            let yenData = state.apps.map(a => {
+                if(chart1PeriodTab === 'day') {
+                    const dateInput = document.getElementById('chart1-date-input');
+                    return getRedemptionYenForApp(a.id, 'day', dateInput ? dateInput.value : todayStr);
+                } else if(chart1PeriodTab === 'month') {
+                    const monthInput = document.getElementById('chart1-month-input');
+                    return getRedemptionYenForApp(a.id, 'month', monthInput ? monthInput.value : currentMonthStr);
+                } else {
+                    const selectInput = document.getElementById('chart1-select-input');
+                    return getRedemptionYenForApp(a.id, 'year', selectInput ? selectInput.value : new Date().getFullYear().toString());
+                }
+            });
+
             let bgColors = state.apps.map((_, i) => APP_COLOR_PALETTE[i % APP_COLOR_PALETTE.length]);
 
             chartAppsInst = new Chart(ctx, {
                 type: 'bar',
-                data: { labels: labels, datasets: [{ label: 'ポイント数値', data: data, backgroundColor: bgColors, borderRadius: 6 }] },
-                options: { responsive: true, maintainAspectRatio: false }
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { type: 'bar', label: 'ポイント数値', data: pointData, backgroundColor: bgColors, borderRadius: 6, yAxisID: 'y', order: 2 },
+                        { type: 'line', label: '交換実績金額 (円)', data: yenData, borderColor: '#10b981', backgroundColor: '#10b981', borderWidth: 2, pointRadius: 4, yAxisID: 'y1', order: 1 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'ポイント' } },
+                        y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: '交換実績 (円)' } }
+                    }
+                }
             });
         };
 
-        // --- グラフ2：個別アプリ推移グラフ描画ロジック (日別は1日～月末、月別は1月～12月) ---
+        // --- グラフ2：個別アプリ推移グラフ (左軸:ポイント棒, 右軸:交換金額線 / orderで前面表示) ---
         window.renderChart2 = function() {
             const canvas = document.getElementById('barChartSingleApp');
             if(!canvas) return;
@@ -1609,31 +1764,29 @@
 
             const appIndex = state.apps.findIndex(a => a.id === appId);
             const appColor = APP_COLOR_PALETTE[appIndex % APP_COLOR_PALETTE.length];
-            const appLogs = state.logs.filter(l => l.appId === appId).sort((x,y) => new Date(x.date) - new Date(y.date));
+            const appLogs = state.logs.filter(l => l.appId === appId);
 
             let labels = [];
-            let data = [];
+            let pointData = [];
+            let yenData = [];
 
             if(chart2Mode === 'daily') {
                 const monthInput = document.getElementById('chart2-month-input');
-                const targetMonth = monthInput ? monthInput.value : currentMonthStr; // 例: "2026-10"
+                const targetMonth = monthInput ? monthInput.value : currentMonthStr; 
                 const [yearStr, monthStr] = targetMonth.split('-');
                 const year = parseInt(yearStr);
                 const month = parseInt(monthStr);
 
-                // 月末日計算
                 const lastDay = new Date(year, month, 0).getDate();
 
                 for(let day = 1; day <= lastDay; day++) {
                     const dayStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                     labels.push(`${month}/${day}`);
 
-                    // 該当日の直近最新値を取得
-                    let validVal = 0;
-                    for(let i = 0; i < appLogs.length; i++) {
-                        if(appLogs[i].date <= dayStr) validVal = appLogs[i].value;
-                    }
-                    data.push(validVal);
+                    const exactLog = appLogs.find(l => l.date === dayStr);
+                    pointData.push(exactLog ? exactLog.value : 0);
+
+                    yenData.push(getRedemptionYenForApp(app.id, 'day', dayStr));
                 }
             } else {
                 const yearSelect = document.getElementById('chart2-year-select');
@@ -1643,29 +1796,35 @@
                     const mStr = `${targetYear}-${String(m).padStart(2, '0')}`;
                     labels.push(`${m}月`);
 
-                    // 該当月内の最後のログ値を取得
                     const monthLogs = appLogs.filter(l => l.date && l.date.startsWith(mStr));
-                    let val = 0;
-                    if(monthLogs.length > 0) {
-                        val = monthLogs[monthLogs.length - 1].value;
-                    } else {
-                        // 過去の最新値を探す
-                        for(let i = 0; i < appLogs.length; i++) {
-                            if(appLogs[i].date.substring(0, 7) < mStr) val = appLogs[i].value;
-                        }
-                    }
-                    data.push(val);
+                    let val = monthLogs.length > 0 ? monthLogs[monthLogs.length - 1].value : 0;
+                    pointData.push(val);
+
+                    yenData.push(getRedemptionYenForApp(app.id, 'month', mStr));
                 }
             }
 
             chartSingleAppInst = new Chart(ctx, {
                 type: 'bar',
-                data: { labels: labels, datasets: [{ label: `${app.name} 推移`, data: data, backgroundColor: appColor, borderRadius: 6 }] },
-                options: { responsive: true, maintainAspectRatio: false }
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { type: 'bar', label: `${app.name} 推移`, data: pointData, backgroundColor: appColor, borderRadius: 6, yAxisID: 'y', order: 2 },
+                        { type: 'line', label: '交換実績金額 (円)', data: yenData, borderColor: '#10b981', backgroundColor: '#10b981', borderWidth: 2, pointRadius: 4, yAxisID: 'y1', order: 1 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'ポイント' } },
+                        y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: '交換実績 (円)' } }
+                    }
+                }
             });
         };
 
-        // --- グラフ3：カテゴリ別集計グラフ描画ロジック ---
+        // --- グラフ3：カテゴリ別集計グラフ (左軸:ポイント棒, 右軸:交換金額線 / orderで前面表示) ---
         window.renderChart3 = function() {
             const canvas = document.getElementById('barChartMarkCategory');
             if(!canvas) return;
@@ -1675,18 +1834,19 @@
             const catIcons = ['🚶', '💤', '🪙', '⭐'];
             const catColors = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6'];
             let iconMap = {};
-            catIcons.forEach(icon => iconMap[icon] = 0);
+            let yenIconMap = {};
+            catIcons.forEach(icon => { iconMap[icon] = 0; yenIconMap[icon] = 0; });
 
             state.apps.forEach(app => {
-                const appLogs = state.logs.filter(l => l.appId === app.id).sort((x,y) => new Date(x.date) - new Date(y.date));
+                const appLogs = state.logs.filter(l => l.appId === app.id);
+                const icon = app.icon || '🚶';
                 if(appLogs.length > 0) {
                     let targetVal = 0;
                     if(chart3PeriodTab === 'day') {
                         const dateInput = document.getElementById('chart3-date-input');
                         const targetDate = dateInput ? dateInput.value : todayStr;
-                        for(let i = 0; i < appLogs.length; i++) {
-                            if(appLogs[i].date <= targetDate) targetVal = appLogs[i].value;
-                        }
+                        const exactLog = appLogs.find(l => l.date === targetDate);
+                        targetVal = exactLog ? exactLog.value : 0;
                     } else if(chart3PeriodTab === 'month') {
                         const monthInput = document.getElementById('chart3-month-input');
                         const targetMonth = monthInput ? monthInput.value : currentMonthStr;
@@ -1699,21 +1859,131 @@
                         targetVal = yearLogs.length > 0 ? yearLogs[yearLogs.length - 1].value : 0;
                     }
 
-                    const icon = app.icon || '🚶';
                     if(iconMap[icon] !== undefined) {
                         iconMap[icon] += targetVal;
                     }
                 }
             });
 
+            catIcons.forEach(icon => {
+                if(chart3PeriodTab === 'day') {
+                    const dateInput = document.getElementById('chart3-date-input');
+                    yenIconMap[icon] = getRedemptionYenForCategory(icon, 'day', dateInput ? dateInput.value : todayStr);
+                } else if(chart3PeriodTab === 'month') {
+                    const monthInput = document.getElementById('chart3-month-input');
+                    yenIconMap[icon] = getRedemptionYenForCategory(icon, 'month', monthInput ? monthInput.value : currentMonthStr);
+                } else {
+                    const selectInput = document.getElementById('chart3-select-input');
+                    yenIconMap[icon] = getRedemptionYenForCategory(icon, 'year', selectInput ? selectInput.value : new Date().getFullYear().toString());
+                }
+            });
+
             let labels = catIcons;
             let data = catIcons.map(icon => iconMap[icon]);
+            let yenData = catIcons.map(icon => yenIconMap[icon]);
             let bgColors = catColors;
 
             chartMarkCategoryInst = new Chart(ctx, {
                 type: 'bar',
-                data: { labels: labels, datasets: [{ label: 'カテゴリ別ポイント', data: data, backgroundColor: bgColors, borderRadius: 6 }] },
-                options: { responsive: true, maintainAspectRatio: false }
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { type: 'bar', label: 'カテゴリ別ポイント', data: data, backgroundColor: bgColors, borderRadius: 6, yAxisID: 'y', order: 2 },
+                        { type: 'line', label: '交換実績金額 (円)', data: yenData, borderColor: '#6366f1', backgroundColor: '#6366f1', borderWidth: 2, pointRadius: 4, yAxisID: 'y1', order: 1 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'ポイント' } },
+                        y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: '交換実績 (円)' } }
+                    }
+                }
+            });
+        };
+
+        // --- エントリー画面用個別グラフ描画（左軸:ポイント棒, 右軸:交換金額線 / orderで前面表示） ---
+        window.renderEntryAppGraph = function() {
+            const container = document.getElementById('entryAppGraphContainer');
+            const canvas = document.getElementById('barChartEntryApp');
+            const titleEl = document.getElementById('entry-app-graph-title');
+            if(!container || !canvas) return;
+
+            if(!selectedAppFilter) {
+                container.classList.add('hidden');
+                return;
+            }
+
+            const app = state.apps.find(a => a.id === selectedAppFilter);
+            if(!app) {
+                container.classList.add('hidden');
+                return;
+            }
+
+            container.classList.remove('hidden');
+            if(titleEl) titleEl.innerHTML = `<i class="fa-solid fa-chart-column text-indigo-600"></i> ${app.icon} ${app.name} の個別推移グラフ`;
+
+            const ctx = canvas.getContext('2d');
+            if(chartEntryAppInst) chartEntryAppInst.destroy();
+
+            const appIndex = state.apps.findIndex(a => a.id === selectedAppFilter);
+            const appColor = APP_COLOR_PALETTE[appIndex % APP_COLOR_PALETTE.length];
+            const appLogs = state.logs.filter(l => l.appId === selectedAppFilter);
+
+            let labels = [];
+            let pointData = [];
+            let yenData = [];
+
+            if(entryChartMode === 'daily') {
+                const monthInput = document.getElementById('entry-chart-month-input');
+                const targetMonth = monthInput ? monthInput.value : currentMonthStr; 
+                const [yearStr, monthStr] = targetMonth.split('-');
+                const year = parseInt(yearStr);
+                const month = parseInt(monthStr);
+
+                const lastDay = new Date(year, month, 0).getDate();
+
+                for(let day = 1; day <= lastDay; day++) {
+                    const dayStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                    labels.push(`${month}/${day}`);
+
+                    const exactLog = appLogs.find(l => l.date === dayStr);
+                    pointData.push(exactLog ? exactLog.value : 0);
+                    yenData.push(getRedemptionYenForApp(app.id, 'day', dayStr));
+                }
+            } else {
+                const yearSelect = document.getElementById('entry-chart-year-select');
+                const targetYear = yearSelect ? yearSelect.value : new Date().getFullYear().toString();
+
+                for(let m = 1; m <= 12; m++) {
+                    const mStr = `${targetYear}-${String(m).padStart(2, '0')}`;
+                    labels.push(`${m}月`);
+
+                    const monthLogs = appLogs.filter(l => l.date && l.date.startsWith(mStr));
+                    let val = monthLogs.length > 0 ? monthLogs[monthLogs.length - 1].value : 0;
+                    pointData.push(val);
+                    yenData.push(getRedemptionYenForApp(app.id, 'month', mStr));
+                }
+            }
+
+            chartEntryAppInst = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { type: 'bar', label: `${app.name} 推移`, data: pointData, backgroundColor: appColor, borderRadius: 6, yAxisID: 'y', order: 2 },
+                        { type: 'line', label: '交換実績金額 (円)', data: yenData, borderColor: '#10b981', backgroundColor: '#10b981', borderWidth: 2, pointRadius: 4, yAxisID: 'y1', order: 1 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'ポイント' } },
+                        y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: '交換実績 (円)' } }
+                    }
+                }
             });
         };
 
@@ -1751,6 +2021,7 @@
             selectedAppFilter = appId;
             renderSelectedAppCard();
             renderLogsTable();
+            renderEntryAppGraph();
         };
 
         function renderSelectedAppCard() {
@@ -1917,6 +2188,7 @@
             if(entrySelect) entrySelect.value = appId;
             renderSelectedAppCard();
             renderLogsTable();
+            renderEntryAppGraph();
             const app = state.apps.find(a => a.id === appId);
             const banner = document.getElementById('filter-banner');
             const bannerText = document.getElementById('filter-banner-text');
@@ -1933,6 +2205,7 @@
             document.getElementById('filter-banner').classList.add('hidden');
             renderSelectedAppCard();
             renderLogsTable();
+            renderEntryAppGraph();
         };
 
         function renderLogsTable() {
