@@ -264,7 +264,7 @@
                 </form>
             </div>
 
-            <!-- 【要望2対応】アプリ数値入力画面の選択アプリ連動個別推移グラフ（入力を保存するボタンの下へ移動） -->
+            <!-- アプリ数値入力画面の選択アプリ連動個別推移グラフ -->
             <div id="entryAppGraphContainer" class="hidden bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <h3 id="entry-app-graph-title" class="font-bold text-slate-700 text-sm flex items-center gap-2">
@@ -650,7 +650,8 @@
             { icon: '🔘', color: '#64748b' }
         ];
 
-        const APP_COLOR_PALETTE = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#3b82f6', '#14b8a6', '#f43f5e'];
+        // 【修正】アプリカラーパレットから赤系（#ec4899, #f43f5e等）を除外
+        const APP_COLOR_PALETTE = ['#6366f1', '#10b981', '#f59e0b', '#8b5cf6', '#3b82f6', '#14b8a6', '#06b6d4', '#84cc16'];
 
         let state = { apps: [], logs: [], redemptions: [], commonPoints: [], commonLogs: [] };
         
@@ -1687,7 +1688,7 @@
             return total;
         }
 
-        // --- グラフ1：アプリ別比較グラフ (左軸:ポイント棒, 右軸:交換金額線 / orderで前面表示) ---
+        // --- グラフ1：アプリ別比較グラフ (右軸メモリ固定: 日・月=1000 / 年=5000、線赤化、点サイズ変更) ---
         window.renderChart1 = function() {
             const canvas = document.getElementById('barChartApps');
             if(!canvas) return;
@@ -1730,13 +1731,19 @@
 
             let bgColors = state.apps.map((_, i) => APP_COLOR_PALETTE[i % APP_COLOR_PALETTE.length]);
 
+            // 右軸メモリの固定化判定
+            let y1Max = 1000;
+            if(chart1PeriodTab === 'year') {
+                y1Max = 5000;
+            }
+
             chartAppsInst = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: labels,
                     datasets: [
                         { type: 'bar', label: 'ポイント数値', data: pointData, backgroundColor: bgColors, borderRadius: 6, yAxisID: 'y', order: 2 },
-                        { type: 'line', label: '交換実績金額 (円)', data: yenData, borderColor: '#10b981', backgroundColor: '#10b981', borderWidth: 2, pointRadius: 4, yAxisID: 'y1', order: 1 }
+                        { type: 'line', label: '交換実績金額 (円)', data: yenData, borderColor: '#ef4444', backgroundColor: '#ef4444', borderWidth: 2, pointRadius: 2, pointHoverRadius: 4, yAxisID: 'y1', order: 1 }
                     ]
                 },
                 options: {
@@ -1744,13 +1751,13 @@
                     maintainAspectRatio: false,
                     scales: {
                         y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'ポイント' } },
-                        y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: '交換実績 (円)' } }
+                        y1: { type: 'linear', display: true, position: 'right', min: 0, max: y1Max, grid: { drawOnChartArea: false }, title: { display: true, text: '交換実績 (円)' } }
                     }
                 }
             });
         };
 
-        // --- グラフ2：個別アプリ推移グラフ (左軸:ポイント棒, 右軸:交換金額線 / orderで前面表示) ---
+        // --- グラフ2：個別アプリ推移グラフ (右軸メモリ固定: 日別(月選択)=1000 / 月別(年選択)=1000、線赤化、点サイズ変更) ---
         window.renderChart2 = function() {
             const canvas = document.getElementById('barChartSingleApp');
             if(!canvas) return;
@@ -1810,7 +1817,7 @@
                     labels: labels,
                     datasets: [
                         { type: 'bar', label: `${app.name} 推移`, data: pointData, backgroundColor: appColor, borderRadius: 6, yAxisID: 'y', order: 2 },
-                        { type: 'line', label: '交換実績金額 (円)', data: yenData, borderColor: '#10b981', backgroundColor: '#10b981', borderWidth: 2, pointRadius: 4, yAxisID: 'y1', order: 1 }
+                        { type: 'line', label: '交換実績金額 (円)', data: yenData, borderColor: '#ef4444', backgroundColor: '#ef4444', borderWidth: 2, pointRadius: 2, pointHoverRadius: 4, yAxisID: 'y1', order: 1 }
                     ]
                 },
                 options: {
@@ -1818,13 +1825,13 @@
                     maintainAspectRatio: false,
                     scales: {
                         y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'ポイント' } },
-                        y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: '交換実績 (円)' } }
+                        y1: { type: 'linear', display: true, position: 'right', min: 0, max: 1000, grid: { drawOnChartArea: false }, title: { display: true, text: '交換実績 (円)' } }
                     }
                 }
             });
         };
 
-        // --- グラフ3：カテゴリ別集計グラフ (左軸:ポイント棒, 右軸:交換金額線 / orderで前面表示) ---
+        // --- グラフ3：カテゴリ別集計グラフ (右軸メモリ固定: 日・月=1000 / 年選択=20000、線赤化、点サイズ変更) ---
         window.renderChart3 = function() {
             const canvas = document.getElementById('barChartMarkCategory');
             if(!canvas) return;
@@ -1883,13 +1890,19 @@
             let yenData = catIcons.map(icon => yenIconMap[icon]);
             let bgColors = catColors;
 
+            // 右軸メモリの固定化判定
+            let y1Max = 1000;
+            if(chart3PeriodTab === 'year') {
+                y1Max = 20000;
+            }
+
             chartMarkCategoryInst = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: labels,
                     datasets: [
                         { type: 'bar', label: 'カテゴリ別ポイント', data: data, backgroundColor: bgColors, borderRadius: 6, yAxisID: 'y', order: 2 },
-                        { type: 'line', label: '交換実績金額 (円)', data: yenData, borderColor: '#6366f1', backgroundColor: '#6366f1', borderWidth: 2, pointRadius: 4, yAxisID: 'y1', order: 1 }
+                        { type: 'line', label: '交換実績金額 (円)', data: yenData, borderColor: '#ef4444', backgroundColor: '#ef4444', borderWidth: 2, pointRadius: 2, pointHoverRadius: 4, yAxisID: 'y1', order: 1 }
                     ]
                 },
                 options: {
@@ -1897,13 +1910,13 @@
                     maintainAspectRatio: false,
                     scales: {
                         y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'ポイント' } },
-                        y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: '交換実績 (円)' } }
+                        y1: { type: 'linear', display: true, position: 'right', min: 0, max: y1Max, grid: { drawOnChartArea: false }, title: { display: true, text: '交換実績 (円)' } }
                     }
                 }
             });
         };
 
-        // --- エントリー画面用個別グラフ描画（左軸:ポイント棒, 右軸:交換金額線 / orderで前面表示） ---
+        // --- エントリー画面用個別グラフ描画 (右軸メモリ固定: 1000、線赤化、点サイズ変更) ---
         window.renderEntryAppGraph = function() {
             const container = document.getElementById('entryAppGraphContainer');
             const canvas = document.getElementById('barChartEntryApp');
@@ -1973,7 +1986,7 @@
                     labels: labels,
                     datasets: [
                         { type: 'bar', label: `${app.name} 推移`, data: pointData, backgroundColor: appColor, borderRadius: 6, yAxisID: 'y', order: 2 },
-                        { type: 'line', label: '交換実績金額 (円)', data: yenData, borderColor: '#10b981', backgroundColor: '#10b981', borderWidth: 2, pointRadius: 4, yAxisID: 'y1', order: 1 }
+                        { type: 'line', label: '交換実績金額 (円)', data: yenData, borderColor: '#ef4444', backgroundColor: '#ef4444', borderWidth: 2, pointRadius: 2, pointHoverRadius: 4, yAxisID: 'y1', order: 1 }
                     ]
                 },
                 options: {
@@ -1981,7 +1994,7 @@
                     maintainAspectRatio: false,
                     scales: {
                         y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'ポイント' } },
-                        y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: '交換実績 (円)' } }
+                        y1: { type: 'linear', display: true, position: 'right', min: 0, max: 1000, grid: { drawOnChartArea: false }, title: { display: true, text: '交換実績 (円)' } }
                     }
                 }
             });
@@ -2043,7 +2056,7 @@
             }
 
             const cardColor = APP_COLOR_PALETTE[appIndex % APP_COLOR_PALETTE.length];
-            const appLogs = state.logs.filter(l => l.appId === app.id).sort((a,b) => new Date(a.date) - new Date(b.date));
+            const appLogs = state.logs.filter(l => l.appId === selectedAppFilter).sort((a,b) => new Date(a.date) - new Date(b.date));
             const latestVal = appLogs.length > 0 ? Number(appLogs[appLogs.length - 1].value || 0) : 0;
             
             let redeemedPtTotal = 0;
