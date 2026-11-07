@@ -133,7 +133,7 @@
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <h3 class="font-bold text-slate-700 text-sm flex items-center gap-2">
-                        <i class="fa-solid fa-chart-column text-indigo-600"></i> アプリ別 獲得比較
+                        <i class="fa-solid fa-chart-column text-indigo-600"></i> アプリ別 実質獲得比較
                     </h3>
                     <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-medium">
                         <button onclick="changeChart1PeriodTab('day')" id="c1-ptab-day" class="px-3 py-1.5 rounded-lg transition bg-indigo-600 text-white font-medium">日選択</button>
@@ -166,7 +166,7 @@
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <h3 class="font-bold text-slate-700 text-sm flex items-center gap-2">
-                        <i class="fa-solid fa-chart-column text-emerald-600"></i> アプリ個別推移グラフ
+                        <i class="fa-solid fa-chart-column text-emerald-600"></i> アプリ個別 実質増加グラフ
                     </h3>
                     <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-medium">
                         <button onclick="changeChart2Mode('daily')" id="btn-c2-daily" class="px-3 py-1.5 rounded-lg transition bg-emerald-600 text-white font-medium">日別 (月選択)</button>
@@ -203,7 +203,7 @@
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <h3 class="font-bold text-slate-700 text-sm flex items-center gap-2">
-                        <i class="fa-solid fa-chart-column text-amber-600"></i> カテゴリ別 集計グラフ
+                        <i class="fa-solid fa-chart-column text-amber-600"></i> カテゴリ別 実質獲得集計
                     </h3>
                     <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-medium">
                         <button onclick="changeChart3PeriodTab('day')" id="c3-ptab-day" class="px-3 py-1.5 rounded-lg transition bg-amber-600 text-white font-medium">日選択</button>
@@ -268,7 +268,7 @@
             <div id="entryAppGraphContainer" class="hidden bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <h3 id="entry-app-graph-title" class="font-bold text-slate-700 text-sm flex items-center gap-2">
-                        <i class="fa-solid fa-chart-column text-indigo-600"></i> 選択アプリの個別推移グラフ
+                        <i class="fa-solid fa-chart-column text-indigo-600"></i> 選択アプリの実質増加グラフ
                     </h3>
                     <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-medium">
                         <button onclick="changeEntryChartMode('daily')" id="btn-ec2-daily" class="px-3 py-1.5 rounded-lg transition bg-indigo-600 text-white font-medium">日別 (月選択)</button>
@@ -489,7 +489,7 @@
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <h3 class="font-bold text-slate-700 text-sm flex items-center gap-2">
-                            <i class="fa-solid fa-chart-column text-amber-500"></i> ポイント種類別 比較グラフ
+                            <i class="fa-solid fa-chart-column text-amber-500"></i> ポイント種類別 実質獲得グラフ
                         </h3>
                         <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-medium">
                             <button onclick="changeCommonChart1Mode('monthly')" id="btn-cc1-monthly" class="px-3 py-1 rounded-lg transition bg-white shadow-sm text-amber-600 font-bold">月別</button>
@@ -505,7 +505,7 @@
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <h3 class="font-bold text-slate-700 text-sm flex items-center gap-2">
-                            <i class="fa-solid fa-chart-column text-emerald-600"></i> <span id="commonChart2Title">合計ポイント推移グラフ</span>
+                            <i class="fa-solid fa-chart-column text-emerald-600"></i> <span id="commonChart2Title">合計ポイント実質増加グラフ</span>
                         </h3>
                         <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-medium">
                             <button onclick="changeCommonChart2Mode('monthly')" id="btn-cc2-monthly" class="px-3 py-1 rounded-lg transition bg-white shadow-sm text-emerald-600 font-bold">月別</button>
@@ -639,7 +639,6 @@
             { id: 'cp_03', name: '楽天ポイント', icon: 'col_blue', order: 3 }
         ];
 
-        // 16種類のカラーパレット定義
         const COMMON_COLOR_ICONS = [
             { id: 'col_blue', color: '#3b82f6', label: '青' },
             { id: 'col_indigo', color: '#6366f1', label: 'インディゴ' },
@@ -678,7 +677,6 @@
         let logDisplayMode = 'point';
 
         function getHexColorForCommonIcon(icon) {
-            // 旧形式の絵文字（🟡, 🟢 など）や未定義の場合のフォールバック対応
             const foundObj = COMMON_COLOR_ICONS.find(ci => ci.id === icon || ci.icon === icon);
             if (foundObj) return foundObj.color;
             if (icon === '🔵') return '#3b82f6';
@@ -916,7 +914,7 @@
             switchTab('common_detail');
             renderCommonDetailHeader();
             const monthInput = document.getElementById('commonEntryMonth');
-            if(monthInput && !monthInput.value) monthInput.value = currentMonthStr;
+            if(monthInput && !monthInput.value) monthInput.value = "2026-10";
             renderCommonCharts();
             renderCommonLogsTable();
         };
@@ -927,7 +925,7 @@
 
         if(document.getElementById('entryDate')) document.getElementById('entryDate').valueAsDate = new Date();
         if(document.getElementById('redDate')) document.getElementById('redDate').valueAsDate = new Date();
-        if(document.getElementById('commonEntryMonth')) document.getElementById('commonEntryMonth').value = currentMonthStr;
+        if(document.getElementById('commonEntryMonth')) document.getElementById('commonEntryMonth').value = "2026-10";
 
         window.changeChart1PeriodTab = function(tab) {
             chart1PeriodTab = tab;
@@ -972,7 +970,7 @@
             } else if(chart1PeriodTab === 'year') {
                 const selectIn = document.getElementById('chart1-select-input');
                 if(!selectIn) return;
-                let curYear = parseInt(selectIn.value) || new Date().getFullYear();
+                let curYear = parseInt(selectIn.value) || 2026;
                 curYear += direction;
                 let exists = Array.from(selectIn.options).some(opt => opt.value === String(curYear));
                 if(!exists) {
@@ -1025,7 +1023,7 @@
             } else {
                 const yearSelect = document.getElementById('chart2-year-select');
                 if(!yearSelect) return;
-                let curYear = parseInt(yearSelect.value) || new Date().getFullYear();
+                let curYear = parseInt(yearSelect.value) || 2026;
                 curYear += direction;
                 let exists = Array.from(yearSelect.options).some(opt => opt.value === String(curYear));
                 if(!exists) {
@@ -1082,7 +1080,7 @@
             } else if(chart3PeriodTab === 'year') {
                 const selectIn = document.getElementById('chart3-select-input');
                 if(!selectIn) return;
-                let curYear = parseInt(selectIn.value) || new Date().getFullYear();
+                let curYear = parseInt(selectIn.value) || 2026;
                 curYear += direction;
                 let exists = Array.from(selectIn.options).some(opt => opt.value === String(curYear));
                 if(!exists) {
@@ -1135,7 +1133,7 @@
             } else {
                 const yearSelect = document.getElementById('entry-chart-year-select');
                 if(!yearSelect) return;
-                let curYear = parseInt(yearSelect.value) || new Date().getFullYear();
+                let curYear = parseInt(yearSelect.value) || 2026;
                 curYear += direction;
                 let exists = Array.from(yearSelect.options).some(opt => opt.value === String(curYear));
                 if(!exists) {
@@ -1150,20 +1148,18 @@
         };
 
         function populateYearSelect(selectEl) {
-            let years = new Set();
+            let years = new Set(['2026']);
             state.logs.forEach(l => { if(l.date) years.add(l.date.substring(0, 4)); });
             let arr = Array.from(years).sort().reverse();
-            if(arr.length === 0) arr = [new Date().getFullYear().toString()];
             let html = '';
             arr.forEach(y => html += `<option value="${y}">${y}年</option>`);
             selectEl.innerHTML = html;
         }
 
         function populateChart2YearSelect(selectEl) {
-            let years = new Set();
+            let years = new Set(['2026']);
             state.logs.forEach(l => { if(l.date) years.add(l.date.substring(0, 4)); });
             let arr = Array.from(years).sort().reverse();
-            if(arr.length === 0) arr = [new Date().getFullYear().toString()];
             let html = '';
             arr.forEach(y => html += `<option value="${y}">${y}年</option>`);
             selectEl.innerHTML = html;
@@ -1355,13 +1351,15 @@
                 const chart3DateIn = document.getElementById('chart3-date-input');
                 const chart3MonthIn = document.getElementById('chart3-month-input');
                 const entryMonthIn = document.getElementById('entry-chart-month-input');
+                const commonEntryMonth = document.getElementById('commonEntryMonth');
 
                 if(dateIn && !dateIn.value) dateIn.value = todayStr;
-                if(monthIn && !monthIn.value) monthIn.value = currentMonthStr;
-                if(chart2MonthIn && !chart2MonthIn.value) chart2MonthIn.value = currentMonthStr;
+                if(monthIn && !monthIn.value) monthIn.value = "2026-10";
+                if(chart2MonthIn && !chart2MonthIn.value) chart2MonthIn.value = "2026-10";
                 if(chart3DateIn && !chart3DateIn.value) chart3DateIn.value = todayStr;
-                if(chart3MonthIn && !chart3MonthIn.value) chart3MonthIn.value = currentMonthStr;
-                if(entryMonthIn && !entryMonthIn.value) entryMonthIn.value = currentMonthStr;
+                if(chart3MonthIn && !chart3MonthIn.value) chart3MonthIn.value = "2026-10";
+                if(entryMonthIn && !entryMonthIn.value) entryMonthIn.value = "2026-10";
+                if(commonEntryMonth && !commonEntryMonth.value) commonEntryMonth.value = "2026-10";
 
                 renderChart1(); 
                 renderChart2(); 
@@ -1433,7 +1431,7 @@
                             <p class="text-xs text-amber-100">全ポイントの合算管理</p>
                         </div>
                         <div class="text-right">
-                            <span class="text-xs text-amber-100 block">総残高</span>
+                            <span class="text-xs text-amber-100 block">総残高 (最新)</span>
                             <span class="text-xl font-bold">${totalLatestVal.toLocaleString()} pt</span>
                         </div>
                     </div>
@@ -1579,6 +1577,39 @@
             }
         }
 
+        // 共通ポイント用：指定月の実質増加値を計算（10月は入力残高そのもの、11月以降は 対象月残高 - 前月残高 ＋ 当月交換ポイント）
+        function getCommonEffectiveGain(cpId, monthStr) {
+            const logs = state.commonLogs.filter(l => l.commonPointId === cpId).sort((a,b) => a.month.localeCompare(b.month));
+            const logEntry = logs.find(l => l.month === monthStr);
+            if(!logEntry) return 0;
+            const currentVal = logEntry.value;
+
+            if(monthStr === "2026-10") {
+                return currentVal;
+            }
+
+            // 前月の年月を算出
+            const [y, m] = monthStr.split('-').map(Number);
+            let prevY = y, prevM = m - 1;
+            if(prevM < 1) { prevM = 12; prevY--; }
+            const prevMonthStr = `${prevY}-${String(prevM).padStart(2, '0')}`;
+            const prevLog = logs.find(l => l.month === prevMonthStr);
+            const prevVal = prevLog ? prevLog.value : 0;
+
+            // 当月（monthStr）に発生した、この共通ポイント宛ての交換ポイント合計を取得
+            let monthRedeemSpentPt = 0;
+            state.redemptions.forEach(r => {
+                if(r.date && r.date.startsWith(monthStr)) {
+                    const cp = state.commonPoints.find(p => p.id === cpId);
+                    if(cp && r.destination && r.destination.includes(cp.name)) {
+                        monthRedeemSpentPt += Number(r.spentPt || 0);
+                    }
+                }
+            });
+
+            return (currentVal - prevVal) + monthRedeemSpentPt;
+        }
+
         function renderCommonCharts() {
             const compareContainer = document.getElementById('commonChartCompare').closest('.bg-white');
             const shareContainer = document.getElementById('commonChartShare').closest('.bg-white');
@@ -1588,11 +1619,11 @@
                 if(compareContainer) compareContainer.classList.add('hidden');
                 if(shareContainer) shareContainer.classList.add('hidden');
                 const cp = state.commonPoints.find(p => p.id === selectedCommonPointId);
-                if(cp && chart2Title) chart2Title.innerText = `${cp.name} ポイント推移グラフ`;
+                if(cp && chart2Title) chart2Title.innerText = `${cp.name} 実質増加グラフ`;
             } else {
                 if(compareContainer) compareContainer.classList.remove('hidden');
                 if(shareContainer) shareContainer.classList.remove('hidden');
-                if(chart2Title) chart2Title.innerText = '合計ポイント推移グラフ';
+                if(chart2Title) chart2Title.innerText = '合計ポイント実質増加グラフ';
 
                 const canvas1 = document.getElementById('commonChartCompare');
                 if(canvas1) {
@@ -1600,8 +1631,7 @@
                     if(commonChartCompareInst) commonChartCompareInst.destroy();
                     let labels = state.commonPoints.map(p => p.name);
                     let data = state.commonPoints.map(p => {
-                        const logs = state.commonLogs.filter(l => l.commonPointId === p.id).sort((a,b) => a.month.localeCompare(b.month));
-                        return logs.length > 0 ? logs[logs.length - 1].value : 0;
+                        return getCommonEffectiveGain(p.id, "2026-10");
                     });
                     if(commonChart1Mode === 'yearly') {
                         let yearMap = {};
@@ -1609,14 +1639,14 @@
                             const logs = state.commonLogs.filter(l => l.commonPointId === p.id);
                             logs.forEach(l => {
                                 const yr = l.month.substring(0, 4);
-                                yearMap[yr] = (yearMap[yr] || 0) + Number(l.value || 0);
+                                yearMap[yr] = (yearMap[yr] || 0) + getCommonEffectiveGain(p.id, l.month);
                             });
                         });
                         labels = Object.keys(yearMap).sort();
                         data = labels.map(yr => yearMap[yr]);
                     }
                     let bgColors = state.commonPoints.map(p => getHexColorForCommonIcon(p.icon));
-                    commonChartCompareInst = new Chart(ctx1, { type: 'bar', data: { labels, datasets: [{ label: 'ポイント数', data, backgroundColor: bgColors, borderRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false } });
+                    commonChartCompareInst = new Chart(ctx1, { type: 'bar', data: { labels, datasets: [{ label: '実質獲得ポイント', data, backgroundColor: bgColors, borderRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false } });
                 }
 
                 const canvas3 = document.getElementById('commonChartShare');
@@ -1642,9 +1672,15 @@
                 let chartColor = '#10b981';
 
                 if(selectedCommonPointId === 'total') {
-                    state.commonLogs.forEach(l => {
-                        let key = commonChart2Mode === 'yearly' ? l.month.substring(0, 4) : l.month;
-                        mapData[key] = (mapData[key] || 0) + Number(l.value || 0);
+                    let allMonths = new Set();
+                    state.commonLogs.forEach(l => allMonths.add(l.month));
+                    allMonths.forEach(mStr => {
+                        let monthTotal = 0;
+                        state.commonPoints.forEach(cp => {
+                            monthTotal += getCommonEffectiveGain(cp.id, mStr);
+                        });
+                        let key = commonChart2Mode === 'yearly' ? mStr.substring(0, 4) : mStr;
+                        mapData[key] = (mapData[key] || 0) + monthTotal;
                     });
                 } else {
                     const cp = state.commonPoints.find(p => p.id === selectedCommonPointId);
@@ -1654,7 +1690,7 @@
                     const logs = state.commonLogs.filter(l => l.commonPointId === selectedCommonPointId);
                     logs.forEach(l => {
                         let key = commonChart2Mode === 'yearly' ? l.month.substring(0, 4) : l.month;
-                        mapData[key] = (mapData[key] || 0) + Number(l.value || 0);
+                        mapData[key] = (mapData[key] || 0) + getCommonEffectiveGain(selectedCommonPointId, l.month);
                     });
                 }
 
@@ -1665,11 +1701,66 @@
                     type: 'bar',
                     data: {
                         labels: labels,
-                        datasets: [{ label: 'ポイント数', data: data, backgroundColor: chartColor, borderRadius: 6 }]
+                        datasets: [{ label: '実質増加ポイント', data: data, backgroundColor: chartColor, borderRadius: 6 }]
                     },
                     options: { responsive: true, maintainAspectRatio: false }
                 });
             }
+        }
+
+        // アプリ管理画面の実質増加計算ロジック（前回入力からの差分 ＋ 交換ポイント）
+        function getAppEffectiveGainForDay(appId, dayStr) {
+            const appLogs = state.logs.filter(l => l.appId === appId).sort((a,b) => new Date(a.date) - new Date(b.date));
+            const logIdx = appLogs.findIndex(l => l.date === dayStr);
+            if(logIdx === -1) return 0;
+            const currentVal = Number(appLogs[logIdx].value || 0);
+            let prevVal = 0;
+            if(logIdx > 0) {
+                prevVal = Number(appLogs[logIdx - 1].value || 0);
+            }
+            let redeemedOnDay = 0;
+            state.redemptions.filter(r => r.appId === appId && r.date === dayStr).forEach(r => {
+                redeemedOnDay += Number(r.spentPt || 0);
+            });
+            return (currentVal - prevVal) + redeemedOnDay;
+        }
+
+        function getAppEffectiveGainForMonth(appId, mStr) {
+            const appLogs = state.logs.filter(l => l.appId === appId).sort((a,b) => new Date(a.date) - new Date(b.date));
+            const monthLogs = appLogs.filter(l => l.date && l.date.startsWith(mStr));
+            if(monthLogs.length === 0) return 0;
+            const latestMonthVal = Number(monthLogs[monthLogs.length - 1].value || 0);
+
+            // 前月の最新値を取得
+            const [y, m] = mStr.split('-').map(Number);
+            let prevY = y, prevM = m - 1;
+            if(prevM < 1) { prevM = 12; prevY--; }
+            const prevMonthStr = `${prevY}-${String(prevM).padStart(2, '0')}`;
+            const prevMonthLogs = appLogs.filter(l => l.date && l.date.startsWith(prevMonthStr));
+            const prevVal = prevMonthLogs.length > 0 ? Number(prevMonthLogs[prevMonthLogs.length - 1].value || 0) : 0;
+
+            let redeemedInMonth = 0;
+            state.redemptions.filter(r => r.appId === appId && r.date && r.date.startsWith(mStr)).forEach(r => {
+                redeemedInMonth += Number(r.spentPt || 0);
+            });
+            return (latestMonthVal - prevVal) + redeemedInMonth;
+        }
+
+        function getAppEffectiveGainForYear(appId, targetYear) {
+            const appLogs = state.logs.filter(l => l.appId === appId).sort((a,b) => new Date(a.date) - new Date(b.date));
+            const yearLogs = appLogs.filter(l => l.date && l.date.startsWith(targetYear));
+            if(yearLogs.length === 0) return 0;
+            const latestYearVal = Number(yearLogs[yearLogs.length - 1].value || 0);
+
+            const prevYearStr = String(parseInt(targetYear) - 1);
+            const prevYearLogs = appLogs.filter(l => l.date && l.date.startsWith(prevYearStr));
+            const prevVal = prevYearLogs.length > 0 ? Number(prevYearLogs[prevYearLogs.length - 1].value || 0) : 0;
+
+            let redeemedInYear = 0;
+            state.redemptions.filter(r => r.appId === appId && r.date && r.date.startsWith(targetYear)).forEach(r => {
+                redeemedInYear += Number(r.spentPt || 0);
+            });
+            return (latestYearVal - prevVal) + redeemedInYear;
         }
 
         function getRedemptionYenForApp(appId, periodType, targetKey) {
@@ -1713,22 +1804,15 @@
 
             let labels = state.apps.map(a => a.name);
             let pointData = state.apps.map(a => {
-                const appLogs = state.logs.filter(l => l.appId === a.id);
                 if(chart1PeriodTab === 'day') {
                     const dateInput = document.getElementById('chart1-date-input');
-                    const targetDate = dateInput ? dateInput.value : todayStr;
-                    const exactLog = appLogs.find(l => l.date === targetDate);
-                    return exactLog ? exactLog.value : 0;
+                    return getAppEffectiveGainForDay(a.id, dateInput ? dateInput.value : todayStr);
                 } else if(chart1PeriodTab === 'month') {
                     const monthInput = document.getElementById('chart1-month-input');
-                    const targetMonth = monthInput ? monthInput.value : currentMonthStr;
-                    const monthLogs = appLogs.filter(l => l.date && l.date.startsWith(targetMonth));
-                    return monthLogs.length > 0 ? monthLogs[monthLogs.length - 1].value : 0;
+                    return getAppEffectiveGainForMonth(a.id, monthInput ? monthInput.value : "2026-10");
                 } else {
                     const selectInput = document.getElementById('chart1-select-input');
-                    const targetYear = selectInput ? selectInput.value : new Date().getFullYear().toString();
-                    const yearLogs = appLogs.filter(l => l.date && l.date.startsWith(targetYear));
-                    return yearLogs.length > 0 ? yearLogs[yearLogs.length - 1].value : 0;
+                    return getAppEffectiveGainForYear(a.id, selectInput ? selectInput.value : "2026");
                 }
             });
 
@@ -1738,10 +1822,10 @@
                     return getRedemptionYenForApp(a.id, 'day', dateInput ? dateInput.value : todayStr);
                 } else if(chart1PeriodTab === 'month') {
                     const monthInput = document.getElementById('chart1-month-input');
-                    return getRedemptionYenForApp(a.id, 'month', monthInput ? monthInput.value : currentMonthStr);
+                    return getRedemptionYenForApp(a.id, 'month', monthInput ? monthInput.value : "2026-10");
                 } else {
                     const selectInput = document.getElementById('chart1-select-input');
-                    return getRedemptionYenForApp(a.id, 'year', selectInput ? selectInput.value : new Date().getFullYear().toString());
+                    return getRedemptionYenForApp(a.id, 'year', selectInput ? selectInput.value : "2026");
                 }
             });
 
@@ -1757,7 +1841,7 @@
                 data: {
                     labels: labels,
                     datasets: [
-                        { type: 'bar', label: 'ポイント数値', data: pointData, backgroundColor: bgColors, borderRadius: 6, yAxisID: 'y', order: 2 },
+                        { type: 'bar', label: '実質増加ポイント', data: pointData, backgroundColor: bgColors, borderRadius: 6, yAxisID: 'y', order: 2 },
                         { type: 'line', label: '交換実績金額 (円)', data: yenData, borderColor: '#ef4444', backgroundColor: '#ef4444', borderWidth: 2, pointRadius: 2, pointHoverRadius: 4, yAxisID: 'y1', order: 1 }
                     ]
                 },
@@ -1785,7 +1869,6 @@
 
             const appIndex = state.apps.findIndex(a => a.id === appId);
             const appColor = APP_COLOR_PALETTE[appIndex % APP_COLOR_PALETTE.length];
-            const appLogs = state.logs.filter(l => l.appId === appId);
 
             let labels = [];
             let pointData = [];
@@ -1793,7 +1876,7 @@
 
             if(chart2Mode === 'daily') {
                 const monthInput = document.getElementById('chart2-month-input');
-                const targetMonth = monthInput ? monthInput.value : currentMonthStr; 
+                const targetMonth = monthInput ? monthInput.value : "2026-10"; 
                 const [yearStr, monthStr] = targetMonth.split('-');
                 const year = parseInt(yearStr);
                 const month = parseInt(monthStr);
@@ -1803,24 +1886,17 @@
                 for(let day = 1; day <= lastDay; day++) {
                     const dayStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                     labels.push(`${month}/${day}`);
-
-                    const exactLog = appLogs.find(l => l.date === dayStr);
-                    pointData.push(exactLog ? exactLog.value : 0);
-
+                    pointData.push(getAppEffectiveGainForDay(app.id, dayStr));
                     yenData.push(getRedemptionYenForApp(app.id, 'day', dayStr));
                 }
             } else {
                 const yearSelect = document.getElementById('chart2-year-select');
-                const targetYear = yearSelect ? yearSelect.value : new Date().getFullYear().toString();
+                const targetYear = yearSelect ? yearSelect.value : "2026";
 
                 for(let m = 1; m <= 12; m++) {
                     const mStr = `${targetYear}-${String(m).padStart(2, '0')}`;
                     labels.push(`${m}月`);
-
-                    const monthLogs = appLogs.filter(l => l.date && l.date.startsWith(mStr));
-                    let val = monthLogs.length > 0 ? monthLogs[monthLogs.length - 1].value : 0;
-                    pointData.push(val);
-
+                    pointData.push(getAppEffectiveGainForMonth(app.id, mStr));
                     yenData.push(getRedemptionYenForApp(app.id, 'month', mStr));
                 }
             }
@@ -1830,7 +1906,7 @@
                 data: {
                     labels: labels,
                     datasets: [
-                        { type: 'bar', label: `${app.name} 推移`, data: pointData, backgroundColor: appColor, borderRadius: 6, yAxisID: 'y', order: 2 },
+                        { type: 'bar', label: `${app.name} 実質増加`, data: pointData, backgroundColor: appColor, borderRadius: 6, yAxisID: 'y', order: 2 },
                         { type: 'line', label: '交換実績金額 (円)', data: yenData, borderColor: '#ef4444', backgroundColor: '#ef4444', borderWidth: 2, pointRadius: 2, pointHoverRadius: 4, yAxisID: 'y1', order: 1 }
                     ]
                 },
@@ -1858,30 +1934,21 @@
             catIcons.forEach(icon => { iconMap[icon] = 0; yenIconMap[icon] = 0; });
 
             state.apps.forEach(app => {
-                const appLogs = state.logs.filter(l => l.appId === app.id);
                 const icon = app.icon || '🚶';
-                if(appLogs.length > 0) {
-                    let targetVal = 0;
-                    if(chart3PeriodTab === 'day') {
-                        const dateInput = document.getElementById('chart3-date-input');
-                        const targetDate = dateInput ? dateInput.value : todayStr;
-                        const exactLog = appLogs.find(l => l.date === targetDate);
-                        targetVal = exactLog ? exactLog.value : 0;
-                    } else if(chart3PeriodTab === 'month') {
-                        const monthInput = document.getElementById('chart3-month-input');
-                        const targetMonth = monthInput ? monthInput.value : currentMonthStr;
-                        const monthLogs = appLogs.filter(l => l.date && l.date.startsWith(targetMonth));
-                        targetVal = monthLogs.length > 0 ? monthLogs[monthLogs.length - 1].value : 0;
-                    } else {
-                        const selectInput = document.getElementById('chart3-select-input');
-                        const targetYear = selectInput ? selectInput.value : new Date().getFullYear().toString();
-                        const yearLogs = appLogs.filter(l => l.date && l.date.startsWith(targetYear));
-                        targetVal = yearLogs.length > 0 ? yearLogs[yearLogs.length - 1].value : 0;
-                    }
+                let targetVal = 0;
+                if(chart3PeriodTab === 'day') {
+                    const dateInput = document.getElementById('chart3-date-input');
+                    targetVal = getAppEffectiveGainForDay(app.id, dateInput ? dateInput.value : todayStr);
+                } else if(chart3PeriodTab === 'month') {
+                    const monthInput = document.getElementById('chart3-month-input');
+                    targetVal = getAppEffectiveGainForMonth(app.id, monthInput ? monthInput.value : "2026-10");
+                } else {
+                    const selectInput = document.getElementById('chart3-select-input');
+                    targetVal = getAppEffectiveGainForYear(app.id, selectInput ? selectInput.value : "2026");
+                }
 
-                    if(iconMap[icon] !== undefined) {
-                        iconMap[icon] += targetVal;
-                    }
+                if(iconMap[icon] !== undefined) {
+                    iconMap[icon] += targetVal;
                 }
             });
 
@@ -1891,10 +1958,10 @@
                     yenIconMap[icon] = getRedemptionYenForCategory(icon, 'day', dateInput ? dateInput.value : todayStr);
                 } else if(chart3PeriodTab === 'month') {
                     const monthInput = document.getElementById('chart3-month-input');
-                    yenIconMap[icon] = getRedemptionYenForCategory(icon, 'month', monthInput ? monthInput.value : currentMonthStr);
+                    yenIconMap[icon] = getRedemptionYenForCategory(icon, 'month', monthInput ? monthInput.value : "2026-10");
                 } else {
                     const selectInput = document.getElementById('chart3-select-input');
-                    yenIconMap[icon] = getRedemptionYenForCategory(icon, 'year', selectInput ? selectInput.value : new Date().getFullYear().toString());
+                    yenIconMap[icon] = getRedemptionYenForCategory(icon, 'year', selectInput ? selectInput.value : "2026");
                 }
             });
 
@@ -1913,7 +1980,7 @@
                 data: {
                     labels: labels,
                     datasets: [
-                        { type: 'bar', label: 'カテゴリ別ポイント', data: data, backgroundColor: bgColors, borderRadius: 6, yAxisID: 'y', order: 2 },
+                        { type: 'bar', label: 'カテゴリ別実質増加', data: data, backgroundColor: bgColors, borderRadius: 6, yAxisID: 'y', order: 2 },
                         { type: 'line', label: '交換実績金額 (円)', data: yenData, borderColor: '#ef4444', backgroundColor: '#ef4444', borderWidth: 2, pointRadius: 2, pointHoverRadius: 4, yAxisID: 'y1', order: 1 }
                     ]
                 },
@@ -1946,14 +2013,13 @@
             }
 
             container.classList.remove('hidden');
-            if(titleEl) titleEl.innerHTML = `<i class="fa-solid fa-chart-column text-indigo-600"></i> ${app.icon} ${app.name} の個別推移グラフ`;
+            if(titleEl) titleEl.innerHTML = `<i class="fa-solid fa-chart-column text-indigo-600"></i> ${app.icon} ${app.name} の実質増加グラフ`;
 
             const ctx = canvas.getContext('2d');
             if(chartEntryAppInst) chartEntryAppInst.destroy();
 
             const appIndex = state.apps.findIndex(a => a.id === selectedAppFilter);
             const appColor = APP_COLOR_PALETTE[appIndex % APP_COLOR_PALETTE.length];
-            const appLogs = state.logs.filter(l => l.appId === selectedAppFilter);
 
             let labels = [];
             let pointData = [];
@@ -1961,7 +2027,7 @@
 
             if(entryChartMode === 'daily') {
                 const monthInput = document.getElementById('entry-chart-month-input');
-                const targetMonth = monthInput ? monthInput.value : currentMonthStr; 
+                const targetMonth = monthInput ? monthInput.value : "2026-10"; 
                 const [yearStr, monthStr] = targetMonth.split('-');
                 const year = parseInt(yearStr);
                 const month = parseInt(monthStr);
@@ -1971,22 +2037,17 @@
                 for(let day = 1; day <= lastDay; day++) {
                     const dayStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                     labels.push(`${month}/${day}`);
-
-                    const exactLog = appLogs.find(l => l.date === dayStr);
-                    pointData.push(exactLog ? exactLog.value : 0);
+                    pointData.push(getAppEffectiveGainForDay(app.id, dayStr));
                     yenData.push(getRedemptionYenForApp(app.id, 'day', dayStr));
                 }
             } else {
                 const yearSelect = document.getElementById('entry-chart-year-select');
-                const targetYear = yearSelect ? yearSelect.value : new Date().getFullYear().toString();
+                const targetYear = yearSelect ? yearSelect.value : "2026";
 
                 for(let m = 1; m <= 12; m++) {
                     const mStr = `${targetYear}-${String(m).padStart(2, '0')}`;
                     labels.push(`${m}月`);
-
-                    const monthLogs = appLogs.filter(l => l.date && l.date.startsWith(mStr));
-                    let val = monthLogs.length > 0 ? monthLogs[monthLogs.length - 1].value : 0;
-                    pointData.push(val);
+                    pointData.push(getAppEffectiveGainForMonth(app.id, mStr));
                     yenData.push(getRedemptionYenForApp(app.id, 'month', mStr));
                 }
             }
@@ -1996,7 +2057,7 @@
                 data: {
                     labels: labels,
                     datasets: [
-                        { type: 'bar', label: `${app.name} 推移`, data: pointData, backgroundColor: appColor, borderRadius: 6, yAxisID: 'y', order: 2 },
+                        { type: 'bar', label: `${app.name} 実質増加`, data: pointData, backgroundColor: appColor, borderRadius: 6, yAxisID: 'y', order: 2 },
                         { type: 'line', label: '交換実績金額 (円)', data: yenData, borderColor: '#ef4444', backgroundColor: '#ef4444', borderWidth: 2, pointRadius: 2, pointHoverRadius: 4, yAxisID: 'y1', order: 1 }
                     ]
                 },
