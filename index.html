@@ -1197,10 +1197,14 @@
             const name = document.getElementById('appNameInput').value;
             const rate = parseFloat(document.getElementById('appRateInput').value);
             const icon = document.getElementById('appIconInput').value;
+            
+            // 99個まで対応できるようにID採番を修正
             const nextNum = Math.min(99, Math.max(1, state.apps.length + 1));
             const newId = 'app_' + String(nextNum).padStart(2, '0');
             try {
                 await setDoc(doc(db, "apps", newId), { id: newId, name, rate, icon, order: state.apps.length + 1 });
+                document.getElementById('appNameInput').value = '';
+                document.getElementById('appRateInput').value = '';
                 await loadDataFromCloud();
                 alert('追加しました！');
             } catch(e) {}
@@ -1577,7 +1581,6 @@
             }
         }
 
-        // 共通ポイント用：指定月の実質増加値を計算（10月は入力残高そのもの、11月以降は 対象月残高 - 前月残高 ＋ 当月交換ポイント）
         function getCommonEffectiveGain(cpId, monthStr) {
             const logs = state.commonLogs.filter(l => l.commonPointId === cpId).sort((a,b) => a.month.localeCompare(b.month));
             const logEntry = logs.find(l => l.month === monthStr);
@@ -1588,7 +1591,6 @@
                 return currentVal;
             }
 
-            // 前月の年月を算出
             const [y, m] = monthStr.split('-').map(Number);
             let prevY = y, prevM = m - 1;
             if(prevM < 1) { prevM = 12; prevY--; }
@@ -1596,7 +1598,6 @@
             const prevLog = logs.find(l => l.month === prevMonthStr);
             const prevVal = prevLog ? prevLog.value : 0;
 
-            // 当月（monthStr）に発生した、この共通ポイント宛ての交換ポイント合計を取得
             let monthRedeemSpentPt = 0;
             state.redemptions.forEach(r => {
                 if(r.date && r.date.startsWith(monthStr)) {
@@ -1708,7 +1709,6 @@
             }
         }
 
-        // アプリ管理画面の実質増加計算ロジック（前回入力からの差分 ＋ 交換ポイント）
         function getAppEffectiveGainForDay(appId, dayStr) {
             const appLogs = state.logs.filter(l => l.appId === appId).sort((a,b) => new Date(a.date) - new Date(b.date));
             const logIdx = appLogs.findIndex(l => l.date === dayStr);
@@ -1731,7 +1731,6 @@
             if(monthLogs.length === 0) return 0;
             const latestMonthVal = Number(monthLogs[monthLogs.length - 1].value || 0);
 
-            // 前月の最新値を取得
             const [y, m] = mStr.split('-').map(Number);
             let prevY = y, prevM = m - 1;
             if(prevM < 1) { prevM = 12; prevY--; }
