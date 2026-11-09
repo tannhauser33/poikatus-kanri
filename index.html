@@ -403,7 +403,7 @@
         <section id="view-apps" class="hidden space-y-6">
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                 <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
-                    <i class="fa-solid fa-circle-plus text-indigo-600"></i> 新しいアプリを追加
+                    <i class="fa-solid fa-circle-plus text-indigo-600"></i> 新しいアプリを追加 <span id="app-count-badge" class="text-xs font-normal text-slate-400"></span>
                 </h3>
                 <form id="appAddForm" onsubmit="handleAddApp(event)" class="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
                     <div>
@@ -563,7 +563,7 @@
 
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                 <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
-                    <i class="fa-solid fa-circle-plus text-amber-500"></i> 新しい共通ポイントを追加
+                    <i class="fa-solid fa-circle-plus text-amber-500"></i> 新しい共通ポイントを追加 <span id="cp-count-badge" class="text-xs font-normal text-slate-400"></span>
                 </h3>
                 <form id="commonAddForm" onsubmit="handleAddCommonPoint(event)" class="space-y-4">
                     <div>
@@ -658,7 +658,11 @@
             { id: 'col_slate', color: '#64748b', label: 'スレート' }
         ];
 
-        const APP_COLOR_PALETTE = ['#6366f1', '#10b981', '#f59e0b', '#8b5cf6', '#3b82f6', '#14b8a6', '#06b6d4', '#84cc16'];
+        // 99個まで対応する拡張パレット
+        const APP_COLOR_PALETTE = [
+            '#6366f1', '#10b981', '#f59e0b', '#8b5cf6', '#3b82f6', '#14b8a6', '#06b6d4', '#84cc16',
+            '#ec4899', '#f43f5e', '#ef4444', '#f97316', '#eab308', '#22c55e', '#64748b', '#a855f7'
+        ];
 
         let state = { apps: [], logs: [], redemptions: [], commonPoints: [], commonLogs: [] };
         
@@ -1194,6 +1198,10 @@
 
         window.handleAddApp = async function(e) {
             e.preventDefault();
+            if (state.apps.length >= 99) {
+                alert('登録できるアプリは最大99個までです。');
+                return;
+            }
             const name = document.getElementById('appNameInput').value;
             const rate = parseFloat(document.getElementById('appRateInput').value);
             const icon = document.getElementById('appIconInput').value;
@@ -1211,12 +1219,17 @@
 
         window.handleAddCommonPoint = async function(e) {
             e.preventDefault();
+            if (state.commonPoints.length >= 99) {
+                alert('登録できる共通ポイントは最大99個までです。');
+                return;
+            }
             const name = document.getElementById('commonNameInput').value;
             const icon = document.getElementById('selectedCommonIcon').value || 'col_blue';
             const nextNum = Math.min(99, Math.max(1, state.commonPoints.length + 1));
             const newId = 'cp_' + String(nextNum).padStart(2, '0');
             try {
                 await setDoc(doc(db, "commonPoints", newId), { id: newId, name, icon, order: state.commonPoints.length + 1 });
+                document.getElementById('commonNameInput').value = '';
                 await loadDataFromCloud();
                 switchTab('dashboard');
                 alert('共通ポイントを追加しました！');
@@ -1342,6 +1355,12 @@
             renderChart2AppSelect();
             renderSelectedAppCard();
             renderEntryAppGraph();
+            
+            const appCountBadge = document.getElementById('app-count-badge');
+            if(appCountBadge) appCountBadge.innerText = `(${state.apps.length} / 99件)`;
+            const cpCountBadge = document.getElementById('cp-count-badge');
+            if(cpCountBadge) cpCountBadge.innerText = `(${state.commonPoints.length} / 99件)`;
+
             if(selectedCommonPointId) {
                 renderCommonDetailHeader();
                 renderCommonCharts();
@@ -1712,7 +1731,6 @@
         // アプリ管理画面 グラフ用 正確な実質獲得計算ロジック（日別・月別・年別）
         // =========================================================================
 
-        // 日別：前回入力値から追加された獲得ポイント。前回入力値以降に交換実績がある場合は交換実績分を加算。マイナスは0に補正。
         function getAppEffectiveGainForDay(appId, dayStr) {
             const appLogs = state.logs.filter(l => l.appId === appId).sort((a,b) => new Date(a.date) - new Date(b.date));
             const logIdx = appLogs.findIndex(l => l.date === dayStr);
@@ -1728,7 +1746,6 @@
                 prevDateStr = appLogs[logIdx - 1].date;
             }
 
-            // 前回入力値以降（前回入力日翌日〜当日）に発生した交換実績（消費ポイント）を合算
             let redeemedBetween = 0;
             state.redemptions.filter(r => r.appId === appId && r.date).forEach(r => {
                 if(r.date === dayStr || (prevDateStr && r.date > prevDateStr && r.date <= dayStr)) {
@@ -1740,7 +1757,6 @@
             return Math.max(0, diff);
         }
 
-        // 月別：月内各日の日別実質獲得分の合計値、または前月末値との差分＋交換分。マイナスは0に補正。
         function getAppEffectiveGainForMonth(appId, mStr) {
             const [yearStr, monthStr] = mStr.split('-');
             const year = parseInt(yearStr);
@@ -1755,7 +1771,6 @@
             return Math.max(0, monthTotal);
         }
 
-        // 年別：年内各月（または日別）の合計値。マイナスは0に補正。
         function getAppEffectiveGainForYear(appId, targetYear) {
             let yearTotal = 0;
             for(let m = 1; m <= 12; m++) {
@@ -2423,7 +2438,7 @@
                             </select>
                             <div>
                                 <h4 class="font-bold text-sm text-slate-800">${app.name}</h4>
-                                <p class="text-xs text-slate-400">レート: ${app.rate}円</p>
+                                <p class="text-xs text-slate-400">レート: ${app.rate}円 (ID: ${app.id})</p>
                             </div>
                         </div>
                         <div class="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-2">
@@ -2455,7 +2470,7 @@
                             <span class="w-7 h-7 rounded-full inline-block shadow-sm shrink-0" style="background-color: ${dotColor};"></span>
                             <div>
                                 <h4 class="font-bold text-sm">${cp.name}</h4>
-                                <p class="text-xs text-slate-400">1pt = 1円</p>
+                                <p class="text-xs text-slate-400">1pt = 1円 (ID: ${cp.id})</p>
                             </div>
                         </div>
                         <button onclick="deleteCommonPoint('${cp.id}')" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button>
