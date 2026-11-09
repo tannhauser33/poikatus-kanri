@@ -658,7 +658,6 @@
             { id: 'col_slate', color: '#64748b', label: 'スレート' }
         ];
 
-        // 99個まで対応する拡張パレット
         const APP_COLOR_PALETTE = [
             '#6366f1', '#10b981', '#f59e0b', '#8b5cf6', '#3b82f6', '#14b8a6', '#06b6d4', '#84cc16',
             '#ec4899', '#f43f5e', '#ef4444', '#f97316', '#eab308', '#22c55e', '#64748b', '#a855f7'
@@ -1206,8 +1205,17 @@
             const rate = parseFloat(document.getElementById('appRateInput').value);
             const icon = document.getElementById('appIconInput').value;
             
-            const nextNum = Math.min(99, Math.max(1, state.apps.length + 1));
+            // 空いている次のID（app_01 〜 app_99）を正確に採番
+            let nextNum = 1;
+            while(state.apps.some(a => a.id === 'app_' + String(nextNum).padStart(2, '0')) && nextNum <= 99) {
+                nextNum++;
+            }
+            if(nextNum > 99) {
+                alert('登録上限（99個）に達しています。');
+                return;
+            }
             const newId = 'app_' + String(nextNum).padStart(2, '0');
+            
             try {
                 await setDoc(doc(db, "apps", newId), { id: newId, name, rate, icon, order: state.apps.length + 1 });
                 document.getElementById('appNameInput').value = '';
@@ -1225,8 +1233,17 @@
             }
             const name = document.getElementById('commonNameInput').value;
             const icon = document.getElementById('selectedCommonIcon').value || 'col_blue';
-            const nextNum = Math.min(99, Math.max(1, state.commonPoints.length + 1));
+            
+            let nextNum = 1;
+            while(state.commonPoints.some(cp => cp.id === 'cp_' + String(nextNum).padStart(2, '0')) && nextNum <= 99) {
+                nextNum++;
+            }
+            if(nextNum > 99) {
+                alert('登録上限（99個）に達しています。');
+                return;
+            }
             const newId = 'cp_' + String(nextNum).padStart(2, '0');
+
             try {
                 await setDoc(doc(db, "commonPoints", newId), { id: newId, name, icon, order: state.commonPoints.length + 1 });
                 document.getElementById('commonNameInput').value = '';
@@ -2466,7 +2483,7 @@
                 const dotColor = getHexColorForCommonIcon(cp.icon);
                 html += `
                     <div class="flex items-center justify-between p-3 bg-slate-50 border rounded-xl">
-                        <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-1">
                             <span class="w-7 h-7 rounded-full inline-block shadow-sm shrink-0" style="background-color: ${dotColor};"></span>
                             <div>
                                 <h4 class="font-bold text-sm">${cp.name}</h4>
