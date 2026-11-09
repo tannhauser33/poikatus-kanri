@@ -1198,7 +1198,6 @@
             const rate = parseFloat(document.getElementById('appRateInput').value);
             const icon = document.getElementById('appIconInput').value;
             
-            // 99個まで対応できるようにID採番を修正
             const nextNum = Math.min(99, Math.max(1, state.apps.length + 1));
             const newId = 'app_' + String(nextNum).padStart(2, '0');
             try {
@@ -1588,7 +1587,7 @@
             const currentVal = logEntry.value;
 
             if(monthStr === "2026-10") {
-                return currentVal;
+                return Math.max(0, currentVal);
             }
 
             const [y, m] = monthStr.split('-').map(Number);
@@ -1608,7 +1607,7 @@
                 }
             });
 
-            return (currentVal - prevVal) + monthRedeemSpentPt;
+            return Math.max(0, (currentVal - prevVal) + monthRedeemSpentPt);
         }
 
         function renderCommonCharts() {
@@ -1644,7 +1643,7 @@
                             });
                         });
                         labels = Object.keys(yearMap).sort();
-                        data = labels.map(yr => yearMap[yr]);
+                        data = labels.map(yr => Math.max(0, yearMap[yr]));
                     }
                     let bgColors = state.commonPoints.map(p => getHexColorForCommonIcon(p.icon));
                     commonChartCompareInst = new Chart(ctx1, { type: 'bar', data: { labels, datasets: [{ label: '実質獲得ポイント', data, backgroundColor: bgColors, borderRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false } });
@@ -1696,7 +1695,7 @@
                 }
 
                 let labels = Object.keys(mapData).sort();
-                let data = labels.map(k => mapData[k]);
+                let data = labels.map(k => Math.max(0, mapData[k]));
 
                 commonChartTotalInst = new Chart(ctx2, {
                     type: 'bar',
@@ -1709,57 +1708,61 @@
             }
         }
 
+        // =========================================================================
+        // アプリ管理画面 グラフ用 正確な実質獲得計算ロジック（日別・月別・年別）
+        // =========================================================================
+
+        // 日別：前回入力値から追加された獲得ポイント。前回入力値以降に交換実績がある場合は交換実績分を加算。マイナスは0に補正。
         function getAppEffectiveGainForDay(appId, dayStr) {
             const appLogs = state.logs.filter(l => l.appId === appId).sort((a,b) => new Date(a.date) - new Date(b.date));
             const logIdx = appLogs.findIndex(l => l.date === dayStr);
             if(logIdx === -1) return 0;
-            const currentVal = Number(appLogs[logIdx].value || 0);
+            
+            const currentLog = appLogs[logIdx];
+            const currentVal = Number(currentLog.value || 0);
+
             let prevVal = 0;
+            let prevDateStr = "";
             if(logIdx > 0) {
                 prevVal = Number(appLogs[logIdx - 1].value || 0);
+                prevDateStr = appLogs[logIdx - 1].date;
             }
-            let redeemedOnDay = 0;
-            state.redemptions.filter(r => r.appId === appId && r.date === dayStr).forEach(r => {
-                redeemedOnDay += Number(r.spentPt || 0);
+
+            // 前回入力値以降（前回入力日翌日〜当日）に発生した交換実績（消費ポイント）を合算
+            let redeemedBetween = 0;
+            state.redemptions.filter(r => r.appId === appId && r.date).forEach(r => {
+                if(r.date === dayStr || (prevDateStr && r.date > prevDateStr && r.date <= dayStr)) {
+                    redeemedBetween += Number(r.spentPt || 0);
+                }
             });
-            return (currentVal - prevVal) + redeemedOnDay;
+
+            const diff = (currentVal - prevVal) + redeemedBetween;
+            return Math.max(0, diff);
         }
 
+        // 月別：月内各日の日別実質獲得分の合計値、または前月末値との差分＋交換分。マイナスは0に補正。
         function getAppEffectiveGainForMonth(appId, mStr) {
-            const appLogs = state.logs.filter(l => l.appId === appId).sort((a,b) => new Date(a.date) - new Date(b.date));
-            const monthLogs = appLogs.filter(l => l.date && l.date.startsWith(mStr));
-            if(monthLogs.length === 0) return 0;
-            const latestMonthVal = Number(monthLogs[monthLogs.length - 1].value || 0);
+            const [yearStr, monthStr] = mStr.split('-');
+            const year = parseInt(yearStr);
+            const month = parseInt(monthStr);
+            const lastDay = new Date(year, month, 0).getDate();
 
-            const [y, m] = mStr.split('-').map(Number);
-            let prevY = y, prevM = m - 1;
-            if(prevM < 1) { prevM = 12; prevY--; }
-            const prevMonthStr = `${prevY}-${String(prevM).padStart(2, '0')}`;
-            const prevMonthLogs = appLogs.filter(l => l.date && l.date.startsWith(prevMonthStr));
-            const prevVal = prevMonthLogs.length > 0 ? Number(prevMonthLogs[prevMonthLogs.length - 1].value || 0) : 0;
-
-            let redeemedInMonth = 0;
-            state.redemptions.filter(r => r.appId === appId && r.date && r.date.startsWith(mStr)).forEach(r => {
-                redeemedInMonth += Number(r.spentPt || 0);
-            });
-            return (latestMonthVal - prevVal) + redeemedInMonth;
+            let monthTotal = 0;
+            for(let day = 1; day <= lastDay; day++) {
+                const dayStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                monthTotal += getAppEffectiveGainForDay(appId, dayStr);
+            }
+            return Math.max(0, monthTotal);
         }
 
+        // 年別：年内各月（または日別）の合計値。マイナスは0に補正。
         function getAppEffectiveGainForYear(appId, targetYear) {
-            const appLogs = state.logs.filter(l => l.appId === appId).sort((a,b) => new Date(a.date) - new Date(b.date));
-            const yearLogs = appLogs.filter(l => l.date && l.date.startsWith(targetYear));
-            if(yearLogs.length === 0) return 0;
-            const latestYearVal = Number(yearLogs[yearLogs.length - 1].value || 0);
-
-            const prevYearStr = String(parseInt(targetYear) - 1);
-            const prevYearLogs = appLogs.filter(l => l.date && l.date.startsWith(prevYearStr));
-            const prevVal = prevYearLogs.length > 0 ? Number(prevYearLogs[prevYearLogs.length - 1].value || 0) : 0;
-
-            let redeemedInYear = 0;
-            state.redemptions.filter(r => r.appId === appId && r.date && r.date.startsWith(targetYear)).forEach(r => {
-                redeemedInYear += Number(r.spentPt || 0);
-            });
-            return (latestYearVal - prevVal) + redeemedInYear;
+            let yearTotal = 0;
+            for(let m = 1; m <= 12; m++) {
+                const mStr = `${targetYear}-${String(m).padStart(2, '0')}`;
+                yearTotal += getAppEffectiveGainForMonth(appId, mStr);
+            }
+            return Math.max(0, yearTotal);
         }
 
         function getRedemptionYenForApp(appId, periodType, targetKey) {
@@ -1965,7 +1968,7 @@
             });
 
             let labels = catIcons;
-            let data = catIcons.map(icon => iconMap[icon]);
+            let data = catIcons.map(icon => Math.max(0, iconMap[icon]));
             let yenData = catIcons.map(icon => yenIconMap[icon]);
             let bgColors = catColors;
 
