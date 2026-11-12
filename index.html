@@ -44,6 +44,9 @@
                 <span id="sync-status-pc" class="hidden md:flex bg-indigo-700/80 text-indigo-200 text-xs px-3 py-2 rounded-lg items-center gap-1.5">
                     <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> クラウド接続中
                 </span>
+                <button onclick="openHelpModal()" class="bg-indigo-700/80 hover:bg-indigo-700 text-xs px-3 py-2 rounded-lg font-medium transition flex items-center justify-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-circle-question"></i> ヘルプ・仕様
+                </button>
                 <button onclick="exportCSV()" class="bg-indigo-700/80 hover:bg-indigo-700 text-xs px-3 py-2 rounded-lg font-medium transition flex items-center justify-center gap-1.5 shadow-sm">
                     <i class="fa-solid fa-file-arrow-down"></i> CSV出力
                 </button>
@@ -591,6 +594,61 @@
 
     </main>
 
+    <!-- ヘルプ・仕様モーダル -->
+    <div id="helpModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl max-w-2xl w-full p-6 space-y-6 shadow-xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                    <i class="fa-solid fa-circle-question text-indigo-600"></i> アプリの仕様 ＆ 使い方マニュアル
+                </h3>
+                <button onclick="closeHelpModal()" class="text-slate-400 hover:text-slate-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="space-y-6 text-xs sm:text-sm text-slate-700">
+                <!-- セクション1: 仕様 -->
+                <div class="space-y-3">
+                    <h4 class="font-bold text-indigo-600 text-sm border-l-4 border-indigo-600 pl-2">1. アプリの仕様概要</h4>
+                    <p class="leading-relaxed">本アプリは、日々のポイ活アプリ（歩数・放置・ポイントサイト等）のポイント獲得状況や、共通ポイント（dポイント・Vポイント等）の残高推移をFirebase上で一元管理し、実質的な獲得数や換金額をグラフや一覧で可視化するWebアプリケーションです。</p>
+                    <ul class="list-disc pl-5 space-y-1 text-slate-600">
+                        <li>**ダッシュボード**: 総資産価値や未交換相当、今月の交換済み収益をKPI表示。アプリ別・カテゴリ別の獲得比較グラフを完備。</li>
+                        <li>**アプリ数値入力**: 日々の累計ポイントを入力するだけで前回からの差分（獲得分）を自動計算。最大99個までアプリを登録可能。</li>
+                        <li>**交換実績管理**: ポイントを他社ポイント等に交換した際の消費数と獲得金額（円）を記録。交換先別集計にも対応。</li>
+                        <li>**共通ポイント管理**: dポイントや楽天ポイント等の残高（最大99個）を月別に管理し、獲得・利用差分やシェア割合をグラフ化。</li>
+                        <li>**データ同期・バックアップ**: Firebaseによるクラウド同期および、CSV入出力による完全なバックアップ・復元に対応。</li>
+                    </ul>
+                </div>
+
+                <!-- セクション2: 使い方 -->
+                <div class="space-y-3 pt-3 border-t">
+                    <h4 class="font-bold text-indigo-600 text-sm border-l-4 border-indigo-600 pl-2">2. 基本的な使い方マニュアル</h4>
+                    
+                    <div class="space-y-3">
+                        <div class="bg-slate-50 p-3.5 rounded-xl border">
+                            <h5 class="font-bold text-slate-800 mb-1">① アプリを追加する</h5>
+                            <p class="text-slate-600">「アプリ設定」タブを開き、アイコン、アプリ名、還元レート（1pt当りの円）を入力して追加します（最大99個）。</p>
+                        </div>
+                        <div class="bg-slate-50 p-3.5 rounded-xl border">
+                            <h5 class="font-bold text-slate-800 mb-1">② 日々のポイント数を記録する</h5>
+                            <p class="text-slate-600">「アプリ数値入力・履歴」タブで日付、アプリ、現在の累計ポイント数（アプリ上の画面数値）を入力して保存します。差分が自動で獲得ポイントとして算出されます。</p>
+                        </div>
+                        <div class="bg-slate-50 p-3.5 rounded-xl border">
+                            <h5 class="font-bold text-slate-800 mb-1">③ ポイント交換実績の記録</h5>
+                            <p class="text-slate-600">「交換実績管理」タブで、消費したポイント数と獲得した金額（円）、交換先を登録します。残高から消費分が差し引かれ、実際の収益として計上されます。</p>
+                        </div>
+                        <div class="bg-slate-50 p-3.5 rounded-xl border">
+                            <h5 class="font-bold text-slate-800 mb-1">④ データのバックアップ (CSV)</h5>
+                            <p class="text-slate-600">画面右上の「CSV出力」ボタンからいつでも全データのバックアップをファイル保存できます。復元時は「CSV取込」をご利用ください。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end pt-3 border-t">
+                <button onclick="closeHelpModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl text-xs font-medium transition">閉じる</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 交換先別集計モーダル -->
     <div id="exchangeSummaryModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl">
@@ -747,6 +805,15 @@
                 console.error("Cloud load error:", error);
             }
         }
+
+        window.openHelpModal = function() {
+            document.getElementById('helpModal').classList.remove('hidden');
+            document.getElementById('helpModal').classList.add('flex');
+        };
+        window.closeHelpModal = function() {
+            document.getElementById('helpModal').classList.remove('flex');
+            document.getElementById('helpModal').classList.add('hidden');
+        };
 
         window.exportCSV = function() {
             let csvContent = "\ufeff[APPS]\nid,name,rate,icon,order\n";
@@ -1205,7 +1272,6 @@
             const rate = parseFloat(document.getElementById('appRateInput').value);
             const icon = document.getElementById('appIconInput').value;
             
-            // 空いている次のID（app_01 〜 app_99）を正確に採番
             let nextNum = 1;
             while(state.apps.some(a => a.id === 'app_' + String(nextNum).padStart(2, '0')) && nextNum <= 99) {
                 nextNum++;
@@ -1743,10 +1809,6 @@
                 });
             }
         }
-
-        // =========================================================================
-        // アプリ管理画面 グラフ用 正確な実質獲得計算ロジック（日別・月別・年別）
-        // =========================================================================
 
         function getAppEffectiveGainForDay(appId, dayStr) {
             const appLogs = state.logs.filter(l => l.appId === appId).sort((a,b) => new Date(a.date) - new Date(b.date));
@@ -2483,7 +2545,7 @@
                 const dotColor = getHexColorForCommonIcon(cp.icon);
                 html += `
                     <div class="flex items-center justify-between p-3 bg-slate-50 border rounded-xl">
-                        <div class="flex items-center gap-1">
+                        <div class="flex items-center gap-2">
                             <span class="w-7 h-7 rounded-full inline-block shadow-sm shrink-0" style="background-color: ${dotColor};"></span>
                             <div>
                                 <h4 class="font-bold text-sm">${cp.name}</h4>
